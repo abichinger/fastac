@@ -1,0 +1,8 @@
+p, a, /a, read
+p, b, /b, read
+p, a&b, /a_and_b, read
+
+g, alice, a
+g, bob, b
+g, stuart, a
+g, stuart, b
