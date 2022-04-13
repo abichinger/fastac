@@ -28,6 +28,7 @@ const matcherNotFound = "error: matcher %s not found"
 const policyNotFound = "error: policy %s not found"
 const rmNotFound = "error: role manager %s not found"
 const requestNotFound = "error: request definition %s not found"
+const effectNotFound = "error: effect definition %s not found"
 
 type Model struct {
 	pMap    map[string]*Policy
@@ -36,6 +37,7 @@ type Model struct {
 	rmMap   map[string]rbac.RoleManager
 	rMap    map[string]*ArgsDef
 	secDefs map[string]*SectionDef
+	eMap    map[string]Effector
 
 	fm *FunctionMap
 }
@@ -48,11 +50,12 @@ func NewModel() *Model {
 	m.rmMap = make(map[string]rbac.RoleManager)
 	m.rMap = make(map[string]*ArgsDef)
 	m.secDefs = make(map[string]*SectionDef)
+	m.eMap = make(map[string]Effector)
 	m.fm = DefaultFunctionMap()
 
 	m.secDefs["request_definition"] = NewSectionDef("request_definition", 'r', m.AddRequestDef)
 	m.secDefs["policy_definition"] = NewSectionDef("policy_definition", 'p', m.AddPolicyDef)
-	//m.secDefs["policy_effect"] = NewSectionDef("policy_effect", 'e', m.AddRequestDef)
+	m.secDefs["policy_effect"] = NewSectionDef("policy_effect", 'e', m.AddEffectDef)
 	m.secDefs["matchers"] = NewSectionDef("matchers", 'm', m.AddMatcherDef)
 	m.secDefs["role_definition"] = NewSectionDef("role_definition", 'g', m.AddRequestDef)
 
@@ -170,6 +173,11 @@ func (m *Model) AddRequestDef(key, arguments string) error {
 	return nil
 }
 
+func (m *Model) AddEffectDef(key, expr string) error {
+	m.eMap[key] = NewDefaultEffector(key, expr)
+	return nil
+}
+
 func (m *Model) AddPolicyRule(key string, rule Rule) error {
 	policy, ok := m.pMap[key]
 	if !ok {
@@ -213,4 +221,47 @@ func (m *Model) RangeMatches(mKey string, rKey string, rvals []string, fn func(r
 	}
 
 	return matcher.RangeMatches(*rDef, rvals, *m.fm, fn)
+}
+
+func (m *Model) Enforce(mKey string, rKey string, eKey string, rvals []string) (bool, error) {
+	res := Indeterminate
+	effector, eOk := m.eMap[eKey]
+	if !eOk {
+		return false, fmt.Errorf(effectNotFound, eKey)
+	}
+	matcher, mOk := m.mMap[mKey]
+	if !mOk {
+		return false, fmt.Errorf(matcherNotFound, mKey)
+	}
+	pDef := matcher.policy
+
+	effects := []Effect{}
+	matches := []Rule{}
+
+	var eftErr error = nil
+	err := m.RangeMatches(mKey, rKey, rvals, func(rule Rule) bool {
+		eft := pDef.GetEft(rule)
+
+		effects = append(effects, eft)
+		matches = append(matches, rule)
+
+		res, _, eftErr = effector.MergeEffects(effects, matches, false)
+
+		if eftErr != nil || res != Indeterminate {
+			return true
+		}
+		return false
+	})
+	if err != nil {
+		return false, err
+	}
+	if eftErr != nil {
+		return false, err
+	}
+
+	if res == Indeterminate {
+		res, _, _ = effector.MergeEffects(effects, matches, true)
+	}
+
+	return res == Allow, nil
 }

@@ -40,6 +40,17 @@ func (def *ArgsDef) Has(name string) bool {
 	return ok
 }
 
+func (def *ArgsDef) GetEft(values []string) Effect {
+	eftArg := def.key + "_eft"
+	if def.Has(eftArg) {
+		eft, _ := def.GetParameter(values, eftArg)
+		if eft != "allow" {
+			return Deny
+		}
+	}
+	return Allow
+}
+
 func (def *ArgsDef) GetParameter(values []string, name string) (string, error) {
 	index, ok := def.argIndex[name]
 	if !ok {
@@ -119,19 +130,23 @@ func (def *MatcherDef) NewExpressionWithFunctions(functions map[string]govaluate
 }
 
 type EffectDef struct {
-	key    string
-	effect string
+	key  string
+	expr string
+}
+
+func NewEffectDef(key, expr string) *EffectDef {
+	def := &EffectDef{}
+	def.key = key
+	def.expr = strings.ReplaceAll(expr, " ", "")
+	return def
+}
+
+func (def *EffectDef) Expr() string {
+	return def.expr
 }
 
 func (def *EffectDef) String() string {
-	return fmt.Sprintf("%s = %s", def.key, def.effect)
-}
-
-func NewEffectDef(key, effect string) *EffectDef {
-	def := &EffectDef{}
-	def.key = key
-	def.effect = effect
-	return def
+	return fmt.Sprintf("%s = %s", def.key, def.expr)
 }
 
 type RoleDef struct {

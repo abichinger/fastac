@@ -26,7 +26,7 @@ func TestMatcher(t *testing.T) {
 	p.AddPolicy([]string{"bob", "data2", "read"})
 
 	t.Logf("M1")
-	err := m1.RangeMatches(*rDef, []string{"alice", "data2", "read"}, fm.GetFunctions(), func(rule Rule) bool {
+	err := m1.RangeMatches(*rDef, []string{"alice", "data2", "read"}, *fm, func(rule Rule) bool {
 		t.Logf("match: %s", rule.Hash())
 		return false
 	})
@@ -35,7 +35,7 @@ func TestMatcher(t *testing.T) {
 	}
 
 	t.Logf("M2")
-	err = m2.RangeMatches(*rDef, []string{"alice", "", ""}, fm.GetFunctions(), func(rule Rule) bool {
+	err = m2.RangeMatches(*rDef, []string{"alice", "", ""}, *fm, func(rule Rule) bool {
 		t.Logf("match: %s", rule.Hash())
 		return false
 	})
