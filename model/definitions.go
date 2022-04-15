@@ -164,7 +164,7 @@ func (def *MatcherDef) GetRequestArgs() []string {
 	return def.rArgs
 }
 
-func (def *MatcherDef) NewExpressionWithFunctions(functions map[string]govaluate.ExpressionFunction, rules map[string]interface{}) (*govaluate.EvaluableExpression, error) {
+func (def *MatcherDef) NewExpressionWithFunctions(functions map[string]govaluate.ExpressionFunction) (*govaluate.EvaluableExpression, error) {
 	return govaluate.NewEvaluableExpressionWithFunctions(def.expr, functions)
 }
 

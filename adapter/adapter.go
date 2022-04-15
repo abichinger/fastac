@@ -13,6 +13,33 @@ type Adapter interface {
 	LoadPolicy(model *model.Model) error
 	// SavePolicy saves all policy rules to the storage.
 	SavePolicy(model *model.Model) error
+
+	// AddPolicy adds a policy rule to the storage.
+	// This is part of the Auto-Save feature.
+	AddPolicy(sec string, key string, rule []string) error
+	// RemovePolicy removes a policy rule from the storage.
+	// This is part of the Auto-Save feature.
+	RemovePolicy(sec string, key string, rule []string) error
+}
+
+type FilteredAdapter interface {
+	Adapter
+
+	// LoadFilteredPolicy loads only policy rules that match the filter.
+	LoadFilteredPolicy(model *model.Model, filter interface{}) error
+	// IsFiltered returns true if the loaded policy has been filtered.
+	IsFiltered() bool
+}
+
+// BatchAdapter is the interface for Casbin adapters with multiple add and remove policy functions.
+type BatchAdapter interface {
+	Adapter
+	// AddPolicies adds policy rules to the storage.
+	// This is part of the Auto-Save feature.
+	AddPolicies(sec string, key string, rules [][]string) error
+	// RemovePolicies removes policy rules from the storage.
+	// This is part of the Auto-Save feature.
+	RemovePolicies(sec string, key string, rules [][]string) error
 }
 
 // LoadPolicyLine loads a text line as a policy rule to model.
@@ -31,18 +58,5 @@ func LoadPolicyLine(line string, m *model.Model) {
 		return
 	}
 
-	LoadPolicyArray(tokens, m)
-}
-
-// LoadPolicyArray loads a policy rule to model.
-func LoadPolicyArray(rule []string, m *model.Model) {
-	key := rule[0]
-	sec := key[0]
-	switch sec {
-	case 'p':
-		m.AddPolicyRule(key, rule[1:])
-		break
-	case 'g':
-		m.AddRoleRule(key, rule[1:])
-	}
+	m.AddRule(tokens)
 }

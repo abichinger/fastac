@@ -65,12 +65,12 @@ func (e *Enforcer) AddGroupingPolicy(params ...interface{}) (bool, error) {
 	return e.AddNamedGroupingPolicy("g", params...)
 }
 
-func (e *Enforcer) AddNamedGroupingPolicy(pKey string, params ...interface{}) (bool, error) {
+func (e *Enforcer) AddNamedGroupingPolicy(gKey string, params ...interface{}) (bool, error) {
 	rule := model.Rule{}
 	for _, param := range params {
 		rule = append(rule, param.(string))
 	}
-	return true, e.m.AddRoleRule(pKey, rule)
+	return true, e.m.AddRoleRule(gKey, rule)
 }
 
 func (e *Enforcer) Enforce(rvals ...interface{}) (bool, error) {

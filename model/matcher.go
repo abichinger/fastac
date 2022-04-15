@@ -71,10 +71,14 @@ func NewMatcher(policy *Policy, matchers []*MatcherDef) *Matcher {
 	m.matchers = matchers
 	m.root = NewMatcherNode([]string{""})
 
+	if len(matchers) == 1 {
+		m.root.policies = append(m.root.policies, policy.rules...)
+	} else {
 	policy.Range(func(i int, rule Rule) bool {
 		m.AddPolicy(rule)
 		return false
 	})
+	}
 
 	policy.AddListener(PolicyAdded, func(arguments ...interface{}) {
 		rule := arguments[0].(Rule)
@@ -114,13 +118,13 @@ func (m *Matcher) RangeMatches(rDef RequestDef, rvals []interface{}, fm Function
 	q = append(q, m.root)
 
 	params := NewMatchParameters(*m.policy.PolicyDef, nil, rDef, rvals)
-	fm.AddFunction("eval", GenerateEvalFunction(fm, params))
+	fm.AddFunction("eval", generateEvalFunction(fm, params))
 	functions := fm.GetFunctions()
 
 	for len(q) > 0 {
 		levelSize := len(q)
 
-		expr, err := m.matchers[level].NewExpressionWithFunctions(functions, nil)
+		expr, err := m.matchers[level].NewExpressionWithFunctions(functions)
 		if err != nil {
 			return err
 		}
@@ -185,7 +189,7 @@ func eval(expression string, functions map[string]govaluate.ExpressionFunction, 
 	return expr.Eval(parameters)
 }
 
-func GenerateEvalFunction(fm FunctionMap, parameters *MatchParameters) govaluate.ExpressionFunction {
+func generateEvalFunction(fm FunctionMap, parameters *MatchParameters) govaluate.ExpressionFunction {
 	functions := fm.GetFunctions()
 
 	return func(args ...interface{}) (interface{}, error) {

@@ -34,3 +34,11 @@ func (a *FileAdapter) LoadPolicy(model *model.Model) error {
 func (a *FileAdapter) SavePolicy(model *model.Model) error {
 	return errors.New("not implemented")
 }
+
+func (a *FileAdapter) AddPolicy(sec string, key string, rule []string) error {
+	return errors.New("not implemented")
+}
+
+func (a *FileAdapter) RemovePolicy(sec string, key string, rule []string) error {
+	return errors.New("not implemented")
+}

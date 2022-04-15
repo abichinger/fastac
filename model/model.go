@@ -200,6 +200,31 @@ func addEffectDef(m *Model, key, expr string) error {
 	return nil
 }
 
+func (m *Model) AddRule(rule []string) error {
+	key := rule[0]
+	sec := key[0]
+	switch sec {
+	case 'p':
+		return m.AddPolicyRule(key, rule[1:])
+	case 'g':
+		return m.AddRoleRule(key, rule[1:])
+	}
+	return fmt.Errorf(policyNotFound, key)
+}
+
+func (m *Model) RemoveRule(rule []string) error {
+	key := rule[0]
+	sec := key[0]
+	switch sec {
+	case 'p':
+		_, err := m.RemovePolicyRule(key, rule[1:])
+		return err
+	case 'g':
+		return m.RemoveRoleRule(key, rule[1:])
+	}
+	return fmt.Errorf(policyNotFound, key)
+}
+
 func (m *Model) AddPolicyRule(key string, rule Rule) error {
 	policy, ok := m.pMap[key]
 	if !ok {
