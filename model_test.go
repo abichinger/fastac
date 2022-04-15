@@ -1,10 +1,10 @@
-package lessbin
+package fastac
 
 import (
 	"testing"
 
-	"example.com/lessbin/adapter"
-	"example.com/lessbin/model"
+	"example.com/fastac/adapter"
+	"example.com/fastac/model"
 )
 
 func TestModel(t *testing.T) {
@@ -14,9 +14,9 @@ func TestModel(t *testing.T) {
 	}
 
 	adapter := adapter.NewFileAdapter("examples/basic_policy.csv")
-	adapter.LoadPolicy(*m)
+	adapter.LoadPolicy(m)
 
-	err = m.RangeMatches("m", "r", []string{"alice", "data1", "read"}, func(rule model.Rule) bool {
+	err = m.RangeMatches("m", "r", []interface{}{"alice", "data1", "read"}, func(rule model.Rule) bool {
 		t.Logf("match: %s", rule.Hash())
 		return false
 	})

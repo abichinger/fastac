@@ -4,7 +4,7 @@ import (
 	"encoding/csv"
 	"strings"
 
-	"example.com/lessbin/model"
+	"example.com/fastac/model"
 )
 
 // Adapter is the interface for Casbin adapters.
@@ -16,7 +16,7 @@ type Adapter interface {
 }
 
 // LoadPolicyLine loads a text line as a policy rule to model.
-func LoadPolicyLine(line string, m model.Model) {
+func LoadPolicyLine(line string, m *model.Model) {
 	if line == "" || strings.HasPrefix(line, "#") {
 		return
 	}
@@ -35,7 +35,7 @@ func LoadPolicyLine(line string, m model.Model) {
 }
 
 // LoadPolicyArray loads a policy rule to model.
-func LoadPolicyArray(rule []string, m model.Model) {
+func LoadPolicyArray(rule []string, m *model.Model) {
 	key := rule[0]
 	sec := key[0]
 	switch sec {

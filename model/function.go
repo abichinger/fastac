@@ -1,7 +1,7 @@
 package model
 
 import (
-	"example.com/lessbin/util"
+	"example.com/fastac/util"
 	"github.com/Knetic/govaluate"
 )
 

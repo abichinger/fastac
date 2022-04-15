@@ -20,7 +20,7 @@ import (
 	"strings"
 	"sync"
 
-	"example.com/lessbin/util"
+	"example.com/fastac/util"
 )
 
 const defaultDomain string = ""

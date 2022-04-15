@@ -4,23 +4,31 @@ import (
 	"fmt"
 	"strings"
 
-	"example.com/lessbin/rbac"
+	"example.com/fastac/rbac"
 	"github.com/go-ini/ini"
 )
 
 type SectionDef struct {
 	name      string
 	keyPrefix byte
-	fn        func(key, value string) error
+	handler   func(m *Model, key, value string) error
 }
 
-func NewSectionDef(name string, keyPrefix byte, fn func(key, value string) error) *SectionDef {
+func NewSectionDef(name string, keyPrefix byte, handler func(m *Model, key, value string) error) *SectionDef {
 	sec := &SectionDef{
 		name:      name,
 		keyPrefix: keyPrefix,
-		fn:        fn,
+		handler:   handler,
 	}
 	return sec
+}
+
+var sections = []*SectionDef{
+	NewSectionDef("request_definition", 'r', addRequestDef),
+	NewSectionDef("policy_definition", 'p', addPolicyDef),
+	NewSectionDef("policy_effect", 'e', addEffectDef),
+	NewSectionDef("matchers", 'm', addMatcherDef),
+	NewSectionDef("role_definition", 'g', addRoleDef),
 }
 
 const invalidKeyPrefix = "error: key of %s must start with '%c'"
@@ -35,8 +43,9 @@ type Model struct {
 	mDefMap map[string][]*MatcherDef
 	mMap    map[string]*Matcher
 	rmMap   map[string]rbac.RoleManager
-	rMap    map[string]*ArgsDef
+	rMap    map[string]*RequestDef
 	secDefs map[string]*SectionDef
+	secMap  map[byte]*SectionDef
 	eMap    map[string]Effector
 
 	fm *FunctionMap
@@ -48,16 +57,16 @@ func NewModel() *Model {
 	m.mDefMap = make(map[string][]*MatcherDef)
 	m.mMap = make(map[string]*Matcher)
 	m.rmMap = make(map[string]rbac.RoleManager)
-	m.rMap = make(map[string]*ArgsDef)
+	m.rMap = make(map[string]*RequestDef)
 	m.secDefs = make(map[string]*SectionDef)
+	m.secMap = make(map[byte]*SectionDef)
 	m.eMap = make(map[string]Effector)
 	m.fm = DefaultFunctionMap()
 
-	m.secDefs["request_definition"] = NewSectionDef("request_definition", 'r', m.AddRequestDef)
-	m.secDefs["policy_definition"] = NewSectionDef("policy_definition", 'p', m.AddPolicyDef)
-	m.secDefs["policy_effect"] = NewSectionDef("policy_effect", 'e', m.AddEffectDef)
-	m.secDefs["matchers"] = NewSectionDef("matchers", 'm', m.AddMatcherDef)
-	m.secDefs["role_definition"] = NewSectionDef("role_definition", 'g', m.AddRequestDef)
+	for _, sec := range sections {
+		m.secDefs[sec.name] = sec
+		m.secMap[sec.keyPrefix] = sec
+	}
 
 	return m
 }
@@ -102,29 +111,42 @@ func (m *Model) loadModelFromConfig(cfg *ini.File) error {
 				return fmt.Errorf(invalidKeyPrefix, secDef.name, secDef.keyPrefix)
 			}
 
-			secDef.fn(key.Name(), key.String())
+			secDef.handler(m, key.Name(), key.String())
 		}
 	}
 
 	return m.BuildMatchers()
 }
 
-func (m *Model) AddPolicyDef(key string, arguments string) error {
+func (m *Model) AddDef(sec byte, key string, value string) bool {
+	secDef, ok := m.secMap[sec]
+	if !ok {
+		return false
+	}
+	if err := secDef.handler(m, key, value); err != nil {
+		return false
+	}
+	return true
+}
+
+func addPolicyDef(m *Model, key string, arguments string) error {
 	m.pMap[key] = NewPolicy(key, arguments)
 	return nil
 }
 
-func (m *Model) AddMatcherDef(key string, matcher string) error {
+func addMatcherDef(m *Model, key string, matcher string) error {
 	newDef := NewMatcherDef(key, matcher)
 	if defs, ok := m.mDefMap[newDef.key]; ok {
 		for i, def := range defs {
 			if def.index > newDef.index {
 				defs = append(defs[0:i+1], defs[i:]...)
 				defs[i] = newDef
-				return nil
+				goto ENDOFLOOP
 			}
 		}
 		defs = append(defs, newDef)
+	ENDOFLOOP:
+		m.mDefMap[newDef.key] = defs
 	} else {
 		m.mDefMap[newDef.key] = []*MatcherDef{newDef}
 	}
@@ -132,7 +154,7 @@ func (m *Model) AddMatcherDef(key string, matcher string) error {
 }
 
 func (m *Model) BuildMatchers() error {
-	for key, _ := range m.mDefMap {
+	for key := range m.mDefMap {
 		if err := m.BuildMatcher(key); err != nil {
 			return err
 		}
@@ -157,7 +179,7 @@ func (m *Model) BuildMatcher(key string) error {
 	return nil
 }
 
-func (m *Model) AddRoleDef(key, arguments string) error {
+func addRoleDef(m *Model, key, arguments string) error {
 	def := NewRoleDef(key, arguments)
 	if def.nargs == 2 {
 		m.rmMap[key] = rbac.NewRoleManagerImpl(10)
@@ -168,12 +190,12 @@ func (m *Model) AddRoleDef(key, arguments string) error {
 	return nil
 }
 
-func (m *Model) AddRequestDef(key, arguments string) error {
-	m.rMap[key] = NewArgsDef(key, arguments)
+func addRequestDef(m *Model, key, arguments string) error {
+	m.rMap[key] = NewRequestDef(key, arguments)
 	return nil
 }
 
-func (m *Model) AddEffectDef(key, expr string) error {
+func addEffectDef(m *Model, key, expr string) error {
 	m.eMap[key] = NewDefaultEffector(key, expr)
 	return nil
 }
@@ -210,7 +232,7 @@ func (m *Model) RemoveRoleRule(key string, rule Rule) error {
 	return rm.DeleteLink(rule[0], rule[1], rule[2:]...)
 }
 
-func (m *Model) RangeMatches(mKey string, rKey string, rvals []string, fn func(rule Rule) bool) error {
+func (m *Model) RangeMatches(mKey string, rKey string, rvals []interface{}, fn func(rule Rule) bool) error {
 	matcher, mOk := m.mMap[mKey]
 	if !mOk {
 		return fmt.Errorf(matcherNotFound, mKey)
@@ -223,7 +245,7 @@ func (m *Model) RangeMatches(mKey string, rKey string, rvals []string, fn func(r
 	return matcher.RangeMatches(*rDef, rvals, *m.fm, fn)
 }
 
-func (m *Model) Enforce(mKey string, rKey string, eKey string, rvals []string) (bool, error) {
+func (m *Model) Enforce(mKey string, rKey string, eKey string, rvals []interface{}) (bool, error) {
 	res := Indeterminate
 	effector, eOk := m.eMap[eKey]
 	if !eOk {

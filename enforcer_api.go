@@ -1,4 +1,4 @@
-package lessbin
+package fastac
 
 type EnforcerAPI interface {
 	//enforce(matchers []MatcherDef, rvals ...interface{}) (ok bool, err error)

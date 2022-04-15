@@ -5,7 +5,7 @@ import (
 	"errors"
 	"os"
 
-	"example.com/lessbin/model"
+	"example.com/fastac/model"
 )
 
 type FileAdapter struct {
@@ -16,7 +16,7 @@ func NewFileAdapter(path string) *FileAdapter {
 	return &FileAdapter{path: path}
 }
 
-func (a *FileAdapter) LoadPolicy(model model.Model) error {
+func (a *FileAdapter) LoadPolicy(model *model.Model) error {
 	file, err := os.Open(a.path)
 	if err != nil {
 		return err
@@ -31,6 +31,6 @@ func (a *FileAdapter) LoadPolicy(model model.Model) error {
 	return scanner.Err()
 }
 
-func (a *FileAdapter) SavePolicy(model model.Model) error {
+func (a *FileAdapter) SavePolicy(model *model.Model) error {
 	return errors.New("not implemented")
 }

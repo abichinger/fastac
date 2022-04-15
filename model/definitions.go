@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"example.com/lessbin/util"
 	"github.com/Knetic/govaluate"
 )
 
@@ -18,14 +17,14 @@ var argReg = regexp.MustCompile(`([pr][0-9]*)(\.|_)([A-Za-z0-9_]+)`)
 var pArgReg = regexp.MustCompile(`(p[0-9]*)_([A-Za-z0-9_]+)`)
 var rArgReg = regexp.MustCompile(`(r[0-9]*)_([A-Za-z0-9_]+)`)
 
-type ArgsDef struct {
+type PolicyDef struct {
 	key      string
 	args     []string
 	argIndex map[string]int
 }
 
-func NewArgsDef(key, arguments string) *ArgsDef {
-	def := &ArgsDef{}
+func NewPolicyDef(key, arguments string) *PolicyDef {
+	def := &PolicyDef{}
 	def.key = key
 	def.args = strings.Split(strings.ReplaceAll(arguments, " ", ""), DefaultSep)
 	def.argIndex = make(map[string]int, len(def.args))
@@ -35,12 +34,12 @@ func NewArgsDef(key, arguments string) *ArgsDef {
 	return def
 }
 
-func (def *ArgsDef) Has(name string) bool {
+func (def *PolicyDef) Has(name string) bool {
 	_, ok := def.argIndex[name]
 	return ok
 }
 
-func (def *ArgsDef) GetEft(values []string) Effect {
+func (def *PolicyDef) GetEft(values []string) Effect {
 	eftArg := def.key + "_eft"
 	if def.Has(eftArg) {
 		eft, _ := def.GetParameter(values, eftArg)
@@ -51,7 +50,7 @@ func (def *ArgsDef) GetEft(values []string) Effect {
 	return Allow
 }
 
-func (def *ArgsDef) GetParameter(values []string, name string) (string, error) {
+func (def *PolicyDef) GetParameter(values []string, name string) (string, error) {
 	index, ok := def.argIndex[name]
 	if !ok {
 		return "", errors.New("No parameter '" + name + "' found.")
@@ -59,7 +58,7 @@ func (def *ArgsDef) GetParameter(values []string, name string) (string, error) {
 	return values[index], nil
 }
 
-func (def *ArgsDef) GetParameters(values, names []string) (Rule, error) {
+func (def *PolicyDef) GetParameters(values, names []string) (Rule, error) {
 	params := make([]string, 0)
 	for _, name := range names {
 		value, err := def.GetParameter(values, name)
@@ -71,7 +70,53 @@ func (def *ArgsDef) GetParameters(values, names []string) (Rule, error) {
 	return params, nil
 }
 
-func (def *ArgsDef) String() string {
+func (def *PolicyDef) String() string {
+	return fmt.Sprintf("%s = %s", def.key, strings.Join(def.args, DefaultSep+" "))
+}
+
+type RequestDef struct {
+	key      string
+	args     []string
+	argIndex map[string]int
+}
+
+func NewRequestDef(key, arguments string) *RequestDef {
+	def := &RequestDef{}
+	def.key = key
+	def.args = strings.Split(strings.ReplaceAll(arguments, " ", ""), DefaultSep)
+	def.argIndex = make(map[string]int, len(def.args))
+	for i, arg := range def.args {
+		def.argIndex[key+"_"+arg] = i
+	}
+	return def
+}
+
+func (def *RequestDef) Has(name string) bool {
+	_, ok := def.argIndex[name]
+	return ok
+}
+
+func (def *RequestDef) GetParameter(values []interface{}, name string) (interface{}, error) {
+	index, ok := def.argIndex[name]
+	if !ok {
+		return "", errors.New("No parameter '" + name + "' found.")
+	}
+	return values[index], nil
+}
+
+func (def *RequestDef) GetParameters(values []interface{}, names []string) ([]interface{}, error) {
+	params := make([]interface{}, 0)
+	for _, name := range names {
+		value, err := def.GetParameter(values, name)
+		if err != nil {
+			return nil, err
+		}
+		params = append(params, value)
+	}
+	return params, nil
+}
+
+func (def *RequestDef) String() string {
 	return fmt.Sprintf("%s = %s", def.key, strings.Join(def.args, DefaultSep+" "))
 }
 
@@ -79,7 +124,6 @@ type MatcherDef struct {
 	key          string
 	index        int
 	expr         string
-	hasEval      bool
 	ruleNames    []string
 	exprTemplate string
 	pArgs        []string
@@ -89,7 +133,7 @@ type MatcherDef struct {
 func NewMatcherDef(key, expr string) *MatcherDef {
 	def := &MatcherDef{}
 
-	split := strings.Split(def.key, ".")
+	split := strings.Split(key, ".")
 	if len(split) <= 1 {
 		def.key = key
 		def.index = -1
@@ -99,8 +143,6 @@ func NewMatcherDef(key, expr string) *MatcherDef {
 	}
 
 	def.expr = argReg.ReplaceAllString(expr, "${1}_${3}")
-
-	def.hasEval = util.HasEval(expr)
 	def.pArgs = pArgReg.FindAllString(def.expr, -1)
 	def.rArgs = rArgReg.FindAllString(def.expr, -1)
 
@@ -123,9 +165,6 @@ func (def *MatcherDef) GetRequestArgs() []string {
 }
 
 func (def *MatcherDef) NewExpressionWithFunctions(functions map[string]govaluate.ExpressionFunction, rules map[string]interface{}) (*govaluate.EvaluableExpression, error) {
-	if def.hasEval {
-		return nil, errors.New("not implemented") //https://forum.golangbridge.org/t/named-string-formatting/3802/2
-	}
 	return govaluate.NewEvaluableExpressionWithFunctions(def.expr, functions)
 }
 

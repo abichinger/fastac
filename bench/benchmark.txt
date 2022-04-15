@@ -1,0 +1,33 @@
+goos: linux
+goarch: amd64
+pkg: example.com/fastac
+cpu: AMD Ryzen 5 3600 6-Core Processor              
+BenchmarkRBAC/size=Large/enforcer=casbin-12         	     270	   4527178 ns/op	 1131336 B/op	   30143 allocs/op
+BenchmarkRBAC/size=Large/enforcer=fastac-12         	     512	   2196744 ns/op	  325009 B/op	   20143 allocs/op
+BenchmarkRBAC/size=Large/enforcer=fastac-index-12   	    5242	    255702 ns/op	   37304 B/op	    2149 allocs/op
+BenchmarkRBAC/size=Medium/enforcer=casbin-12        	    2515	    768341 ns/op	  119725 B/op	    3143 allocs/op
+BenchmarkRBAC/size=Medium/enforcer=fastac-12        	    3339	    333684 ns/op	   37008 B/op	    2143 allocs/op
+BenchmarkRBAC/size=Medium/enforcer=fastac-index-12  	   22258	     60691 ns/op	    8504 B/op	     349 allocs/op
+BenchmarkRBAC/size=Small/enforcer=casbin-12         	   11103	    113462 ns/op	   18292 B/op	     443 allocs/op
+BenchmarkRBAC/size=Small/enforcer=fastac-12         	   18909	     63625 ns/op	    8208 B/op	     343 allocs/op
+BenchmarkRBAC/size=Small/enforcer=fastac-index-12   	   51621	     24760 ns/op	    5624 B/op	     169 allocs/op
+BenchmarkAddPolicy/size=Large/enforcer=casbin-12    	 1000000	      1373 ns/op	     531 B/op	      12 allocs/op
+BenchmarkAddPolicy/size=Large/enforcer=fastac-12    	  972328	      1303 ns/op	     672 B/op	      12 allocs/op
+BenchmarkAddPolicy/size=Large/enforcer=fastac-index-12         	 1000000	      1500 ns/op	     632 B/op	      13 allocs/op
+BenchmarkAddPolicy/size=Medium/enforcer=casbin-12              	  878776	      1375 ns/op	     537 B/op	      12 allocs/op
+BenchmarkAddPolicy/size=Medium/enforcer=fastac-12              	  978468	      1417 ns/op	     672 B/op	      12 allocs/op
+BenchmarkAddPolicy/size=Medium/enforcer=fastac-index-12        	  686132	      1560 ns/op	     595 B/op	      13 allocs/op
+BenchmarkAddPolicy/size=Empty/enforcer=casbin-12               	  816667	      1355 ns/op	     486 B/op	      12 allocs/op
+BenchmarkAddPolicy/size=Empty/enforcer=fastac-12               	  841752	      1269 ns/op	     604 B/op	      12 allocs/op
+BenchmarkAddPolicy/size=Empty/enforcer=fastac-index-12         	  740958	      1468 ns/op	     609 B/op	      13 allocs/op
+BenchmarkABAC/size=Large/enforcer=casbin-12                    	      43	  29114255 ns/op	 7912010 B/op	  133081 allocs/op
+BenchmarkABAC/size=Large/enforcer=fastac-12                    	     199	   6714969 ns/op	 1354936 B/op	   40129 allocs/op
+BenchmarkABAC/size=Large/enforcer=fastac-index-12              	    1542	    702147 ns/op	  143998 B/op	    4393 allocs/op
+BenchmarkABAC/size=Medium/enforcer=casbin-12                   	     442	   3086420 ns/op	  787127 B/op	   13316 allocs/op
+BenchmarkABAC/size=Medium/enforcer=fastac-12                   	    1795	    657332 ns/op	  137876 B/op	    4081 allocs/op
+BenchmarkABAC/size=Medium/enforcer=fastac-index-12             	    1990	    662065 ns/op	  138163 B/op	    4105 allocs/op
+BenchmarkABAC/size=Small/enforcer=casbin-12                    	    3958	    304470 ns/op	   79910 B/op	    1339 allocs/op
+BenchmarkABAC/size=Small/enforcer=fastac-12                    	   17079	     77072 ns/op	   17091 B/op	     475 allocs/op
+BenchmarkABAC/size=Small/enforcer=fastac-index-12              	   14983	     82307 ns/op	   17194 B/op	     493 allocs/op
+PASS
+ok  	example.com/fastac	54.730s

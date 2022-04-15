@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"example.com/lessbin/util"
+	"example.com/fastac/util"
 	"github.com/Knetic/govaluate"
 )
 
@@ -33,13 +33,13 @@ func (n *MatcherNode) GetOrCreate(key Rule, rule Rule) *MatcherNode {
 }
 
 type MatchParameters struct {
-	pDef  ArgsDef
+	pDef  PolicyDef
 	pvals Rule
-	rDef  ArgsDef
-	rvals []string
+	rDef  RequestDef
+	rvals []interface{}
 }
 
-func NewMatchParameters(pDef ArgsDef, pvals Rule, rDef ArgsDef, rvals []string) *MatchParameters {
+func NewMatchParameters(pDef PolicyDef, pvals Rule, rDef RequestDef, rvals []interface{}) *MatchParameters {
 	return &MatchParameters{
 		pDef:  pDef,
 		pvals: pvals,
@@ -108,12 +108,12 @@ func (m *Matcher) RemovePolicy(rule Rule) {
 
 }
 
-func (m *Matcher) RangeMatches(rDef ArgsDef, rvals []string, fm FunctionMap, fn func(rule Rule) bool) error {
+func (m *Matcher) RangeMatches(rDef RequestDef, rvals []interface{}, fm FunctionMap, fn func(rule Rule) bool) error {
 	level := 0
 	q := make([]*MatcherNode, 0)
 	q = append(q, m.root)
 
-	params := NewMatchParameters(*m.policy.ArgsDef, nil, rDef, rvals)
+	params := NewMatchParameters(*m.policy.PolicyDef, nil, rDef, rvals)
 	fm.AddFunction("eval", GenerateEvalFunction(fm, params))
 	functions := fm.GetFunctions()
 
@@ -147,7 +147,14 @@ func (m *Matcher) RangeMatches(rDef ArgsDef, rvals []string, fm FunctionMap, fn 
 		} else {
 
 			for _, node := range q {
-				for _, rule := range node.policies {
+
+				policies := node.policies
+				if len(policies) == 0 {
+					policies = make([]Rule, 0)
+					policies = append(policies, make(Rule, len(params.pDef.args)))
+				}
+
+				for _, rule := range policies {
 					params.pvals = rule
 					res, err := expr.Eval(params)
 					if err != nil {
@@ -187,6 +194,7 @@ func GenerateEvalFunction(fm FunctionMap, parameters *MatchParameters) govaluate
 		}
 
 		expression := args[0].(string)
+		expression = argReg.ReplaceAllString(expression, "${1}_${3}")
 		return eval(expression, functions, parameters)
 	}
 }

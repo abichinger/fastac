@@ -20,12 +20,12 @@ type Policy struct {
 	ruleMap map[string]int
 
 	*em.Emitter
-	*ArgsDef
+	*PolicyDef
 }
 
-func NewPolicyFromDef(pDef *ArgsDef) *Policy {
+func NewPolicyFromDef(pDef *PolicyDef) *Policy {
 	p := &Policy{}
-	p.ArgsDef = pDef
+	p.PolicyDef = pDef
 	p.Emitter = em.NewEmitter(false)
 	p.rules = make([]Rule, 0)
 	p.ruleMap = make(map[string]int)
@@ -33,14 +33,19 @@ func NewPolicyFromDef(pDef *ArgsDef) *Policy {
 }
 
 func NewPolicy(key, arguments string) *Policy {
-	pDef := NewArgsDef(key, arguments)
+	pDef := NewPolicyDef(key, arguments)
 	return NewPolicyFromDef(pDef)
 }
 
-func (p *Policy) AddPolicy(rule Rule) {
-	p.ruleMap[rule.Hash()] = len(p.rules)
+func (p *Policy) AddPolicy(rule Rule) bool {
+	hash := rule.Hash()
+	if _, ok := p.ruleMap[hash]; ok {
+		return false
+	}
+	p.ruleMap[hash] = len(p.rules)
 	p.rules = append(p.rules, rule)
 	p.Emitter.EmitEvent(PolicyAdded, rule)
+	return true
 }
 
 func (p *Policy) RemovePolicy(rule Rule) bool {
