@@ -11,14 +11,12 @@ import (
 type MatcherNode struct {
 	rule     Rule
 	children map[string]*MatcherNode
-	policies []Rule
 }
 
 func NewMatcherNode(rule Rule) *MatcherNode {
 	node := &MatcherNode{}
 	node.rule = rule
 	node.children = make(map[string]*MatcherNode)
-	node.policies = make([]Rule, 0)
 	return node
 }
 
@@ -71,14 +69,10 @@ func NewMatcher(policy *Policy, matchers []*MatcherDef) *Matcher {
 	m.matchers = matchers
 	m.root = NewMatcherNode([]string{""})
 
-	if len(matchers) == 1 {
-		m.root.policies = append(m.root.policies, policy.rules...)
-	} else {
-	policy.Range(func(i int, rule Rule) bool {
+	policy.Range(func(hash string, rule Rule) bool {
 		m.AddPolicy(rule)
 		return false
 	})
-	}
 
 	policy.AddListener(PolicyAdded, func(arguments ...interface{}) {
 		rule := arguments[0].(Rule)
@@ -98,24 +92,48 @@ func (m *Matcher) AddPolicy(rule Rule) {
 }
 
 func (m *Matcher) addPolicy(rule Rule, level int, node *MatcherNode) {
+	pArgs := m.matchers[level].GetPolicyArgs()
+	if len(pArgs) == 0 {
+		return
+	}
+
 	if level < len(m.matchers)-1 {
-		pArgs := m.matchers[level].GetPolicyArgs()
 		key, _ := m.policy.GetParameters(rule, pArgs)
 		nextNode := node.GetOrCreate(key, rule)
 		m.addPolicy(rule, level+1, nextNode)
 	} else {
-		node.policies = append(node.policies, rule)
+		hash := rule.Hash()
+		node.children[hash] = NewMatcherNode(rule)
 	}
 }
 
 func (m *Matcher) RemovePolicy(rule Rule) {
+	m.removePolicy(rule, 0, m.root)
+}
 
+func (m *Matcher) removePolicy(rule Rule, level int, node *MatcherNode) {
+	pArgs := m.matchers[level].GetPolicyArgs()
+	if len(pArgs) == 0 {
+		return
+	}
+
+	if level < len(m.matchers)-1 {
+		key, _ := m.policy.GetParameters(rule, pArgs)
+		strKey := key.Hash()
+		if nextNode, ok := node.children[strKey]; ok {
+			m.removePolicy(rule, level+1, nextNode)
+		}
+	} else {
+		hash := rule.Hash()
+		delete(node.children, hash)
+	}
 }
 
 func (m *Matcher) RangeMatches(rDef RequestDef, rvals []interface{}, fm FunctionMap, fn func(rule Rule) bool) error {
 	level := 0
 	q := make([]*MatcherNode, 0)
 	q = append(q, m.root)
+	empty := true
 
 	params := NewMatchParameters(*m.policy.PolicyDef, nil, rDef, rvals)
 	fm.AddFunction("eval", generateEvalFunction(fm, params))
@@ -129,7 +147,7 @@ func (m *Matcher) RangeMatches(rDef RequestDef, rvals []interface{}, fm Function
 			return err
 		}
 
-		if level < len(m.matchers)-1 {
+		if level < len(m.matchers) {
 
 			for levelSize > 0 {
 				node := q[0]
@@ -137,43 +155,36 @@ func (m *Matcher) RangeMatches(rDef RequestDef, rvals []interface{}, fm Function
 				levelSize--
 
 				for _, child := range node.children {
+					if level == len(m.matchers)-1 {
+						empty = false
+					}
 					params.pvals = child.rule
 					res, err := expr.Eval(params)
 					if err != nil {
 						return err
 					}
 					if res.(bool) {
-						q = append(q, child)
-					}
-				}
-			}
-
-		} else {
-
-			for _, node := range q {
-
-				policies := node.policies
-				if len(policies) == 0 {
-					policies = make([]Rule, 0)
-					policies = append(policies, make(Rule, len(params.pDef.args)))
-				}
-
-				for _, rule := range policies {
-					params.pvals = rule
-					res, err := expr.Eval(params)
-					if err != nil {
-						return err
-					}
-					if res.(bool) {
-						if fn(rule) {
-							return nil
+						if level < len(m.matchers)-1 {
+							q = append(q, child)
+						} else {
+							if fn(child.rule) {
+								return nil
+							}
 						}
 					}
 				}
 			}
+		}
 
-			break
-
+		if empty && level == len(m.matchers)-1 {
+			params.pvals = make(Rule, len(m.policy.args))
+			res, err := expr.Eval(params)
+			if err != nil {
+				return err
+			}
+			if res.(bool) {
+				fn(params.pvals)
+			}
 		}
 
 		level++

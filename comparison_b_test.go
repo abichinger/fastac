@@ -8,20 +8,42 @@ import (
 )
 
 type AddRulesAPI interface {
-	AddPolicy(params ...interface{}) (bool, error)
-	AddGroupingPolicy(params ...interface{}) (bool, error)
+	AddRule(params ...string) (bool, error)
+}
+
+type CasbinEnforcer struct {
+	*casbin.Enforcer
+}
+
+func NewCasbinEnforcer(params ...interface{}) (*CasbinEnforcer, error) {
+	e := CasbinEnforcer{}
+	enforcer, err := casbin.NewEnforcer(params...)
+	e.Enforcer = enforcer
+	return &e, err
+}
+
+func (e *CasbinEnforcer) AddRule(params ...string) (bool, error) {
+	key := params[0]
+	sec := key[0]
+	switch sec {
+	case 'p':
+		return e.AddNamedPolicy(key, params[1:])
+	case 'g':
+		return e.AddNamedGroupingPolicy(key, params[1:])
+	}
+	return false, fmt.Errorf("unknown sec: %d", sec)
 }
 
 func genRBACPolicy(e AddRulesAPI, n int) error {
 	for i := 0; i < n; i++ {
-		_, err := e.AddGroupingPolicy(fmt.Sprintf("user%d", i), fmt.Sprintf("group%d", i/10))
+		_, err := e.AddRule("g", fmt.Sprintf("user%d", i), fmt.Sprintf("group%d", i/10))
 		if err != nil {
 			return err
 		}
 	}
 
 	for i := 0; i < n/10; i++ {
-		_, err := e.AddPolicy(fmt.Sprintf("group%d", i), fmt.Sprintf("data%d", i/10), "read")
+		_, err := e.AddRule("p", fmt.Sprintf("group%d", i), fmt.Sprintf("data%d", i/10), "read")
 		if err != nil {
 			return err
 		}
@@ -31,7 +53,7 @@ func genRBACPolicy(e AddRulesAPI, n int) error {
 
 func genABACPolicy(e AddRulesAPI, n int) error {
 	for i := 0; i < n; i++ {
-		_, err := e.AddPolicy(fmt.Sprintf("r.sub.Age > %d", i%100), fmt.Sprintf("data%d", i), "read")
+		_, err := e.AddRule("p", fmt.Sprintf("r.sub.Age > %d", i%100), fmt.Sprintf("data%d", i), "read")
 		if err != nil {
 			return err
 		}
@@ -68,7 +90,7 @@ func BenchmarkRBAC(b *testing.B) {
 	for _, bm := range benchmarks {
 		b.Run("size="+bm.name, func(b *testing.B) {
 			b.Run("enforcer=casbin", func(b *testing.B) {
-				e, _ := casbin.NewEnforcer("examples/rbac_model.conf", false)
+				e, _ := NewCasbinEnforcer("examples/rbac_model.conf", false)
 
 				if err := genRBACPolicy(e, bm.nUsers); err != nil {
 					b.Fatal()
@@ -120,7 +142,7 @@ func BenchmarkAddPolicy(b *testing.B) {
 	for _, bm := range benchmarks {
 		b.Run("size="+bm.name, func(b *testing.B) {
 			b.Run("enforcer=casbin", func(b *testing.B) {
-				e, _ := casbin.NewEnforcer("examples/rbac_model.conf", false)
+				e, _ := NewCasbinEnforcer("examples/rbac_model.conf", false)
 
 				if err := genRBACPolicy(e, bm.size); err != nil {
 					b.Fatal()
@@ -140,7 +162,7 @@ func BenchmarkAddPolicy(b *testing.B) {
 
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					_, _ = e.AddPolicy(fmt.Sprintf("group%d", i), fmt.Sprintf("data%d", i/10), "write")
+					_, _ = e.AddRule("p", fmt.Sprintf("group%d", i), fmt.Sprintf("data%d", i/10), "write")
 				}
 			})
 			b.Run("enforcer=fastac-index", func(b *testing.B) {
@@ -152,7 +174,7 @@ func BenchmarkAddPolicy(b *testing.B) {
 
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					_, _ = e.AddPolicy(fmt.Sprintf("group%d", i), fmt.Sprintf("data%d", i/10), "write")
+					_, _ = e.AddRule("p", fmt.Sprintf("group%d", i), fmt.Sprintf("data%d", i/10), "write")
 				}
 			})
 		})
@@ -179,7 +201,7 @@ func BenchmarkABAC(b *testing.B) {
 	for _, bm := range benchmarks {
 		b.Run("size="+bm.name, func(b *testing.B) {
 			b.Run("enforcer=casbin", func(b *testing.B) {
-				e, _ := casbin.NewEnforcer("examples/abac_rule_model.conf", false)
+				e, _ := NewCasbinEnforcer("examples/abac_rule_model.conf", false)
 
 				if err := genABACPolicy(e, bm.n); err != nil {
 					b.Fatal()

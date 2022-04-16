@@ -18,16 +18,18 @@ import (
 	"github.com/Knetic/govaluate"
 )
 
+type MatchingFunc func(arg1 string, arg2 string) bool
+
 // RoleManager provides interface to define the operations for managing roles.
-type RoleManager interface {
+type IRoleManager interface {
 	// Clear clears all stored data and resets the role manager to the initial state.
 	Clear() error
 	// AddLink adds the inheritance link between two roles. role: name1 and role: name2.
 	// domain is a prefix to the roles (can be used for other purposes).
-	AddLink(name1 string, name2 string, domain ...string) error
+	AddLink(name1 string, name2 string, domain ...string) (bool, error)
 	// DeleteLink deletes the inheritance link between two roles. role: name1 and role: name2.
 	// domain is a prefix to the roles (can be used for other purposes).
-	DeleteLink(name1 string, name2 string, domain ...string) error
+	DeleteLink(name1 string, name2 string, domain ...string) (bool, error)
 	// HasLink determines whether a link exists between two roles. role: name1 inherits role: name2.
 	// domain is a prefix to the roles (can be used for other purposes).
 	HasLink(name1 string, name2 string, domain ...string) (bool, error)
@@ -39,36 +41,28 @@ type RoleManager interface {
 	GetUsers(name string, domain ...string) ([]string, error)
 	// GetDomains gets domains that a user has
 	GetDomains(name string) ([]string, error)
+
+	SetMatcher(fn MatchingFunc)
+	SetDomainMatcher(fn MatchingFunc)
 }
 
 // GenerateGFunction is the factory method of the g(_, _) function.
-func GenerateGFunction(rm RoleManager) govaluate.ExpressionFunction {
-	memorized := map[string]bool{}
+func GenerateGFunction(rm IRoleManager) govaluate.ExpressionFunction {
 
 	return func(args ...interface{}) (interface{}, error) {
 		name1 := args[0].(string)
 		name2 := args[1].(string)
 
-		key := ""
-		for index := 0; index < len(args); index++ {
-			key += ";" + args[index].(string)
-		}
-
-		v, found := memorized[key]
-		if found {
-			return v, nil
-		}
-
 		if rm == nil {
-			v = name1 == name2
+			return name1 == name2, nil
 		} else if len(args) == 2 {
-			v, _ = rm.HasLink(name1, name2)
+			return rm.HasLink(name1, name2)
 		} else {
-			domain := args[2].(string)
-			v, _ = rm.HasLink(name1, name2, domain)
+			domains := []string{}
+			for _, domain := range args[2:] {
+				domains = append(domains, domain.(string))
+			}
+			return rm.HasLink(name1, name2, domains...)
 		}
-
-		memorized[key] = v
-		return v, nil
 	}
 }

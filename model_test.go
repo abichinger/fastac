@@ -16,7 +16,7 @@ func TestModel(t *testing.T) {
 	adapter := adapter.NewFileAdapter("examples/basic_policy.csv")
 	adapter.LoadPolicy(m)
 
-	err = m.RangeMatches("m", "r", []interface{}{"alice", "data1", "read"}, func(rule model.Rule) bool {
+	err = m.RangeMatchesWithKeys("m", "r", []interface{}{"alice", "data1", "read"}, func(rule model.Rule) bool {
 		t.Logf("match: %s", rule.Hash())
 		return false
 	})

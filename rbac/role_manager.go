@@ -25,8 +25,6 @@ import (
 
 const defaultDomain string = ""
 
-type MatchingFunc func(arg1 string, arg2 string) bool
-
 // Role represents the data structure for a role in RBAC.
 type Role struct {
 	name      string
@@ -46,14 +44,27 @@ func newRole(name string) *Role {
 	return &r
 }
 
-func (r *Role) addRole(role *Role) {
-	r.roles.Store(role.name, role)
-	role.addUser(r)
+func (r *Role) hasRole(role *Role) (ok bool) {
+	_, ok = r.roles.Load(role.name)
+	return
 }
 
-func (r *Role) removeRole(role *Role) {
+func (r *Role) addRole(role *Role) bool {
+	if r.hasRole(role) {
+		return false
+	}
+	r.roles.Store(role.name, role)
+	role.addUser(r)
+	return true
+}
+
+func (r *Role) removeRole(role *Role) bool {
+	if !r.hasRole(role) {
+		return false
+	}
 	r.roles.Delete(role.name)
 	role.removeUser(r)
+	return true
 }
 
 //should only be called inside addRole
@@ -181,7 +192,7 @@ func NewRoleManagerImpl(maxHierarchyLevel int) *RoleManagerImpl {
 	return &rm
 }
 
-// use this constructor to avoid rebuild of AddMatchingFunc
+// use this constructor to avoid rebuild of SetMatcher
 func newRoleManagerWithMatchingFunc(maxHierarchyLevel int, fn MatchingFunc) *RoleManagerImpl {
 	rm := NewRoleManagerImpl(maxHierarchyLevel)
 	rm.matchingFunc = fn
@@ -193,7 +204,7 @@ func (rm *RoleManagerImpl) rebuild() {
 	roles := rm.allRoles
 	_ = rm.Clear()
 	rangeLinks(roles, func(name1, name2 string, domain ...string) bool {
-		_ = rm.AddLink(name1, name2, domain...)
+		_, _ = rm.AddLink(name1, name2, domain...)
 		return true
 	})
 }
@@ -267,14 +278,14 @@ func (rm *RoleManagerImpl) removeRole(name string) {
 	}
 }
 
-// AddMatchingFunc support use pattern in g
-func (rm *RoleManagerImpl) AddMatchingFunc(name string, fn MatchingFunc) {
+// SetMatcher support use pattern in g
+func (rm *RoleManagerImpl) SetMatcher(fn MatchingFunc) {
 	rm.matchingFunc = fn
 	rm.rebuild()
 }
 
-// AddDomainMatchingFunc support use domain pattern in g
-func (rm *RoleManagerImpl) AddDomainMatchingFunc(name string, fn MatchingFunc) {
+// SetDomainMatcher support use domain pattern in g
+func (rm *RoleManagerImpl) SetDomainMatcher(fn MatchingFunc) {
 	rm.domainMatchingFunc = fn
 }
 
@@ -287,20 +298,18 @@ func (rm *RoleManagerImpl) Clear() error {
 
 // AddLink adds the inheritance link between role: name1 and role: name2.
 // aka role: name1 inherits role: name2.
-func (rm *RoleManagerImpl) AddLink(name1 string, name2 string, domains ...string) error {
+func (rm *RoleManagerImpl) AddLink(name1 string, name2 string, domains ...string) (bool, error) {
 	user, _ := rm.getRole(name1)
 	role, _ := rm.getRole(name2)
-	user.addRole(role)
-	return nil
+	return user.addRole(role), nil
 }
 
 // DeleteLink deletes the inheritance link between role: name1 and role: name2.
 // aka role: name1 does not inherit role: name2 any more.
-func (rm *RoleManagerImpl) DeleteLink(name1 string, name2 string, domains ...string) error {
+func (rm *RoleManagerImpl) DeleteLink(name1 string, name2 string, domains ...string) (bool, error) {
 	user, _ := rm.getRole(name1)
 	role, _ := rm.getRole(name2)
-	user.removeRole(role)
-	return nil
+	return user.removeRole(role), nil
 }
 
 // HasLink determines whether role: name1 inherits role: name2.
@@ -388,7 +397,7 @@ func (rm *RoleManagerImpl) GetAllDomains() ([]string, error) {
 
 func (rm *RoleManagerImpl) copyFrom(other *RoleManagerImpl) {
 	other.Range(func(name1, name2 string, domain ...string) bool {
-		_ = rm.AddLink(name1, name2, domain...)
+		_, _ = rm.AddLink(name1, name2, domain...)
 		return true
 	})
 }
@@ -430,20 +439,19 @@ func NewDomainManager(maxHierarchyLevel int) *DomainManager {
 	return dm
 }
 
-// AddMatchingFunc support use pattern in g
-func (dm *DomainManager) AddMatchingFunc(name string, fn MatchingFunc) {
+func (dm *DomainManager) SetMatcher(fn MatchingFunc) {
 	dm.matchingFunc = fn
 	dm.rmMap.Range(func(key, value interface{}) bool {
-		value.(*RoleManagerImpl).AddMatchingFunc(name, fn)
+		value.(*RoleManagerImpl).SetMatcher(fn)
 		return true
 	})
 }
 
-// AddDomainMatchingFunc support use domain pattern in g
-func (dm *DomainManager) AddDomainMatchingFunc(name string, fn MatchingFunc) {
+// SetDomainMatcher support use domain pattern in g
+func (dm *DomainManager) SetDomainMatcher(fn MatchingFunc) {
 	dm.domainMatchingFunc = fn
 	dm.rmMap.Range(func(key, value interface{}) bool {
-		value.(*RoleManagerImpl).AddDomainMatchingFunc(name, fn)
+		value.(*RoleManagerImpl).SetDomainMatcher(fn)
 		return true
 	})
 	dm.rebuild()
@@ -458,7 +466,7 @@ func (dm *DomainManager) rebuild() {
 		rm := value.(*RoleManagerImpl)
 
 		rm.Range(func(name1, name2 string, _ ...string) bool {
-			_ = dm.AddLink(name1, name2, domain)
+			_, _ = dm.AddLink(name1, name2, domain)
 			return true
 		})
 		return true
@@ -539,34 +547,34 @@ func (dm *DomainManager) getRoleManager(domain string, store bool) *RoleManagerI
 
 // AddLink adds the inheritance link between role: name1 and role: name2.
 // aka role: name1 inherits role: name2.
-func (dm *DomainManager) AddLink(name1 string, name2 string, domains ...string) error {
+func (dm *DomainManager) AddLink(name1 string, name2 string, domains ...string) (bool, error) {
 	domain, err := dm.getDomain(domains...)
 	if err != nil {
-		return err
+		return false, err
 	}
 	roleManager := dm.getRoleManager(domain, true) //create role manager if it does not exist
-	_ = roleManager.AddLink(name1, name2, domains...)
+	added, _ := roleManager.AddLink(name1, name2, domains...)
 
 	dm.rangeAffectedRoleManagers(domain, func(rm *RoleManagerImpl) {
-		_ = rm.AddLink(name1, name2, domains...)
+		_, _ = rm.AddLink(name1, name2, domains...)
 	})
-	return nil
+	return added, nil
 }
 
 // DeleteLink deletes the inheritance link between role: name1 and role: name2.
 // aka role: name1 does not inherit role: name2 any more.
-func (dm *DomainManager) DeleteLink(name1 string, name2 string, domains ...string) error {
+func (dm *DomainManager) DeleteLink(name1 string, name2 string, domains ...string) (bool, error) {
 	domain, err := dm.getDomain(domains...)
 	if err != nil {
-		return err
+		return false, err
 	}
 	roleManager := dm.getRoleManager(domain, true) //create role manager if it does not exist
-	_ = roleManager.DeleteLink(name1, name2, domains...)
+	removed, _ := roleManager.DeleteLink(name1, name2, domains...)
 
 	dm.rangeAffectedRoleManagers(domain, func(rm *RoleManagerImpl) {
-		_ = rm.DeleteLink(name1, name2, domains...)
+		_, _ = rm.DeleteLink(name1, name2, domains...)
 	})
-	return nil
+	return removed, nil
 }
 
 // HasLink determines whether role: name1 inherits role: name2.

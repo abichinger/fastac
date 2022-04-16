@@ -43,8 +43,14 @@ func (def *PolicyDef) GetEft(values []string) Effect {
 	eftArg := def.key + "_eft"
 	if def.Has(eftArg) {
 		eft, _ := def.GetParameter(values, eftArg)
-		if eft != "allow" {
+		switch eft {
+		case "":
+		case "allow":
+			return Allow
+		case "deny":
 			return Deny
+		default:
+			return Indeterminate
 		}
 	}
 	return Allow

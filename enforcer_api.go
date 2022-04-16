@@ -6,10 +6,10 @@ import (
 )
 
 type IEnforcer interface {
-	GetModel() model.Model
-	SetModel(m model.Model)
-	GetAdapter() adapter.Adapter
-	SetAdapter(adapter.Adapter)
+	GetModel() *model.Model
+	SetModel(m *model.Model)
+	GetAdapter() *adapter.Adapter
+	SetAdapter(*adapter.Adapter)
 
 	Enforce(rvals ...interface{}) (bool, error)
 	EnforceWithMatcher(matcher string, rvals ...interface{}) (bool, error)
@@ -19,6 +19,6 @@ type IEnforcer interface {
 	FilterWithMatcher(matcher string, rvals ...interface{}) (bool, error)
 	FilterWithKeys(mKey string, rKey string, rvals ...interface{}) (bool, error)
 
-	AddRule(params ...string) error
-	RemoveRule(params ...string) error
+	AddRule(params ...string) (bool, error)
+	RemoveRule(params ...string) (bool, error)
 }
