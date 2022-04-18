@@ -15,167 +15,14 @@
 package rbac
 
 import (
-	"errors"
-	"fmt"
 	"strings"
 	"sync"
 
 	"example.com/fastac/util"
 )
 
-const defaultDomain string = ""
-
-// Role represents the data structure for a role in RBAC.
-type Role struct {
-	name      string
-	roles     *sync.Map
-	users     *sync.Map
-	matched   *sync.Map
-	matchedBy *sync.Map
-}
-
-func newRole(name string) *Role {
-	r := Role{}
-	r.name = name
-	r.roles = &sync.Map{}
-	r.users = &sync.Map{}
-	r.matched = &sync.Map{}
-	r.matchedBy = &sync.Map{}
-	return &r
-}
-
-func (r *Role) hasRole(role *Role) (ok bool) {
-	_, ok = r.roles.Load(role.name)
-	return
-}
-
-func (r *Role) addRole(role *Role) bool {
-	if r.hasRole(role) {
-		return false
-	}
-	r.roles.Store(role.name, role)
-	role.addUser(r)
-	return true
-}
-
-func (r *Role) removeRole(role *Role) bool {
-	if !r.hasRole(role) {
-		return false
-	}
-	r.roles.Delete(role.name)
-	role.removeUser(r)
-	return true
-}
-
-//should only be called inside addRole
-func (r *Role) addUser(user *Role) {
-	r.users.Store(user.name, user)
-}
-
-//should only be called inside removeRole
-func (r *Role) removeUser(user *Role) {
-	r.users.Delete(user.name)
-}
-
-func (r *Role) addMatch(role *Role) {
-	r.matched.Store(role.name, role)
-	role.matchedBy.Store(r.name, r)
-}
-
-func (r *Role) removeMatch(role *Role) {
-	r.matched.Delete(role.name)
-	role.matchedBy.Delete(r.name)
-}
-
-func (r *Role) removeMatches() {
-	r.matched.Range(func(key, value interface{}) bool {
-		r.removeMatch(value.(*Role))
-		return true
-	})
-	r.matchedBy.Range(func(key, value interface{}) bool {
-		value.(*Role).removeMatch(r)
-		return true
-	})
-}
-
-func (r *Role) rangeRoles(fn func(key, value interface{}) bool) {
-	r.roles.Range(fn)
-	r.roles.Range(func(key, value interface{}) bool {
-		role := value.(*Role)
-		role.matched.Range(fn)
-		return true
-	})
-	r.matchedBy.Range(func(key, value interface{}) bool {
-		role := value.(*Role)
-		role.roles.Range(fn)
-		return true
-	})
-}
-
-func (r *Role) rangeUsers(fn func(key, value interface{}) bool) {
-	r.users.Range(fn)
-	r.users.Range(func(key, value interface{}) bool {
-		role := value.(*Role)
-		role.matched.Range(fn)
-		return true
-	})
-	r.matchedBy.Range(func(key, value interface{}) bool {
-		role := value.(*Role)
-		role.users.Range(fn)
-		return true
-	})
-}
-
-func (r *Role) toString() string {
-	roles := r.getRoles()
-
-	if len(roles) == 0 {
-		return ""
-	}
-
-	var sb strings.Builder
-	sb.WriteString(r.name)
-	sb.WriteString(" < ")
-	if len(roles) != 1 {
-		sb.WriteString("(")
-	}
-
-	for i, role := range roles {
-		if i == 0 {
-			sb.WriteString(role)
-		} else {
-			sb.WriteString(", ")
-			sb.WriteString(role)
-		}
-	}
-
-	if len(roles) != 1 {
-		sb.WriteString(")")
-	}
-
-	return sb.String()
-}
-
-func (r *Role) getRoles() []string {
-	names := []string{}
-	r.rangeRoles(func(key, value interface{}) bool {
-		names = append(names, key.(string))
-		return true
-	})
-	return names
-}
-
-func (r *Role) getUsers() []string {
-	names := []string{}
-	r.rangeUsers(func(key, value interface{}) bool {
-		names = append(names, key.(string))
-		return true
-	})
-	return names
-}
-
-// RoleManagerImpl provides a default implementation for the RoleManager interface
-type RoleManagerImpl struct {
+// RoleManager provides a default implementation for the RoleManager interface
+type RoleManager struct {
 	allRoles           *sync.Map
 	maxHierarchyLevel  int
 	matchingFunc       MatchingFunc
@@ -183,24 +30,24 @@ type RoleManagerImpl struct {
 	matchingFuncCache  *util.SyncLRUCache
 }
 
-// NewRoleManagerImpl is the constructor for creating an instance of the
+// NewRoleManager is the constructor for creating an instance of the
 // default RoleManager implementation.
-func NewRoleManagerImpl(maxHierarchyLevel int) *RoleManagerImpl {
-	rm := RoleManagerImpl{}
+func NewRoleManager(maxHierarchyLevel int) *RoleManager {
+	rm := RoleManager{}
 	_ = rm.Clear() //init allRoles and matchingFuncCache
 	rm.maxHierarchyLevel = maxHierarchyLevel
 	return &rm
 }
 
 // use this constructor to avoid rebuild of SetMatcher
-func newRoleManagerWithMatchingFunc(maxHierarchyLevel int, fn MatchingFunc) *RoleManagerImpl {
-	rm := NewRoleManagerImpl(maxHierarchyLevel)
+func newRoleManagerWithMatchingFunc(maxHierarchyLevel int, fn MatchingFunc) *RoleManager {
+	rm := NewRoleManager(maxHierarchyLevel)
 	rm.matchingFunc = fn
 	return rm
 }
 
 // rebuilds role cache
-func (rm *RoleManagerImpl) rebuild() {
+func (rm *RoleManager) rebuild() {
 	roles := rm.allRoles
 	_ = rm.Clear()
 	rangeLinks(roles, func(name1, name2 string, domain ...string) bool {
@@ -209,7 +56,7 @@ func (rm *RoleManagerImpl) rebuild() {
 	})
 }
 
-func (rm *RoleManagerImpl) match(str string, pattern string) bool {
+func (rm *RoleManager) match(str string, pattern string) bool {
 	cacheKey := strings.Join([]string{str, pattern}, "$$")
 	if v, has := rm.matchingFuncCache.Get(cacheKey); has {
 		return v.(bool)
@@ -220,7 +67,7 @@ func (rm *RoleManagerImpl) match(str string, pattern string) bool {
 	}
 }
 
-func (rm *RoleManagerImpl) rangeMatchingRoles(name string, isPattern bool, fn func(role *Role) bool) {
+func (rm *RoleManager) rangeMatchingRoles(name string, isPattern bool, fn func(role *Role) bool) {
 	rm.allRoles.Range(func(key, value interface{}) bool {
 		name2 := key.(string)
 		if isPattern && name != name2 && rm.match(name2, name) {
@@ -232,7 +79,7 @@ func (rm *RoleManagerImpl) rangeMatchingRoles(name string, isPattern bool, fn fu
 	})
 }
 
-func (rm *RoleManagerImpl) load(name interface{}) (value *Role, ok bool) {
+func (rm *RoleManager) load(name interface{}) (value *Role, ok bool) {
 	if r, ok := rm.allRoles.Load(name); ok {
 		return r.(*Role), true
 	}
@@ -240,7 +87,7 @@ func (rm *RoleManagerImpl) load(name interface{}) (value *Role, ok bool) {
 }
 
 // loads or creates a role
-func (rm *RoleManagerImpl) getRole(name string) (r *Role, created bool) {
+func (rm *RoleManager) getRole(name string) (r *Role, created bool) {
 	var role *Role
 	var ok bool
 
@@ -272,25 +119,25 @@ func loadAndDelete(m *sync.Map, name string) (value interface{}, loaded bool) {
 	return value, loaded
 }
 
-func (rm *RoleManagerImpl) removeRole(name string) {
+func (rm *RoleManager) removeRole(name string) {
 	if role, ok := loadAndDelete(rm.allRoles, name); ok {
 		role.(*Role).removeMatches()
 	}
 }
 
 // SetMatcher support use pattern in g
-func (rm *RoleManagerImpl) SetMatcher(fn MatchingFunc) {
+func (rm *RoleManager) SetMatcher(fn MatchingFunc) {
 	rm.matchingFunc = fn
 	rm.rebuild()
 }
 
 // SetDomainMatcher support use domain pattern in g
-func (rm *RoleManagerImpl) SetDomainMatcher(fn MatchingFunc) {
+func (rm *RoleManager) SetDomainMatcher(fn MatchingFunc) {
 	rm.domainMatchingFunc = fn
 }
 
 // Clear clears all stored data and resets the role manager to the initial state.
-func (rm *RoleManagerImpl) Clear() error {
+func (rm *RoleManager) Clear() error {
 	rm.matchingFuncCache = util.NewSyncLRUCache(100)
 	rm.allRoles = &sync.Map{}
 	return nil
@@ -298,7 +145,7 @@ func (rm *RoleManagerImpl) Clear() error {
 
 // AddLink adds the inheritance link between role: name1 and role: name2.
 // aka role: name1 inherits role: name2.
-func (rm *RoleManagerImpl) AddLink(name1 string, name2 string, domains ...string) (bool, error) {
+func (rm *RoleManager) AddLink(name1 string, name2 string, domains ...string) (bool, error) {
 	user, _ := rm.getRole(name1)
 	role, _ := rm.getRole(name2)
 	return user.addRole(role), nil
@@ -306,14 +153,14 @@ func (rm *RoleManagerImpl) AddLink(name1 string, name2 string, domains ...string
 
 // DeleteLink deletes the inheritance link between role: name1 and role: name2.
 // aka role: name1 does not inherit role: name2 any more.
-func (rm *RoleManagerImpl) DeleteLink(name1 string, name2 string, domains ...string) (bool, error) {
+func (rm *RoleManager) DeleteLink(name1 string, name2 string, domains ...string) (bool, error) {
 	user, _ := rm.getRole(name1)
 	role, _ := rm.getRole(name2)
 	return user.removeRole(role), nil
 }
 
 // HasLink determines whether role: name1 inherits role: name2.
-func (rm *RoleManagerImpl) HasLink(name1 string, name2 string, domains ...string) (bool, error) {
+func (rm *RoleManager) HasLink(name1 string, name2 string, domains ...string) (bool, error) {
 	if name1 == name2 {
 		return true, nil
 	}
@@ -331,7 +178,7 @@ func (rm *RoleManagerImpl) HasLink(name1 string, name2 string, domains ...string
 	return rm.hasLinkHelper(role.name, map[string]*Role{user.name: user}, rm.maxHierarchyLevel), nil
 }
 
-func (rm *RoleManagerImpl) hasLinkHelper(name string, roles map[string]*Role, level int) bool {
+func (rm *RoleManager) hasLinkHelper(name string, roles map[string]*Role, level int) bool {
 	if level <= 0 || len(roles) == 0 {
 		return false
 	}
@@ -351,7 +198,7 @@ func (rm *RoleManagerImpl) hasLinkHelper(name string, roles map[string]*Role, le
 }
 
 // GetRoles gets the roles that a user inherits.
-func (rm *RoleManagerImpl) GetRoles(name string, domains ...string) ([]string, error) {
+func (rm *RoleManager) GetRoles(name string, domains ...string) ([]string, error) {
 	user, created := rm.getRole(name)
 	if created {
 		defer rm.removeRole(user.name)
@@ -361,7 +208,7 @@ func (rm *RoleManagerImpl) GetRoles(name string, domains ...string) ([]string, e
 
 // GetUsers gets the users of a role.
 // domain is an unreferenced parameter here, may be used in other implementations.
-func (rm *RoleManagerImpl) GetUsers(name string, domain ...string) ([]string, error) {
+func (rm *RoleManager) GetUsers(name string, domain ...string) ([]string, error) {
 	role, created := rm.getRole(name)
 	if created {
 		defer rm.removeRole(role.name)
@@ -369,33 +216,17 @@ func (rm *RoleManagerImpl) GetUsers(name string, domain ...string) ([]string, er
 	return role.getUsers(), nil
 }
 
-func (rm *RoleManagerImpl) toString() []string {
-	var roles []string
-
-	rm.allRoles.Range(func(key, value interface{}) bool {
-		role := value.(*Role)
-		if text := role.toString(); text != "" {
-			roles = append(roles, text)
-		}
-		return true
-	})
-
-	return roles
-}
-
 // GetDomains gets domains that a user has
-func (rm *RoleManagerImpl) GetDomains(name string) ([]string, error) {
-	domains := []string{defaultDomain}
-	return domains, nil
+func (rm *RoleManager) GetDomains(name string) ([]string, error) {
+	return []string{}, nil
 }
 
 // GetAllDomains gets all domains
-func (rm *RoleManagerImpl) GetAllDomains() ([]string, error) {
-	domains := []string{defaultDomain}
-	return domains, nil
+func (rm *RoleManager) GetAllDomains() ([]string, error) {
+	return []string{}, nil
 }
 
-func (rm *RoleManagerImpl) copyFrom(other *RoleManagerImpl) {
+func (rm *RoleManager) CopyFrom(other IRoleManager) {
 	other.Range(func(name1, name2 string, domain ...string) bool {
 		_, _ = rm.AddLink(name1, name2, domain...)
 		return true
@@ -407,259 +238,12 @@ func rangeLinks(users *sync.Map, fn func(name1, name2 string, domain ...string) 
 		user := value.(*Role)
 		user.roles.Range(func(key, _ interface{}) bool {
 			roleName := key.(string)
-			return fn(user.name, roleName, defaultDomain)
+			return fn(user.name, roleName)
 		})
 		return true
 	})
 }
 
-func (rm *RoleManagerImpl) Range(fn func(name1, name2 string, domain ...string) bool) {
+func (rm *RoleManager) Range(fn func(name1, name2 string, domain ...string) bool) {
 	rangeLinks(rm.allRoles, fn)
 }
-
-// Deprecated: BuildRelationship is no longer required
-func (rm *RoleManagerImpl) BuildRelationship(name1 string, name2 string, domain ...string) error {
-	return nil
-}
-
-type DomainManager struct {
-	rmMap              *sync.Map
-	maxHierarchyLevel  int
-	matchingFunc       MatchingFunc
-	domainMatchingFunc MatchingFunc
-	matchingFuncCache  *util.SyncLRUCache
-}
-
-// NewDomainManager is the constructor for creating an instance of the
-// default DomainManager implementation.
-func NewDomainManager(maxHierarchyLevel int) *DomainManager {
-	dm := &DomainManager{}
-	_ = dm.Clear() // init rmMap and rmCache
-	dm.maxHierarchyLevel = maxHierarchyLevel
-	return dm
-}
-
-func (dm *DomainManager) SetMatcher(fn MatchingFunc) {
-	dm.matchingFunc = fn
-	dm.rmMap.Range(func(key, value interface{}) bool {
-		value.(*RoleManagerImpl).SetMatcher(fn)
-		return true
-	})
-}
-
-// SetDomainMatcher support use domain pattern in g
-func (dm *DomainManager) SetDomainMatcher(fn MatchingFunc) {
-	dm.domainMatchingFunc = fn
-	dm.rmMap.Range(func(key, value interface{}) bool {
-		value.(*RoleManagerImpl).SetDomainMatcher(fn)
-		return true
-	})
-	dm.rebuild()
-}
-
-// clears the map of RoleManagers
-func (dm *DomainManager) rebuild() {
-	rmMap := dm.rmMap
-	_ = dm.Clear()
-	rmMap.Range(func(key, value interface{}) bool {
-		domain := key.(string)
-		rm := value.(*RoleManagerImpl)
-
-		rm.Range(func(name1, name2 string, _ ...string) bool {
-			_, _ = dm.AddLink(name1, name2, domain)
-			return true
-		})
-		return true
-	})
-}
-
-//Clear clears all stored data and resets the role manager to the initial state.
-func (dm *DomainManager) Clear() error {
-	dm.rmMap = &sync.Map{}
-	dm.matchingFuncCache = util.NewSyncLRUCache(100)
-	return nil
-}
-
-func (dm *DomainManager) getDomain(domains ...string) (domain string, err error) {
-	switch len(domains) {
-	case 0:
-		return defaultDomain, nil
-	case 1:
-		return domains[0], nil
-	default:
-		return "", errors.New("error: domain should be 1 parameter")
-	}
-}
-
-func (dm *DomainManager) match(str string, pattern string) bool {
-	cacheKey := strings.Join([]string{str, pattern}, "$$")
-	if v, has := dm.matchingFuncCache.Get(cacheKey); has {
-		return v.(bool)
-	} else {
-		matched := dm.domainMatchingFunc(str, pattern)
-		dm.matchingFuncCache.Put(cacheKey, matched)
-		return matched
-	}
-}
-
-func (dm *DomainManager) rangeAffectedRoleManagers(domain string, fn func(rm *RoleManagerImpl)) {
-	if dm.domainMatchingFunc != nil {
-		dm.rmMap.Range(func(key, value interface{}) bool {
-			domain2 := key.(string)
-			if domain != domain2 && dm.match(domain2, domain) {
-				fn(value.(*RoleManagerImpl))
-			}
-			return true
-		})
-	}
-}
-
-func (dm *DomainManager) load(name interface{}) (value *RoleManagerImpl, ok bool) {
-	if r, ok := dm.rmMap.Load(name); ok {
-		return r.(*RoleManagerImpl), true
-	}
-	return nil, false
-}
-
-// load or create a RoleManager instance of domain
-func (dm *DomainManager) getRoleManager(domain string, store bool) *RoleManagerImpl {
-	var rm *RoleManagerImpl
-	var ok bool
-
-	if rm, ok = dm.load(domain); !ok {
-		rm = newRoleManagerWithMatchingFunc(dm.maxHierarchyLevel, dm.matchingFunc)
-		if store {
-			dm.rmMap.Store(domain, rm)
-		}
-		if dm.domainMatchingFunc != nil {
-			dm.rmMap.Range(func(key, value interface{}) bool {
-				domain2 := key.(string)
-				rm2 := value.(*RoleManagerImpl)
-				if domain != domain2 && dm.match(domain, domain2) {
-					rm.copyFrom(rm2)
-				}
-				return true
-			})
-		}
-	}
-	return rm
-}
-
-// AddLink adds the inheritance link between role: name1 and role: name2.
-// aka role: name1 inherits role: name2.
-func (dm *DomainManager) AddLink(name1 string, name2 string, domains ...string) (bool, error) {
-	domain, err := dm.getDomain(domains...)
-	if err != nil {
-		return false, err
-	}
-	roleManager := dm.getRoleManager(domain, true) //create role manager if it does not exist
-	added, _ := roleManager.AddLink(name1, name2, domains...)
-
-	dm.rangeAffectedRoleManagers(domain, func(rm *RoleManagerImpl) {
-		_, _ = rm.AddLink(name1, name2, domains...)
-	})
-	return added, nil
-}
-
-// DeleteLink deletes the inheritance link between role: name1 and role: name2.
-// aka role: name1 does not inherit role: name2 any more.
-func (dm *DomainManager) DeleteLink(name1 string, name2 string, domains ...string) (bool, error) {
-	domain, err := dm.getDomain(domains...)
-	if err != nil {
-		return false, err
-	}
-	roleManager := dm.getRoleManager(domain, true) //create role manager if it does not exist
-	removed, _ := roleManager.DeleteLink(name1, name2, domains...)
-
-	dm.rangeAffectedRoleManagers(domain, func(rm *RoleManagerImpl) {
-		_, _ = rm.DeleteLink(name1, name2, domains...)
-	})
-	return removed, nil
-}
-
-// HasLink determines whether role: name1 inherits role: name2.
-func (dm *DomainManager) HasLink(name1 string, name2 string, domains ...string) (bool, error) {
-	domain, err := dm.getDomain(domains...)
-	if err != nil {
-		return false, err
-	}
-	rm := dm.getRoleManager(domain, false)
-	return rm.HasLink(name1, name2, domains...)
-}
-
-// GetRoles gets the roles that a subject inherits.
-func (dm *DomainManager) GetRoles(name string, domains ...string) ([]string, error) {
-	domain, err := dm.getDomain(domains...)
-	if err != nil {
-		return nil, err
-	}
-	rm := dm.getRoleManager(domain, false)
-	return rm.GetRoles(name, domains...)
-}
-
-// GetUsers gets the users of a role.
-func (dm *DomainManager) GetUsers(name string, domains ...string) ([]string, error) {
-	domain, err := dm.getDomain(domains...)
-	if err != nil {
-		return nil, err
-	}
-	rm := dm.getRoleManager(domain, false)
-	return rm.GetUsers(name, domains...)
-}
-
-func (dm *DomainManager) toString() []string {
-	var roles []string
-
-	dm.rmMap.Range(func(key, value interface{}) bool {
-		domain := key.(string)
-		rm := value.(*RoleManagerImpl)
-		domainRoles := rm.toString()
-		roles = append(roles, fmt.Sprintf("%s: %s", domain, strings.Join(domainRoles, ", ")))
-		return true
-	})
-
-	return roles
-}
-
-// GetDomains gets domains that a user has
-func (dm *DomainManager) GetDomains(name string) ([]string, error) {
-	var domains []string
-	dm.rmMap.Range(func(key, value interface{}) bool {
-		domain := key.(string)
-		rm := value.(*RoleManagerImpl)
-		role, created := rm.getRole(name)
-		if created {
-			defer rm.removeRole(role.name)
-		}
-		if len(role.getUsers()) > 0 || len(role.getRoles()) > 0 {
-			domains = append(domains, domain)
-		}
-		return true
-	})
-	return domains, nil
-}
-
-// GetAllDomains gets all domains
-func (rm *DomainManager) GetAllDomains() ([]string, error) {
-	var domains []string
-	rm.rmMap.Range(func(key, value interface{}) bool {
-		domains = append(domains, key.(string))
-		return true
-	})
-	return domains, nil
-}
-
-// Deprecated: BuildRelationship is no longer required
-func (rm *DomainManager) BuildRelationship(name1 string, name2 string, domain ...string) error {
-	return nil
-}
-
-/*type RoleManager struct {
-	*DomainManager
-}
-
-func NewRoleManager(maxHierarchyLevel int) *RoleManager {
-	rm := &RoleManager{}
-	rm.DomainManager = NewDomainManager(maxHierarchyLevel)
-	return rm
-}*/

@@ -214,7 +214,7 @@ func (m *Model) BuildMatcher(key string) error {
 func addRoleDef(m *Model, key, arguments string) error {
 	def := NewRoleDef(key, arguments)
 	if def.nargs == 2 {
-		m.rmMap[key] = rbac.NewRoleManagerImpl(10)
+		m.rmMap[key] = rbac.NewRoleManager(10)
 	} else if def.nargs == 3 {
 		m.rmMap[key] = rbac.NewDomainManager(10)
 	}

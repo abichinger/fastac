@@ -344,9 +344,6 @@ func (rm *testCustomRoleManager) Clear() error { return nil }
 func (rm *testCustomRoleManager) AddLink(name1 string, name2 string, domain ...string) (bool, error) {
 	return false, nil
 }
-func (rm *testCustomRoleManager) BuildRelationship(name1 string, name2 string, domain ...string) error {
-	return nil
-}
 func (rm *testCustomRoleManager) DeleteLink(name1 string, name2 string, domain ...string) (bool, error) {
 	return false, nil
 }
@@ -366,15 +363,13 @@ func (rm *testCustomRoleManager) GetRoles(name string, domain ...string) ([]stri
 func (rm *testCustomRoleManager) GetUsers(name string, domain ...string) ([]string, error) {
 	return []string{}, nil
 }
-func (rm *testCustomRoleManager) GetDomains(name string) ([]string, error) {
-	return []string{}, nil
-}
-func (rm *testCustomRoleManager) GetAllDomains() ([]string, error) {
-	return []string{}, nil
-}
-func (rm *testCustomRoleManager) PrintRoles() error                     { return nil }
-func (rm *testCustomRoleManager) SetMatcher(fn rbac.MatchingFunc)       {}
-func (rm *testCustomRoleManager) SetDomainMatcher(fn rbac.MatchingFunc) {}
+func (rm *testCustomRoleManager) GetDomains(name string) ([]string, error)                  { return []string{}, nil }
+func (rm *testCustomRoleManager) GetAllDomains() ([]string, error)                          { return []string{}, nil }
+func (rm *testCustomRoleManager) PrintRoles() error                                         { return nil }
+func (rm *testCustomRoleManager) SetMatcher(fn rbac.MatchingFunc)                           {}
+func (rm *testCustomRoleManager) SetDomainMatcher(fn rbac.MatchingFunc)                     {}
+func (rm *testCustomRoleManager) CopyFrom(other rbac.IRoleManager)                          {}
+func (rm *testCustomRoleManager) Range(fn func(name1, name2 string, domain ...string) bool) {}
 
 func TestRBACModelWithCustomRoleManager(t *testing.T) {
 	e, _ := NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv")

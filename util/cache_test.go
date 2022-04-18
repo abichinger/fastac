@@ -1,6 +1,10 @@
 package util
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func testCacheGet(t *testing.T, c *LRUCache, key string, value interface{}, ok bool) {
 	v, o := c.Get(key)
@@ -23,9 +27,7 @@ func testCacheEqual(t *testing.T, c *LRUCache, values []int) {
 		cacheValues = append(cacheValues, v.value.(int))
 	}
 
-	if SetEqualsInt(values, cacheValues) == false {
-		t.Errorf("cache values: %d supposed to be %d", cacheValues, values)
-	}
+	assert.ElementsMatch(t, values, cacheValues)
 }
 
 func TestLRUCache(t *testing.T) {
