@@ -2,32 +2,41 @@ goos: linux
 goarch: amd64
 pkg: example.com/fastac
 cpu: AMD Ryzen 5 3600 6-Core Processor              
-BenchmarkRBAC/size=Large/enforcer=casbin-12         	     270	   4247335 ns/op	 1131749 B/op	   30143 allocs/op
-BenchmarkRBAC/size=Large/enforcer=fastac-12         	     525	   2478717 ns/op	  325009 B/op	   20143 allocs/op
-BenchmarkRBAC/size=Large/enforcer=fastac-index-12   	    5402	    234400 ns/op	   37304 B/op	    2149 allocs/op
-BenchmarkRBAC/size=Medium/enforcer=casbin-12        	    2694	    734208 ns/op	  119740 B/op	    3143 allocs/op
-BenchmarkRBAC/size=Medium/enforcer=fastac-12        	    3330	    411438 ns/op	   37008 B/op	    2143 allocs/op
-BenchmarkRBAC/size=Medium/enforcer=fastac-index-12  	   20571	     60127 ns/op	    8504 B/op	     349 allocs/op
-BenchmarkRBAC/size=Small/enforcer=casbin-12         	   10000	    106833 ns/op	   18255 B/op	     443 allocs/op
-BenchmarkRBAC/size=Small/enforcer=fastac-12         	   18070	     67838 ns/op	    8208 B/op	     343 allocs/op
-BenchmarkRBAC/size=Small/enforcer=fastac-index-12   	   55675	     26101 ns/op	    5624 B/op	     169 allocs/op
-BenchmarkAddPolicy/size=Large/enforcer=casbin-12    	 1007374	      1254 ns/op	     529 B/op	      12 allocs/op
-BenchmarkAddPolicy/size=Large/enforcer=fastac-12    	 1000000	      1579 ns/op	     616 B/op	      11 allocs/op
-BenchmarkAddPolicy/size=Large/enforcer=fastac-index-12         	 1000000	      1415 ns/op	     589 B/op	      12 allocs/op
-BenchmarkAddPolicy/size=Medium/enforcer=casbin-12              	  997420	      1390 ns/op	     533 B/op	      12 allocs/op
-BenchmarkAddPolicy/size=Medium/enforcer=fastac-12              	  847452	      1400 ns/op	     498 B/op	      11 allocs/op
-BenchmarkAddPolicy/size=Medium/enforcer=fastac-index-12        	 1000000	      1463 ns/op	     590 B/op	      12 allocs/op
-BenchmarkAddPolicy/size=Empty/enforcer=casbin-12               	 1000000	      1404 ns/op	     533 B/op	      12 allocs/op
-BenchmarkAddPolicy/size=Empty/enforcer=fastac-12               	  896994	      1687 ns/op	     656 B/op	      11 allocs/op
-BenchmarkAddPolicy/size=Empty/enforcer=fastac-index-12         	  955798	      1510 ns/op	     600 B/op	      12 allocs/op
-BenchmarkABAC/size=Large/enforcer=casbin-12                    	      67	  28499359 ns/op	 7912872 B/op	  133082 allocs/op
-BenchmarkABAC/size=Large/enforcer=fastac-12                    	     187	   6730004 ns/op	 1365173 B/op	   40131 allocs/op
-BenchmarkABAC/size=Large/enforcer=fastac-index-12              	    1803	    745588 ns/op	  143760 B/op	    4393 allocs/op
-BenchmarkABAC/size=Medium/enforcer=casbin-12                   	     441	   2994537 ns/op	  787804 B/op	   13316 allocs/op
-BenchmarkABAC/size=Medium/enforcer=fastac-12                   	    1656	    636395 ns/op	  137623 B/op	    4081 allocs/op
-BenchmarkABAC/size=Medium/enforcer=fastac-index-12             	    1633	    637697 ns/op	  138014 B/op	    4105 allocs/op
-BenchmarkABAC/size=Small/enforcer=casbin-12                    	    3609	    286366 ns/op	   79896 B/op	    1339 allocs/op
-BenchmarkABAC/size=Small/enforcer=fastac-12                    	   15295	     78462 ns/op	   17103 B/op	     475 allocs/op
-BenchmarkABAC/size=Small/enforcer=fastac-index-12              	   16438	     84375 ns/op	   17157 B/op	     493 allocs/op
+BenchmarkRBAC/size=Large(100000)/enforcer=casbin-12         	     276	   4162842 ns/op	 1131316 B/op	   30143 allocs/op
+BenchmarkRBAC/size=Large(100000)/enforcer=fastac-12         	     480	   2457399 ns/op	  324768 B/op	   20123 allocs/op
+BenchmarkRBAC/size=Large(100000)/enforcer=fastac-index-12   	    4731	    243980 ns/op	   37064 B/op	    2129 allocs/op
+BenchmarkRBAC/size=Medium(10000)/enforcer=casbin-12         	    1429	    739302 ns/op	  119642 B/op	    3143 allocs/op
+BenchmarkRBAC/size=Medium(10000)/enforcer=fastac-12         	    3237	    317659 ns/op	   36768 B/op	    2123 allocs/op
+BenchmarkRBAC/size=Medium(10000)/enforcer=fastac-index-12   	   17713	     57593 ns/op	    8264 B/op	     329 allocs/op
+BenchmarkRBAC/size=Small(1000)/enforcer=casbin-12           	   10000	    103174 ns/op	   18248 B/op	     443 allocs/op
+BenchmarkRBAC/size=Small(1000)/enforcer=fastac-12           	   19755	     64946 ns/op	    7968 B/op	     323 allocs/op
+BenchmarkRBAC/size=Small(1000)/enforcer=fastac-index-12     	   44248	     29701 ns/op	    5384 B/op	     149 allocs/op
+BenchmarkAddPolicy/size=Large(10000)/enforcer=casbin-12     	 1000000	      1411 ns/op	     579 B/op	      13 allocs/op
+BenchmarkAddPolicy/size=Large(10000)/enforcer=fastac-12     	 1000000	      1894 ns/op	     745 B/op	      16 allocs/op
+BenchmarkAddPolicy/size=Large(10000)/enforcer=fastac-index-12         	  719901	      1627 ns/op	     660 B/op	      17 allocs/op
+BenchmarkAddPolicy/size=Medium(1000)/enforcer=casbin-12               	  718105	      1402 ns/op	     529 B/op	      13 allocs/op
+BenchmarkAddPolicy/size=Medium(1000)/enforcer=fastac-12               	  918098	      2246 ns/op	     776 B/op	      16 allocs/op
+BenchmarkAddPolicy/size=Medium(1000)/enforcer=fastac-index-12         	  952040	      1823 ns/op	     728 B/op	      17 allocs/op
+BenchmarkAddPolicy/size=Empty(0)/enforcer=casbin-12                   	  974619	      1472 ns/op	     588 B/op	      13 allocs/op
+BenchmarkAddPolicy/size=Empty(0)/enforcer=fastac-12                   	  588427	      2024 ns/op	     698 B/op	      16 allocs/op
+BenchmarkAddPolicy/size=Empty(0)/enforcer=fastac-index-12             	  687672	      1687 ns/op	     668 B/op	      17 allocs/op
+BenchmarkRemovePolicy/size=Large(1000)/enforcer=casbin-12             	 1041733	      1258 ns/op	     298 B/op	      12 allocs/op
+BenchmarkRemovePolicy/size=Large(1000)/enforcer=fastac-12             	  920016	      1136 ns/op	     270 B/op	      11 allocs/op
+BenchmarkRemovePolicy/size=Large(1000)/enforcer=fastac-index-12       	 1000000	      1178 ns/op	     270 B/op	      11 allocs/op
+BenchmarkRemovePolicy/size=Medium(100)/enforcer=casbin-12             	  887180	      1238 ns/op	     286 B/op	      12 allocs/op
+BenchmarkRemovePolicy/size=Medium(100)/enforcer=fastac-12             	 1000000	      1074 ns/op	     270 B/op	      10 allocs/op
+BenchmarkRemovePolicy/size=Medium(100)/enforcer=fastac-index-12       	 1140229	      1135 ns/op	     270 B/op	      10 allocs/op
+BenchmarkRemovePolicy/size=Empty(0)/enforcer=casbin-12                	 1000000	      1108 ns/op	     286 B/op	      11 allocs/op
+BenchmarkRemovePolicy/size=Empty(0)/enforcer=fastac-12                	  998966	      1028 ns/op	     270 B/op	      10 allocs/op
+BenchmarkRemovePolicy/size=Empty(0)/enforcer=fastac-index-12          	 1000000	      1084 ns/op	     270 B/op	      10 allocs/op
+BenchmarkABAC/size=Large(1000)/enforcer=casbin-12                     	      39	  30947253 ns/op	 7898086 B/op	  133079 allocs/op
+BenchmarkABAC/size=Large(1000)/enforcer=fastac-12                     	     183	   6836772 ns/op	 1361945 B/op	   40130 allocs/op
+BenchmarkABAC/size=Large(1000)/enforcer=fastac-index-12               	    1440	    770658 ns/op	  144189 B/op	    4393 allocs/op
+BenchmarkABAC/size=Medium(100)/enforcer=casbin-12                     	     445	   3067276 ns/op	  786847 B/op	   13316 allocs/op
+BenchmarkABAC/size=Medium(100)/enforcer=fastac-12                     	    1767	    688906 ns/op	  137708 B/op	    4081 allocs/op
+BenchmarkABAC/size=Medium(100)/enforcer=fastac-index-12               	    1582	    660095 ns/op	  138065 B/op	    4105 allocs/op
+BenchmarkABAC/size=Small(10)/enforcer=casbin-12                       	    4704	    262710 ns/op	   80118 B/op	    1339 allocs/op
+BenchmarkABAC/size=Small(10)/enforcer=fastac-12                       	   15421	     83119 ns/op	   17114 B/op	     475 allocs/op
+BenchmarkABAC/size=Small(10)/enforcer=fastac-index-12                 	   13989	     80703 ns/op	   17164 B/op	     493 allocs/op
 PASS
-ok  	example.com/fastac	54.443s
+ok  	example.com/fastac	66.935s

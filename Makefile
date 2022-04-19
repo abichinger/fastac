@@ -15,3 +15,6 @@ draw_benchmarks:
 
 	$(GOBIN)/benchdraw --filter="BenchmarkAddPolicy" --x=size --group=enforcer < ./bench/benchmark.txt > ./bench/AddPolicy_op.svg
 	$(GOBIN)/benchdraw --filter="BenchmarkAddPolicy" --x=size --group=enforcer --y=allocs/op < ./bench/benchmark.txt > ./bench/AddPolicy_alloc.svg
+
+	$(GOBIN)/benchdraw --filter="BenchmarkRemovePolicy" --x=size --group=enforcer < ./bench/benchmark.txt > ./bench/RemovePolicy_op.svg
+	$(GOBIN)/benchdraw --filter="BenchmarkRemovePolicy" --x=size --group=enforcer --y=allocs/op < ./bench/benchmark.txt > ./bench/RemovePolicy_alloc.svg
