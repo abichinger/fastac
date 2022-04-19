@@ -1,4 +1,4 @@
-package model
+package fm
 
 import (
 	"example.com/fastac/util"

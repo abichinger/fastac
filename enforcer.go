@@ -3,6 +3,7 @@ package fastac
 import (
 	"example.com/fastac/adapter"
 	"example.com/fastac/model"
+	"example.com/fastac/model/types"
 )
 
 type Enforcer struct {
@@ -77,15 +78,15 @@ func (e *Enforcer) EnforceWithKeys(mKey string, rKey string, eKey string, rvals 
 	return e.m.EnforceWithKeys(mKey, rKey, eKey, rvals)
 }
 
-func (e *Enforcer) Filter(rvals ...interface{}) ([]model.Rule, error) {
+func (e *Enforcer) Filter(rvals ...interface{}) ([]types.Rule, error) {
 	return e.FilterWithKeys("m", "r", rvals...)
 }
 
-func (e *Enforcer) FilterWithMatcher(matcher string, rvals ...interface{}) ([]model.Rule, error) {
+func (e *Enforcer) FilterWithMatcher(matcher string, rvals ...interface{}) ([]types.Rule, error) {
 	return e.FilterWithMatcherAndKeys(matcher, "r", rvals...)
 }
 
-func (e *Enforcer) FilterWithMatcherAndKeys(matcher string, rKey string, rvals ...interface{}) ([]model.Rule, error) {
+func (e *Enforcer) FilterWithMatcherAndKeys(matcher string, rKey string, rvals ...interface{}) ([]types.Rule, error) {
 	mKey := "m9999"
 	e.m.AddDef('m', mKey, matcher)
 	e.m.BuildMatcher(mKey)
@@ -93,9 +94,9 @@ func (e *Enforcer) FilterWithMatcherAndKeys(matcher string, rKey string, rvals .
 	return e.FilterWithKeys(mKey, rKey, rvals...)
 }
 
-func (e *Enforcer) FilterWithKeys(mKey string, rKey string, rvals ...interface{}) ([]model.Rule, error) {
-	rules := []model.Rule{}
-	err := e.m.RangeMatchesWithKeys(mKey, rKey, rvals, func(rule model.Rule) bool {
+func (e *Enforcer) FilterWithKeys(mKey string, rKey string, rvals ...interface{}) ([]types.Rule, error) {
+	rules := []types.Rule{}
+	err := e.m.RangeMatchesWithKeys(mKey, rKey, rvals, func(rule types.Rule) bool {
 		rules = append(rules, rule)
 		return true
 	})

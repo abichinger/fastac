@@ -5,6 +5,7 @@ import (
 
 	"example.com/fastac/adapter"
 	"example.com/fastac/model"
+	"example.com/fastac/model/types"
 )
 
 func TestModel(t *testing.T) {
@@ -16,7 +17,7 @@ func TestModel(t *testing.T) {
 	adapter := adapter.NewFileAdapter("examples/basic_policy.csv")
 	adapter.LoadPolicy(m)
 
-	err = m.RangeMatchesWithKeys("m", "r", []interface{}{"alice", "data1", "read"}, func(rule model.Rule) bool {
+	err = m.RangeMatchesWithKeys("m", "r", []interface{}{"alice", "data1", "read"}, func(rule types.Rule) bool {
 		t.Logf("match: %s", rule.Hash())
 		return true
 	})

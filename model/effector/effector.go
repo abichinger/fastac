@@ -12,20 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package model
+package effector
 
-// Effect is the result for a policy rule.
-type Effect int
-
-// Values for policy effect.
-const (
-	Allow Effect = iota
-	Indeterminate
-	Deny
-)
+import "example.com/fastac/model/types"
 
 // Effector is the interface for Casbin effectors.
 type Effector interface {
 	// MergeEffects merges all matching results collected by the enforcer into a single decision.
-	MergeEffects(effects []Effect, matches []Rule, complete bool) (Effect, Rule, error)
+	MergeEffects(effects []types.Effect, matches []types.Rule, complete bool) (types.Effect, types.Rule, error)
 }

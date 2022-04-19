@@ -1,4 +1,4 @@
-package model
+package defs
 
 import (
 	"errors"
@@ -7,13 +7,15 @@ import (
 	"strconv"
 	"strings"
 
+	"example.com/fastac/model/eft"
+	"example.com/fastac/model/types"
 	"github.com/Knetic/govaluate"
 )
 
 const DefaultSep = ","
 const DefaultRoleParty = "_"
 
-var argReg = regexp.MustCompile(`([pr][0-9]*)(\.|_)([A-Za-z0-9_]+)`)
+var ArgReg = regexp.MustCompile(`([pr][0-9]*)(\.|_)([A-Za-z0-9_]+)`)
 var pArgReg = regexp.MustCompile(`(p[0-9]*)_([A-Za-z0-9_]+)`)
 var rArgReg = regexp.MustCompile(`(r[0-9]*)_([A-Za-z0-9_]+)`)
 
@@ -34,26 +36,34 @@ func NewPolicyDef(key, arguments string) *PolicyDef {
 	return def
 }
 
+func (def *PolicyDef) GetKey() string {
+	return def.key
+}
+
+func (def *PolicyDef) GetArgs() []string {
+	return def.args
+}
+
 func (def *PolicyDef) Has(name string) bool {
 	_, ok := def.argIndex[name]
 	return ok
 }
 
-func (def *PolicyDef) GetEft(values []string) Effect {
+func (def *PolicyDef) GetEft(values []string) types.Effect {
 	eftArg := def.key + "_eft"
 	if def.Has(eftArg) {
-		eft, _ := def.GetParameter(values, eftArg)
-		switch eft {
+		eftStr, _ := def.GetParameter(values, eftArg)
+		switch eftStr {
 		case "":
 		case "allow":
-			return Allow
+			return eft.Allow
 		case "deny":
-			return Deny
+			return eft.Deny
 		default:
-			return Indeterminate
+			return eft.Indeterminate
 		}
 	}
-	return Allow
+	return eft.Allow
 }
 
 func (def *PolicyDef) GetParameter(values []string, name string) (string, error) {
@@ -64,7 +74,7 @@ func (def *PolicyDef) GetParameter(values []string, name string) (string, error)
 	return values[index], nil
 }
 
-func (def *PolicyDef) GetParameters(values, names []string) (Rule, error) {
+func (def *PolicyDef) GetParameters(values, names []string) (types.Rule, error) {
 	params := make([]string, 0)
 	for _, name := range names {
 		value, err := def.GetParameter(values, name)
@@ -148,18 +158,26 @@ func NewMatcherDef(key, expr string) *MatcherDef {
 		def.index, _ = strconv.Atoi(split[1])
 	}
 
-	def.expr = argReg.ReplaceAllString(expr, "${1}_${3}")
+	def.expr = ArgReg.ReplaceAllString(expr, "${1}_${3}")
 	def.pArgs = pArgReg.FindAllString(def.expr, -1)
 	def.rArgs = rArgReg.FindAllString(def.expr, -1)
 
 	return def
 }
 
+func (def *MatcherDef) GetKey() string {
+	return def.key
+}
+
+func (def *MatcherDef) GetIndex() int {
+	return def.index
+}
+
 func (def *MatcherDef) String() string {
 	if def.index == -1 {
-		return fmt.Sprintf("%s = %s", def.key, argReg.ReplaceAllString(def.expr, "${1}.${3}"))
+		return fmt.Sprintf("%s = %s", def.key, ArgReg.ReplaceAllString(def.expr, "${1}.${3}"))
 	}
-	return fmt.Sprintf("%s.%d = %s", def.key, def.index, argReg.ReplaceAllString(def.expr, "${1}.${3}"))
+	return fmt.Sprintf("%s.%d = %s", def.key, def.index, ArgReg.ReplaceAllString(def.expr, "${1}.${3}"))
 }
 
 func (def *MatcherDef) GetPolicyArgs() []string {
@@ -199,17 +217,21 @@ type RoleDef struct {
 	nargs int
 }
 
+func NewRoleDef(key, arguments string) *RoleDef {
+	def := &RoleDef{}
+	def.key = key
+	def.nargs = len(strings.Split(arguments, DefaultSep))
+	return def
+}
+
+func (def *RoleDef) NArgs() int {
+	return def.nargs
+}
+
 func (def *RoleDef) String() string {
 	args := make([]string, def.nargs)
 	for i := 0; i < def.nargs; i++ {
 		args = append(args, DefaultRoleParty)
 	}
 	return fmt.Sprintf("%s = %s", def.key, strings.Join(args, DefaultSep))
-}
-
-func NewRoleDef(key, arguments string) *RoleDef {
-	def := &RoleDef{}
-	def.key = key
-	def.nargs = len(strings.Split(arguments, DefaultSep))
-	return def
 }

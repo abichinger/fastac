@@ -1,26 +1,30 @@
-package model
+package matcher
 
 import (
 	"errors"
 	"fmt"
 
+	"example.com/fastac/model/defs"
+	"example.com/fastac/model/fm"
+	p "example.com/fastac/model/policy"
+	"example.com/fastac/model/types"
 	"example.com/fastac/util"
 	"github.com/Knetic/govaluate"
 )
 
 type MatcherNode struct {
-	rule     Rule
+	rule     types.Rule
 	children map[string]*MatcherNode
 }
 
-func NewMatcherNode(rule Rule) *MatcherNode {
+func NewMatcherNode(rule types.Rule) *MatcherNode {
 	node := &MatcherNode{}
 	node.rule = rule
 	node.children = make(map[string]*MatcherNode)
 	return node
 }
 
-func (n *MatcherNode) GetOrCreate(key Rule, rule Rule) *MatcherNode {
+func (n *MatcherNode) GetOrCreate(key types.Rule, rule types.Rule) *MatcherNode {
 	strKey := key.Hash()
 	if node, ok := n.children[strKey]; ok {
 		return node
@@ -31,13 +35,13 @@ func (n *MatcherNode) GetOrCreate(key Rule, rule Rule) *MatcherNode {
 }
 
 type MatchParameters struct {
-	pDef  PolicyDef
-	pvals Rule
-	rDef  RequestDef
+	pDef  defs.PolicyDef
+	pvals types.Rule
+	rDef  defs.RequestDef
 	rvals []interface{}
 }
 
-func NewMatchParameters(pDef PolicyDef, pvals Rule, rDef RequestDef, rvals []interface{}) *MatchParameters {
+func NewMatchParameters(pDef defs.PolicyDef, pvals types.Rule, rDef defs.RequestDef, rvals []interface{}) *MatchParameters {
 	return &MatchParameters{
 		pDef:  pDef,
 		pvals: pvals,
@@ -58,40 +62,44 @@ func (params *MatchParameters) Get(name string) (interface{}, error) {
 }
 
 type Matcher struct {
-	matchers []*MatcherDef
-	policy   *Policy
+	matchers []*defs.MatcherDef
+	policy   *p.Policy
 	root     *MatcherNode
 }
 
-func NewMatcher(policy *Policy, matchers []*MatcherDef) *Matcher {
+func NewMatcher(policy *p.Policy, matchers []*defs.MatcherDef) *Matcher {
 	m := &Matcher{}
 	m.policy = policy
 	m.matchers = matchers
 	m.root = NewMatcherNode([]string{""})
 
-	policy.Range(func(hash string, rule Rule) bool {
+	policy.Range(func(hash string, rule types.Rule) bool {
 		m.AddPolicy(rule)
 		return true
 	})
 
-	policy.AddListener(PolicyAdded, func(arguments ...interface{}) {
-		rule := arguments[0].(Rule)
+	policy.AddListener(p.PolicyAdded, func(arguments ...interface{}) {
+		rule := arguments[0].(types.Rule)
 		m.AddPolicy(rule)
 	})
 
-	policy.AddListener(PolicyRemoved, func(arguments ...interface{}) {
-		rule := arguments[0].(Rule)
+	policy.AddListener(p.PolicyRemoved, func(arguments ...interface{}) {
+		rule := arguments[0].(types.Rule)
 		m.RemovePolicy(rule)
 	})
 
 	return m
 }
 
-func (m *Matcher) AddPolicy(rule Rule) {
+func (m *Matcher) GetPolicy() *p.Policy {
+	return m.policy
+}
+
+func (m *Matcher) AddPolicy(rule types.Rule) {
 	m.addPolicy(rule, 0, m.root)
 }
 
-func (m *Matcher) addPolicy(rule Rule, level int, node *MatcherNode) {
+func (m *Matcher) addPolicy(rule types.Rule, level int, node *MatcherNode) {
 	pArgs := m.matchers[level].GetPolicyArgs()
 	if len(pArgs) == 0 {
 		return
@@ -107,11 +115,11 @@ func (m *Matcher) addPolicy(rule Rule, level int, node *MatcherNode) {
 	}
 }
 
-func (m *Matcher) RemovePolicy(rule Rule) {
+func (m *Matcher) RemovePolicy(rule types.Rule) {
 	m.removePolicy(rule, 0, m.root)
 }
 
-func (m *Matcher) removePolicy(rule Rule, level int, node *MatcherNode) {
+func (m *Matcher) removePolicy(rule types.Rule, level int, node *MatcherNode) {
 	pArgs := m.matchers[level].GetPolicyArgs()
 	if len(pArgs) == 0 {
 		return
@@ -129,15 +137,15 @@ func (m *Matcher) removePolicy(rule Rule, level int, node *MatcherNode) {
 	}
 }
 
-func (m *Matcher) RangeMatches(rDef RequestDef, rvals []interface{}, fm FunctionMap, fn func(rule Rule) bool) error {
+func (m *Matcher) RangeMatches(rDef defs.RequestDef, rvals []interface{}, fMap fm.FunctionMap, fn func(rule types.Rule) bool) error {
 	level := 0
 	q := make([]*MatcherNode, 0)
 	q = append(q, m.root)
 	empty := true
 
 	params := NewMatchParameters(*m.policy.PolicyDef, nil, rDef, rvals)
-	fm.AddFunction("eval", generateEvalFunction(fm, params))
-	functions := fm.GetFunctions()
+	fMap.AddFunction("eval", generateEvalFunction(fMap, params))
+	functions := fMap.GetFunctions()
 
 	for len(q) > 0 {
 		levelSize := len(q)
@@ -177,7 +185,7 @@ func (m *Matcher) RangeMatches(rDef RequestDef, rvals []interface{}, fm Function
 		}
 
 		if empty && level == len(m.matchers)-1 {
-			params.pvals = make(Rule, len(m.policy.args))
+			params.pvals = make(types.Rule, len(m.policy.GetArgs()))
 			res, err := expr.Eval(params)
 			if err != nil {
 				return err
@@ -200,8 +208,8 @@ func eval(expression string, functions map[string]govaluate.ExpressionFunction, 
 	return expr.Eval(parameters)
 }
 
-func generateEvalFunction(fm FunctionMap, parameters *MatchParameters) govaluate.ExpressionFunction {
-	functions := fm.GetFunctions()
+func generateEvalFunction(fMap fm.FunctionMap, parameters *MatchParameters) govaluate.ExpressionFunction {
+	functions := fMap.GetFunctions()
 
 	return func(args ...interface{}) (interface{}, error) {
 		if err := util.ValidateVariadicArgs(1, args...); err != nil {
@@ -209,7 +217,7 @@ func generateEvalFunction(fm FunctionMap, parameters *MatchParameters) govaluate
 		}
 
 		expression := args[0].(string)
-		expression = argReg.ReplaceAllString(expression, "${1}_${3}")
+		expression = defs.ArgReg.ReplaceAllString(expression, "${1}_${3}")
 		return eval(expression, functions, parameters)
 	}
 }

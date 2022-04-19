@@ -12,43 +12,47 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package model
+package effector
 
 import (
 	"errors"
+
+	"example.com/fastac/model/defs"
+	"example.com/fastac/model/eft"
+	"example.com/fastac/model/types"
 )
 
 // DefaultEffector is default effector for Casbin.
 type DefaultEffector struct {
-	*EffectDef
+	*defs.EffectDef
 }
 
 // NewDefaultEffector is the constructor for DefaultEffector.
 func NewDefaultEffector(key, expr string) *DefaultEffector {
 	e := DefaultEffector{}
-	e.EffectDef = NewEffectDef(key, expr)
+	e.EffectDef = defs.NewEffectDef(key, expr)
 	return &e
 }
 
-func (e *DefaultEffector) MergeEffects(effects []Effect, matches []Rule, complete bool) (Effect, Rule, error) {
+func (e *DefaultEffector) MergeEffects(effects []types.Effect, matches []types.Rule, complete bool) (types.Effect, types.Rule, error) {
 
 	if complete {
 		switch e.Expr() {
 		case "some(where(p.eft==allow))":
-			return Deny, Rule{}, nil
+			return eft.Deny, types.Rule{}, nil
 		case "!some(where(p.eft==deny))":
-			return Allow, Rule{}, nil
+			return eft.Allow, types.Rule{}, nil
 		case "some(where(p.eft==allow))&&!some(where(p.eft==deny))":
 			if len(matches) == 0 {
-				return Deny, Rule{}, nil
+				return eft.Deny, types.Rule{}, nil
 			}
 			return effects[0], matches[0], nil
 		}
-		return Deny, Rule{}, errors.New("unsupported effect")
+		return eft.Deny, types.Rule{}, errors.New("unsupported effect")
 	}
 
-	effect := Indeterminate
-	match := Rule{}
+	effect := eft.Indeterminate
+	match := types.Rule{}
 
 	if len(effects) > 0 {
 		effect = effects[len(effects)-1]
@@ -59,23 +63,23 @@ func (e *DefaultEffector) MergeEffects(effects []Effect, matches []Rule, complet
 
 	switch e.Expr() {
 	case "some(where(p.eft==allow))":
-		if effect == Allow {
+		if effect == eft.Allow {
 			return effect, match, nil
 		}
 		break
 	case "!some(where(p.eft==deny))":
-		if effect == Deny {
+		if effect == eft.Deny {
 			return effect, match, nil
 		}
 		break
 	case "some(where(p.eft==allow))&&!some(where(p.eft==deny))":
-		if effect == Deny {
+		if effect == eft.Deny {
 			return effect, match, nil
 		}
 		break
 	default:
-		return Deny, Rule{}, errors.New("unsupported effect")
+		return eft.Deny, types.Rule{}, errors.New("unsupported effect")
 	}
 
-	return Indeterminate, match, nil
+	return eft.Indeterminate, match, nil
 }

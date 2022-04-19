@@ -1,41 +1,37 @@
-package model
+package policy
 
 import (
-	"strings"
-
+	"example.com/fastac/model/defs"
+	"example.com/fastac/model/types"
 	em "github.com/vansante/go-event-emitter"
 )
 
-const PolicyAdded = "PolicyAdded"
-const PolicyRemoved = "PolicyRemoved"
-
-type Rule []string
-
-func (r *Rule) Hash() string {
-	return strings.Join(*r, DefaultSep)
-}
+const (
+	PolicyAdded   em.EventType = "PolicyAdded"
+	PolicyRemoved              = "PolicyRemoved"
+)
 
 type Policy struct {
-	ruleMap map[string]Rule
+	ruleMap map[string]types.Rule
 
 	*em.Emitter
-	*PolicyDef
+	*defs.PolicyDef
 }
 
-func NewPolicyFromDef(pDef *PolicyDef) *Policy {
+func NewPolicyFromDef(pDef *defs.PolicyDef) *Policy {
 	p := &Policy{}
 	p.PolicyDef = pDef
 	p.Emitter = em.NewEmitter(false)
-	p.ruleMap = make(map[string]Rule)
+	p.ruleMap = make(map[string]types.Rule)
 	return p
 }
 
 func NewPolicy(key, arguments string) *Policy {
-	pDef := NewPolicyDef(key, arguments)
+	pDef := defs.NewPolicyDef(key, arguments)
 	return NewPolicyFromDef(pDef)
 }
 
-func (p *Policy) AddPolicy(rule Rule) bool {
+func (p *Policy) AddPolicy(rule types.Rule) bool {
 	hash := rule.Hash()
 	if _, ok := p.ruleMap[hash]; ok {
 		return false
@@ -45,7 +41,7 @@ func (p *Policy) AddPolicy(rule Rule) bool {
 	return true
 }
 
-func (p *Policy) RemovePolicy(rule Rule) bool {
+func (p *Policy) RemovePolicy(rule types.Rule) bool {
 	key := rule.Hash()
 	_, ok := p.ruleMap[key]
 	if !ok {
@@ -59,7 +55,7 @@ func (p *Policy) RemovePolicy(rule Rule) bool {
 func (p *Policy) GetDistinct(args []string) ([][]string, error) {
 	resMap := make(map[string][]string)
 	for i, arg := range args {
-		args[i] = p.key + "_" + arg
+		args[i] = p.GetKey() + "_" + arg
 	}
 	for _, rule := range p.ruleMap {
 		r, err := p.GetParameters(rule, args)
@@ -75,7 +71,7 @@ func (p *Policy) GetDistinct(args []string) ([][]string, error) {
 	return res, nil
 }
 
-func (p *Policy) Range(fn func(hash string, rule Rule) bool) {
+func (p *Policy) Range(fn func(hash string, rule types.Rule) bool) {
 	for hash, r := range p.ruleMap {
 		if !fn(hash, r) {
 			break

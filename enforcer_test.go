@@ -19,7 +19,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"example.com/fastac/model"
+	"example.com/fastac/model/types"
 	"example.com/fastac/rbac"
 	"example.com/fastac/util"
 )
@@ -634,7 +634,7 @@ func TestAllMatchModel(t *testing.T) {
 	testDomainEnforce(t, e, "alice", "domain2", "/book/1", "write", true)
 }
 
-func convertRules(rules []model.Rule) [][]string {
+func convertRules(rules []types.Rule) [][]string {
 	res := [][]string{}
 	for _, rule := range rules {
 		res = append(res, []string(rule))
