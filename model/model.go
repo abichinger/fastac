@@ -355,9 +355,9 @@ func (m *Model) Enforce(matcher *Matcher, rDef *RequestDef, effector Effector, r
 		res, _, eftErr = effector.MergeEffects(effects, matches, false)
 
 		if eftErr != nil || res != Indeterminate {
-			return true
+			return false
 		}
-		return false
+		return true
 	})
 	if err != nil {
 		return false, err

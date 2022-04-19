@@ -28,7 +28,7 @@ func TestMatcher(t *testing.T) {
 	t.Logf("M1")
 	err := m1.RangeMatches(*rDef, []interface{}{"alice", "data2", "read"}, *fm, func(rule Rule) bool {
 		t.Logf("match: %s", rule.Hash())
-		return false
+		return true
 	})
 	if err != nil {
 		t.Errorf(err.Error())
@@ -37,7 +37,7 @@ func TestMatcher(t *testing.T) {
 	t.Logf("M2")
 	err = m2.RangeMatches(*rDef, []interface{}{"alice", "", ""}, *fm, func(rule Rule) bool {
 		t.Logf("match: %s", rule.Hash())
-		return false
+		return true
 	})
 	if err != nil {
 		t.Errorf(err.Error())

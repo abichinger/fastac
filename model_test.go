@@ -18,7 +18,7 @@ func TestModel(t *testing.T) {
 
 	err = m.RangeMatchesWithKeys("m", "r", []interface{}{"alice", "data1", "read"}, func(rule model.Rule) bool {
 		t.Logf("match: %s", rule.Hash())
-		return false
+		return true
 	})
 	if err != nil {
 		t.Errorf(err.Error())

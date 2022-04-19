@@ -56,9 +56,28 @@ func (p *Policy) RemovePolicy(rule Rule) bool {
 	return true
 }
 
+func (p *Policy) GetDistinct(args []string) ([][]string, error) {
+	resMap := make(map[string][]string)
+	for i, arg := range args {
+		args[i] = p.key + "_" + arg
+	}
+	for _, rule := range p.ruleMap {
+		r, err := p.GetParameters(rule, args)
+		if err != nil {
+			return nil, err
+		}
+		resMap[r.Hash()] = r
+	}
+	res := make([][]string, 0)
+	for _, values := range resMap {
+		res = append(res, values)
+	}
+	return res, nil
+}
+
 func (p *Policy) Range(fn func(hash string, rule Rule) bool) {
 	for hash, r := range p.ruleMap {
-		if fn(hash, r) {
+		if !fn(hash, r) {
 			break
 		}
 	}

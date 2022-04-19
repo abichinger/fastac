@@ -71,7 +71,7 @@ func NewMatcher(policy *Policy, matchers []*MatcherDef) *Matcher {
 
 	policy.Range(func(hash string, rule Rule) bool {
 		m.AddPolicy(rule)
-		return false
+		return true
 	})
 
 	policy.AddListener(PolicyAdded, func(arguments ...interface{}) {
@@ -167,7 +167,7 @@ func (m *Matcher) RangeMatches(rDef RequestDef, rvals []interface{}, fm Function
 						if level < len(m.matchers)-1 {
 							q = append(q, child)
 						} else {
-							if fn(child.rule) {
+							if !fn(child.rule) {
 								return nil
 							}
 						}

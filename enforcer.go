@@ -97,7 +97,7 @@ func (e *Enforcer) FilterWithKeys(mKey string, rKey string, rvals ...interface{}
 	rules := []model.Rule{}
 	err := e.m.RangeMatchesWithKeys(mKey, rKey, rvals, func(rule model.Rule) bool {
 		rules = append(rules, rule)
-		return false
+		return true
 	})
 	return rules, err
 }
