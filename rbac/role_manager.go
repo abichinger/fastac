@@ -21,6 +21,8 @@ import (
 	"example.com/fastac/util"
 )
 
+const REDUNDANT_ROLE = "redundant_role"
+
 // RoleManager provides a default implementation for the RoleManager interface
 type RoleManager struct {
 	allRoles           *sync.Map
@@ -148,6 +150,11 @@ func (rm *RoleManager) Clear() error {
 func (rm *RoleManager) AddLink(name1 string, name2 string, domains ...string) (bool, error) {
 	user, _ := rm.getRole(name1)
 	role, _ := rm.getRole(name2)
+
+	if len(domains) > 0 && domains[0] == REDUNDANT_ROLE {
+		user.redundant.LoadOrStore(name2, nil)
+	}
+
 	return user.addRole(role), nil
 }
 
@@ -156,6 +163,11 @@ func (rm *RoleManager) AddLink(name1 string, name2 string, domains ...string) (b
 func (rm *RoleManager) DeleteLink(name1 string, name2 string, domains ...string) (bool, error) {
 	user, _ := rm.getRole(name1)
 	role, _ := rm.getRole(name2)
+
+	if len(domains) > 0 && domains[0] == REDUNDANT_ROLE {
+		user.redundant.Delete(name2)
+	}
+
 	return user.removeRole(role), nil
 }
 
@@ -226,19 +238,15 @@ func (rm *RoleManager) GetAllDomains() ([]string, error) {
 	return []string{}, nil
 }
 
-func (rm *RoleManager) CopyFrom(other IRoleManager) {
-	other.Range(func(name1, name2 string, domain ...string) bool {
-		_, _ = rm.AddLink(name1, name2, domain...)
-		return true
-	})
-}
-
 func rangeLinks(users *sync.Map, fn func(name1, name2 string, domain ...string) bool) {
 	users.Range(func(_, value interface{}) bool {
 		user := value.(*Role)
 		user.roles.Range(func(key, _ interface{}) bool {
 			roleName := key.(string)
-			return fn(user.name, roleName)
+			if _, ok := user.redundant.Load(roleName); !ok {
+				return fn(user.name, roleName)
+			}
+			return true
 		})
 		return true
 	})

@@ -234,14 +234,62 @@ func TestClear(t *testing.T) {
 	testRole(t, rm, "u4", "g3", false)
 }
 
+func TestPatternRole(t *testing.T) {
+	rm := NewRoleManager(10)
+	rm.SetMatcher(util.RegexMatch)
+
+	links := [][]string{
+		{"u1", "g1"},
+		{"u2", "g\\d+"},
+		{"u\\d+", "users"},
+		{"g\\d+", "root"},
+	}
+
+	for _, link := range links {
+		_, _ = rm.AddLink(link[0], link[1])
+	}
+
+	testRole(t, rm, "u1", "g1", true)
+	testRole(t, rm, "u1", "g2", false)
+	testRole(t, rm, "u1", "g3", false)
+	testRole(t, rm, "u1", "users", true)
+	testRole(t, rm, "u1", "root", true)
+
+	testRole(t, rm, "u2", "g1", true)
+	testRole(t, rm, "u2", "g2", true)
+	testRole(t, rm, "u2", "g3", true)
+	testRole(t, rm, "u2", "users", true)
+	testRole(t, rm, "u2", "root", true)
+
+	testRole(t, rm, "u3", "g1", false)
+	testRole(t, rm, "u3", "g2", false)
+	testRole(t, rm, "u3", "g3", false)
+	testRole(t, rm, "u3", "users", true)
+	testRole(t, rm, "u3", "root", false)
+
+	rules := [][]string{}
+	rm.Range(func(name1, name2 string, domain ...string) bool {
+		rules = append(rules, []string{name1, name2})
+		return true
+	})
+
+	assert.ElementsMatch(t, util.Join2D(links, ","), util.Join2D(rules, ","))
+}
+
 func TestDomainPatternRole(t *testing.T) {
 	rm := NewDomainManager(10)
 	rm.SetDomainMatcher(util.KeyMatch2)
 
-	_, _ = rm.AddLink("u1", "g1", "domain1")
-	_, _ = rm.AddLink("u2", "g1", "domain2")
-	_, _ = rm.AddLink("u3", "g1", "*")
-	_, _ = rm.AddLink("u4", "g2", "domain3")
+	links := [][]string{
+		{"u1", "g1", "domain1"},
+		{"u2", "g1", "domain2"},
+		{"u3", "g1", "*"},
+		{"u4", "g2", "domain3"},
+	}
+
+	for _, link := range links {
+		_, _ = rm.AddLink(link[0], link[1], link[2])
+	}
 	// Current role inheritance tree after deleting the links:
 	//       domain1:g1    domain2:g1			domain3:g2
 	//		   /      \    /      \					|
@@ -262,6 +310,30 @@ func TestDomainPatternRole(t *testing.T) {
 	testPrintRolesWithDomain(t, rm, "u3", "domain2", []string{"g1"})
 	testPrintRolesWithDomain(t, rm, "u1", "domain2", []string{})
 	testPrintRolesWithDomain(t, rm, "u4", "domain3", []string{"g2"})
+
+	rules := [][]string{}
+	rm.Range(func(name1, name2 string, domain ...string) bool {
+		rules = append(rules, []string{name1, name2, domain[0]})
+		return true
+	})
+
+	assert.ElementsMatch(t, util.Join2D(links, ","), util.Join2D(rules, ","))
+
+	rm.DeleteLink("u3", "g1", "*")
+	rm.AddLink("u3", "g1", "domain1")
+	links[2] = []string{"u3", "g1", "domain1"}
+
+	testDomainRole(t, rm, true, "u3", "g1", "domain1")
+	testDomainRole(t, rm, false, "u3", "g1", "domain2")
+	testDomainRole(t, rm, false, "u3", "g2", "domain3")
+
+	rules = [][]string{}
+	rm.Range(func(name1, name2 string, domain ...string) bool {
+		rules = append(rules, []string{name1, name2, domain[0]})
+		return true
+	})
+
+	assert.ElementsMatch(t, util.Join2D(links, ","), util.Join2D(rules, ","))
 }
 
 func TestAllMatchingFunc(t *testing.T) {

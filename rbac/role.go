@@ -12,6 +12,7 @@ type Role struct {
 	users     *sync.Map
 	matched   *sync.Map
 	matchedBy *sync.Map
+	redundant *sync.Map //string set of redundant roles
 }
 
 func newRole(name string) *Role {
@@ -21,6 +22,7 @@ func newRole(name string) *Role {
 	r.users = &sync.Map{}
 	r.matched = &sync.Map{}
 	r.matchedBy = &sync.Map{}
+	r.redundant = &sync.Map{}
 	return &r
 }
 

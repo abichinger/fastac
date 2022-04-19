@@ -64,6 +64,8 @@ func (dm *DomainManager) Clear() error {
 func (dm *DomainManager) getDomain(domains ...string) (domain string, subdomains []string, err error) {
 	if len(domains) == 0 {
 		return defaultDomain, []string{}, nil
+	} else if domains[0] == REDUNDANT_ROLE {
+		return defaultDomain, []string{REDUNDANT_ROLE}, nil
 	}
 	return domains[0], domains[1:], nil
 }
@@ -119,7 +121,10 @@ func (dm *DomainManager) getRoleManager(domain string, store bool, subdomains ..
 				domain2 := key.(string)
 				rm2 := value.(IRoleManager)
 				if domain != domain2 && dm.match(domain, domain2) {
-					rm.CopyFrom(rm2)
+					rm2.Range(func(name1, name2 string, domain ...string) bool {
+						_, _ = rm.AddLink(name1, name2, append(domain, REDUNDANT_ROLE)...)
+						return true
+					})
 				}
 				return true
 			})
@@ -139,7 +144,7 @@ func (dm *DomainManager) AddLink(name1 string, name2 string, domains ...string) 
 	added, _ := roleManager.AddLink(name1, name2, subdomains...)
 
 	dm.rangeAffectedRoleManagers(domain, func(rm IRoleManager) {
-		_, _ = rm.AddLink(name1, name2, subdomains...)
+		_, _ = rm.AddLink(name1, name2, append(subdomains, REDUNDANT_ROLE)...)
 	})
 	return added, nil
 }
@@ -155,7 +160,7 @@ func (dm *DomainManager) DeleteLink(name1 string, name2 string, domains ...strin
 	removed, _ := roleManager.DeleteLink(name1, name2, subdomains...)
 
 	dm.rangeAffectedRoleManagers(domain, func(rm IRoleManager) {
-		_, _ = rm.DeleteLink(name1, name2, subdomains...)
+		_, _ = rm.DeleteLink(name1, name2, append(subdomains, REDUNDANT_ROLE)...)
 	})
 	return removed, nil
 }
@@ -271,11 +276,4 @@ func (dm *DomainManager) rangeLinks(rmMap *sync.Map, fn func(name1, name2 string
 
 func (dm *DomainManager) Range(fn func(name1, name2 string, domain ...string) bool) {
 	dm.rangeLinks(dm.rmMap, fn)
-}
-
-func (dm *DomainManager) CopyFrom(other IRoleManager) {
-	other.Range(func(name1, name2 string, domain ...string) bool {
-		_, _ = dm.AddLink(name1, name2, domain...)
-		return true
-	})
 }
