@@ -1,9 +1,16 @@
 package fastac
 
 import (
+	"fmt"
+
 	"example.com/fastac/adapter"
 	"example.com/fastac/model"
+	"example.com/fastac/model/defs"
+	"example.com/fastac/model/effector"
+	"example.com/fastac/model/eft"
+	"example.com/fastac/model/matcher"
 	"example.com/fastac/model/types"
+	"example.com/fastac/str"
 )
 
 type Enforcer struct {
@@ -75,7 +82,20 @@ func (e *Enforcer) EnforceWithMatcherAndKeys(matcher string, rKey string, eKey s
 }
 
 func (e *Enforcer) EnforceWithKeys(mKey string, rKey string, eKey string, rvals ...interface{}) (bool, error) {
-	return e.m.EnforceWithKeys(mKey, rKey, eKey, rvals)
+	matcher, mOk := e.m.GetMatcher(mKey)
+	if !mOk {
+		return false, fmt.Errorf(str.ERR_MATCHER_NOT_FOUND, mKey)
+	}
+	rDef, rOk := e.m.GetRequestDef(rKey)
+	if !rOk {
+		return false, fmt.Errorf(str.ERR_REQUESTDEF_NOT_FOUND, rKey)
+	}
+	effector, eOk := e.m.GetEffector(eKey)
+	if !eOk {
+		return false, fmt.Errorf(str.ERR_EFFECTOR_NOT_FOUND, eKey)
+	}
+
+	return e.enforce(matcher, rDef, effector, rvals)
 }
 
 func (e *Enforcer) Filter(rvals ...interface{}) ([]types.Rule, error) {
@@ -96,11 +116,62 @@ func (e *Enforcer) FilterWithMatcherAndKeys(matcher string, rKey string, rvals .
 
 func (e *Enforcer) FilterWithKeys(mKey string, rKey string, rvals ...interface{}) ([]types.Rule, error) {
 	rules := []types.Rule{}
-	err := e.m.RangeMatchesWithKeys(mKey, rKey, rvals, func(rule types.Rule) bool {
+	err := e.RangeMatchesWithKeys(mKey, rKey, rvals, func(rule types.Rule) bool {
 		rules = append(rules, rule)
 		return true
 	})
 	return rules, err
+}
+
+func (e *Enforcer) RangeMatches(matcher *matcher.Matcher, rDef *defs.RequestDef, rvals []interface{}, fn func(rule types.Rule) bool) error {
+	return e.m.RangeMatches(matcher, rDef, rvals, fn)
+}
+
+func (e *Enforcer) RangeMatchesWithKeys(mKey string, rKey string, rvals []interface{}, fn func(rule types.Rule) bool) error {
+	matcher, mOk := e.m.GetMatcher(mKey)
+	if !mOk {
+		return fmt.Errorf(str.ERR_MATCHER_NOT_FOUND, mKey)
+	}
+	rDef, rOk := e.m.GetRequestDef(rKey)
+	if !rOk {
+		return fmt.Errorf(str.ERR_REQUESTDEF_NOT_FOUND, rKey)
+	}
+
+	return e.RangeMatches(matcher, rDef, rvals, fn)
+}
+
+func (e *Enforcer) enforce(matcher *matcher.Matcher, rDef *defs.RequestDef, effector effector.Effector, rvals []interface{}) (bool, error) {
+	pDef := matcher.GetPolicy()
+	res := eft.Indeterminate
+	effects := []types.Effect{}
+	matches := []types.Rule{}
+
+	var eftErr error = nil
+	err := e.RangeMatches(matcher, rDef, rvals, func(rule types.Rule) bool {
+		effect := pDef.GetEft(rule)
+
+		effects = append(effects, effect)
+		matches = append(matches, rule)
+
+		res, _, eftErr = effector.MergeEffects(effects, matches, false)
+
+		if eftErr != nil || res != eft.Indeterminate {
+			return false
+		}
+		return true
+	})
+	if err != nil {
+		return false, err
+	}
+	if eftErr != nil {
+		return false, err
+	}
+
+	if res == eft.Indeterminate {
+		res, _, _ = effector.MergeEffects(effects, matches, true)
+	}
+
+	return res == eft.Allow, nil
 }
 
 func (e *Enforcer) GetModel() *model.Model {

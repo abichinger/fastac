@@ -6,12 +6,13 @@ import (
 
 	"example.com/fastac/model/defs"
 	"example.com/fastac/model/effector"
-	"example.com/fastac/model/eft"
+	e "example.com/fastac/model/effector"
 	"example.com/fastac/model/fm"
 	"example.com/fastac/model/matcher"
 	"example.com/fastac/model/policy"
 	"example.com/fastac/model/types"
 	"example.com/fastac/rbac"
+	"example.com/fastac/str"
 	"github.com/Knetic/govaluate"
 	"github.com/go-ini/ini"
 )
@@ -41,14 +42,6 @@ var sections = []*SectionDef{
 	NewSectionDef("role_definition", 'g', addRoleDef, removeRoleDef),
 }
 
-const invalidSec = "error: invalid sec %c"
-const invalidKeyPrefix = "error: key of %s must start with '%c'"
-const matcherNotFound = "error: matcher %s not found"
-const policyNotFound = "error: policy %s not found"
-const rmNotFound = "error: role manager %s not found"
-const requestNotFound = "error: request definition %s not found"
-const effectNotFound = "error: effect definition %s not found"
-
 type Model struct {
 	pMap    map[string]*policy.Policy
 	mDefMap map[string][]*defs.MatcherDef
@@ -69,9 +62,10 @@ func NewModel() *Model {
 	m.mMap = make(map[string]*matcher.Matcher)
 	m.rmMap = make(map[string]rbac.IRoleManager)
 	m.rMap = make(map[string]*defs.RequestDef)
+	m.eMap = make(map[string]effector.Effector)
+
 	m.secDefs = make(map[string]*SectionDef)
 	m.secMap = make(map[byte]*SectionDef)
-	m.eMap = make(map[string]effector.Effector)
 	m.fm = fm.DefaultFunctionMap()
 
 	for _, sec := range sections {
@@ -119,7 +113,7 @@ func (m *Model) loadModelFromConfig(cfg *ini.File) error {
 
 		for _, key := range sec.Keys() {
 			if key.Name()[0] != secDef.keyPrefix {
-				return fmt.Errorf(invalidKeyPrefix, secDef.name, secDef.keyPrefix)
+				return fmt.Errorf(str.ERR_INVALID_KEY_PREFIX, secDef.name, secDef.keyPrefix)
 			}
 
 			secDef.handler(m, key.Name(), key.String())
@@ -132,10 +126,10 @@ func (m *Model) loadModelFromConfig(cfg *ini.File) error {
 func (m *Model) AddDef(sec byte, key string, value string) error {
 	secDef, ok := m.secMap[sec]
 	if !ok {
-		return fmt.Errorf(invalidSec, sec)
+		return fmt.Errorf(str.ERR_INVALID_SEC, sec)
 	}
 	if key[0] != secDef.keyPrefix {
-		return fmt.Errorf(invalidKeyPrefix, secDef.name, secDef.keyPrefix)
+		return fmt.Errorf(str.ERR_INVALID_KEY_PREFIX, secDef.name, secDef.keyPrefix)
 	}
 	if err := secDef.handler(m, key, value); err != nil {
 		return err
@@ -146,7 +140,7 @@ func (m *Model) AddDef(sec byte, key string, value string) error {
 func (m *Model) RemoveDef(sec byte, key string) error {
 	secDef, ok := m.secMap[sec]
 	if !ok {
-		return fmt.Errorf(invalidSec, sec)
+		return fmt.Errorf(str.ERR_INVALID_SEC, sec)
 	}
 	if err := secDef.removeHandler(m, key); err != nil {
 		return err
@@ -202,7 +196,7 @@ func (m *Model) BuildMatcher(key string) error {
 
 	defs, ok := m.mDefMap[key]
 	if !ok {
-		return fmt.Errorf(matcherNotFound, key)
+		return fmt.Errorf(str.ERR_MATCHER_NOT_FOUND, key)
 	}
 
 	pArgs := make([]string, 0)
@@ -264,7 +258,7 @@ func (m *Model) AddRule(rule []string) (bool, error) {
 	case 'g':
 		return m.AddRoleRule(key, rule[1:])
 	}
-	return false, fmt.Errorf(policyNotFound, key)
+	return false, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, key)
 }
 
 func (m *Model) RemoveRule(rule []string) (bool, error) {
@@ -276,13 +270,13 @@ func (m *Model) RemoveRule(rule []string) (bool, error) {
 	case 'g':
 		return m.RemoveRoleRule(key, rule[1:])
 	}
-	return false, fmt.Errorf(policyNotFound, key)
+	return false, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, key)
 }
 
 func (m *Model) AddPolicyRule(key string, rule types.Rule) (bool, error) {
 	policy, ok := m.pMap[key]
 	if !ok {
-		return false, fmt.Errorf(policyNotFound, key)
+		return false, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, key)
 	}
 	return policy.AddPolicy(rule), nil
 }
@@ -290,7 +284,7 @@ func (m *Model) AddPolicyRule(key string, rule types.Rule) (bool, error) {
 func (m *Model) RemovePolicyRule(key string, rule types.Rule) (bool, error) {
 	policy, ok := m.pMap[key]
 	if !ok {
-		return false, fmt.Errorf(policyNotFound, key)
+		return false, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, key)
 	}
 	return policy.RemovePolicy(rule), nil
 }
@@ -298,14 +292,14 @@ func (m *Model) RemovePolicyRule(key string, rule types.Rule) (bool, error) {
 func (m *Model) AddRoleRule(key string, rule types.Rule) (bool, error) {
 	rm, ok := m.rmMap[key]
 	if !ok {
-		return false, fmt.Errorf(rmNotFound, key)
+		return false, fmt.Errorf(str.ERR_RM_NOT_FOUND, key)
 	}
 	return rm.AddLink(rule[0], rule[1], rule[2:]...)
 }
 func (m *Model) RemoveRoleRule(key string, rule types.Rule) (bool, error) {
 	rm, ok := m.rmMap[key]
 	if !ok {
-		return false, fmt.Errorf(rmNotFound, key)
+		return false, fmt.Errorf(str.ERR_RM_NOT_FOUND, key)
 	}
 	return rm.DeleteLink(rule[0], rule[1], rule[2:]...)
 }
@@ -329,72 +323,35 @@ func (m *Model) SetRoleManager(key string, rm rbac.IRoleManager) {
 	m.fm.AddFunction(key, rbac.GenerateGFunction(rm))
 }
 
+func (m *Model) GetMatcher(key string) (*matcher.Matcher, bool) {
+	matcher, ok := m.mMap[key]
+	return matcher, ok
+}
+
+func (m *Model) SetMatcher(key string, matcher *matcher.Matcher) {
+	panic("not implemented")
+}
+
+func (m *Model) GetRequestDef(key string) (*defs.RequestDef, bool) {
+	def, ok := m.rMap[key]
+	return def, ok
+}
+
+func (m *Model) SetRequestDef(key string, def *defs.RequestDef) {
+	panic("not implemented")
+}
+
+func (m *Model) GetEffector(key string) (e.Effector, bool) {
+	effector, ok := m.eMap[key]
+	return effector, ok
+}
+
+func (m *Model) SetEffector(key string, eft e.Effector) {
+	panic("not implemented")
+}
+
 func (m *Model) RangeMatches(matcher *matcher.Matcher, rDef *defs.RequestDef, rvals []interface{}, fn func(rule types.Rule) bool) error {
 	return matcher.RangeMatches(*rDef, rvals, *m.fm, fn)
-}
-
-func (m *Model) RangeMatchesWithKeys(mKey string, rKey string, rvals []interface{}, fn func(rule types.Rule) bool) error {
-	matcher, mOk := m.mMap[mKey]
-	if !mOk {
-		return fmt.Errorf(matcherNotFound, mKey)
-	}
-	rDef, rOk := m.rMap[rKey]
-	if !rOk {
-		return fmt.Errorf(requestNotFound, rKey)
-	}
-
-	return m.RangeMatches(matcher, rDef, rvals, fn)
-}
-
-func (m *Model) Enforce(matcher *matcher.Matcher, rDef *defs.RequestDef, effector effector.Effector, rvals []interface{}) (bool, error) {
-	pDef := matcher.GetPolicy()
-	res := eft.Indeterminate
-	effects := []types.Effect{}
-	matches := []types.Rule{}
-
-	var eftErr error = nil
-	err := m.RangeMatches(matcher, rDef, rvals, func(rule types.Rule) bool {
-		effect := pDef.GetEft(rule)
-
-		effects = append(effects, effect)
-		matches = append(matches, rule)
-
-		res, _, eftErr = effector.MergeEffects(effects, matches, false)
-
-		if eftErr != nil || res != eft.Indeterminate {
-			return false
-		}
-		return true
-	})
-	if err != nil {
-		return false, err
-	}
-	if eftErr != nil {
-		return false, err
-	}
-
-	if res == eft.Indeterminate {
-		res, _, _ = effector.MergeEffects(effects, matches, true)
-	}
-
-	return res == eft.Allow, nil
-}
-
-func (m *Model) EnforceWithKeys(mKey string, rKey string, eKey string, rvals []interface{}) (bool, error) {
-	matcher, mOk := m.mMap[mKey]
-	if !mOk {
-		return false, fmt.Errorf(matcherNotFound, mKey)
-	}
-	rDef, rOk := m.rMap[rKey]
-	if !rOk {
-		return false, fmt.Errorf(requestNotFound, rKey)
-	}
-	effector, eOk := m.eMap[eKey]
-	if !eOk {
-		return false, fmt.Errorf(effectNotFound, eKey)
-	}
-
-	return m.Enforce(matcher, rDef, effector, rvals)
 }
 
 func (m *Model) AddFunction(name string, function govaluate.ExpressionFunction) {
