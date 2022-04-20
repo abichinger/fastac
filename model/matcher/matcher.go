@@ -3,6 +3,7 @@ package matcher
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"example.com/fastac/model/defs"
 	"example.com/fastac/model/fm"
@@ -198,6 +199,14 @@ func (m *Matcher) RangeMatches(rDef defs.RequestDef, rvals []interface{}, fMap f
 		level++
 	}
 	return nil
+}
+
+func (m *Matcher) String() string {
+	res := []string{}
+	for _, mDef := range m.matchers {
+		res = append(res, mDef.String())
+	}
+	return strings.Join(res, "\n")
 }
 
 func eval(expression string, functions map[string]govaluate.ExpressionFunction, parameters *MatchParameters) (interface{}, error) {

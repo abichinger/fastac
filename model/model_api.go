@@ -29,5 +29,8 @@ type IModel interface {
 
 	AddRule(rule []string) (bool, error)
 	RemoveRule(rule []string) (bool, error)
+
+	UpdateRule(oldRule []string, newRule []string)
+
 	ClearPolicy()
 }

@@ -19,6 +19,10 @@ var ArgReg = regexp.MustCompile(`([pr][0-9]*)(\.|_)([A-Za-z0-9_]+)`)
 var pArgReg = regexp.MustCompile(`(p[0-9]*)_([A-Za-z0-9_]+)`)
 var rArgReg = regexp.MustCompile(`(r[0-9]*)_([A-Za-z0-9_]+)`)
 
+type IDef interface {
+	String() string
+}
+
 type PolicyDef struct {
 	key      string
 	args     []string
@@ -87,13 +91,17 @@ func (def *PolicyDef) GetParameters(values, names []string) (types.Rule, error) 
 }
 
 func (def *PolicyDef) String() string {
-	return fmt.Sprintf("%s = %s", def.key, strings.Join(def.args, DefaultSep+" "))
+	return strings.Join(def.args, DefaultSep+" ")
 }
 
 type RequestDef struct {
 	key      string
 	args     []string
 	argIndex map[string]int
+}
+
+func (def *RequestDef) GetKey() string {
+	return def.key
 }
 
 func NewRequestDef(key, arguments string) *RequestDef {
@@ -133,7 +141,7 @@ func (def *RequestDef) GetParameters(values []interface{}, names []string) ([]in
 }
 
 func (def *RequestDef) String() string {
-	return fmt.Sprintf("%s = %s", def.key, strings.Join(def.args, DefaultSep+" "))
+	return strings.Join(def.args, DefaultSep+" ")
 }
 
 type MatcherDef struct {
@@ -204,12 +212,16 @@ func NewEffectDef(key, expr string) *EffectDef {
 	return def
 }
 
+func (def *EffectDef) GetKey() string {
+	return def.key
+}
+
 func (def *EffectDef) Expr() string {
 	return def.expr
 }
 
 func (def *EffectDef) String() string {
-	return fmt.Sprintf("%s = %s", def.key, def.expr)
+	return def.expr
 }
 
 type RoleDef struct {
@@ -224,6 +236,10 @@ func NewRoleDef(key, arguments string) *RoleDef {
 	return def
 }
 
+func (def *RoleDef) GetKey() string {
+	return def.key
+}
+
 func (def *RoleDef) NArgs() int {
 	return def.nargs
 }
@@ -233,5 +249,5 @@ func (def *RoleDef) String() string {
 	for i := 0; i < def.nargs; i++ {
 		args = append(args, DefaultRoleParty)
 	}
-	return fmt.Sprintf("%s = %s", def.key, strings.Join(args, DefaultSep))
+	return strings.Join(args, DefaultSep)
 }

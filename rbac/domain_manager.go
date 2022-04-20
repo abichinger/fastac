@@ -277,3 +277,7 @@ func (dm *DomainManager) rangeLinks(rmMap *sync.Map, fn func(name1, name2 string
 func (dm *DomainManager) Range(fn func(name1, name2 string, domain ...string) bool) {
 	dm.rangeLinks(dm.rmMap, fn)
 }
+
+func (dm *DomainManager) String() string {
+	return "_, _, _"
+}

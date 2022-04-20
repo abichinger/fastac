@@ -46,6 +46,8 @@ type IRoleManager interface {
 	SetDomainMatcher(fn MatchingFunc)
 
 	Range(fn func(name1, name2 string, domain ...string) bool)
+
+	String() string
 }
 
 // GenerateGFunction is the factory method of the g(_, _) function.

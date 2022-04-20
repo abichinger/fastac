@@ -2,6 +2,8 @@ package model
 
 import (
 	"fmt"
+	"reflect"
+	"sort"
 	"strings"
 
 	"example.com/fastac/model/defs"
@@ -37,9 +39,9 @@ func NewSectionDef(name string, keyPrefix byte, handler func(m *Model, key, valu
 var sections = []*SectionDef{
 	NewSectionDef("request_definition", 'r', addRequestDef, removeRequestDef),
 	NewSectionDef("policy_definition", 'p', addPolicyDef, removePolicyDef),
+	NewSectionDef("role_definition", 'g', addRoleDef, removeRoleDef),
 	NewSectionDef("policy_effect", 'e', addEffectDef, removeEffectDef),
 	NewSectionDef("matchers", 'm', addMatcherDef, removeMatcherDef),
-	NewSectionDef("role_definition", 'g', addRoleDef, removeRoleDef),
 }
 
 type Model struct {
@@ -48,9 +50,12 @@ type Model struct {
 	mMap    map[string]*matcher.Matcher
 	rmMap   map[string]rbac.IRoleManager
 	rMap    map[string]*defs.RequestDef
-	secDefs map[string]*SectionDef
-	secMap  map[byte]*SectionDef
 	eMap    map[string]effector.Effector
+
+	secMaps    map[byte]interface{}
+	secDefs    map[string]*SectionDef
+	secNameMap map[byte]string
+	//sec
 
 	fm *fm.FunctionMap
 }
@@ -64,13 +69,21 @@ func NewModel() *Model {
 	m.rMap = make(map[string]*defs.RequestDef)
 	m.eMap = make(map[string]effector.Effector)
 
+	m.secMaps = map[byte]interface{}{
+		'r': m.rMap,
+		'p': m.pMap,
+		'g': m.rmMap,
+		'e': m.eMap,
+		'm': m.mMap,
+	}
+
 	m.secDefs = make(map[string]*SectionDef)
-	m.secMap = make(map[byte]*SectionDef)
+	m.secNameMap = make(map[byte]string)
 	m.fm = fm.DefaultFunctionMap()
 
 	for _, sec := range sections {
 		m.secDefs[sec.name] = sec
-		m.secMap[sec.keyPrefix] = sec
+		m.secNameMap[sec.keyPrefix] = sec.name
 	}
 
 	return m
@@ -82,6 +95,35 @@ func NewModelFromFile(path string) (*Model, error) {
 		return nil, err
 	}
 	return m, nil
+}
+
+func (m *Model) getSecDefByName(name string) (*SectionDef, bool) {
+	sec, ok := m.secDefs[name]
+	return sec, ok
+}
+
+func (m *Model) getSecDefByKey(key byte) (*SectionDef, bool) {
+	name, nameOk := m.secNameMap[key]
+	if !nameOk {
+		return nil, nameOk
+	}
+	return m.getSecDefByName(name)
+}
+
+func (m *Model) getSecMap(key byte) (map[string]defs.IDef, bool) {
+	secMap, ok := m.secMaps[key]
+	if !ok {
+		return nil, ok
+	}
+
+	v := reflect.ValueOf(secMap)
+	res := make(map[string]defs.IDef)
+	for _, key := range v.MapKeys() {
+		value := v.MapIndex(key)
+		res[key.String()] = value.Interface().(defs.IDef)
+	}
+
+	return res, ok
 }
 
 // LoadModel loads the model from model CONF file.
@@ -106,7 +148,7 @@ func (m *Model) LoadModelFromText(text string) error {
 
 func (m *Model) loadModelFromConfig(cfg *ini.File) error {
 	for _, sec := range cfg.Sections() {
-		secDef, ok := m.secDefs[sec.Name()]
+		secDef, ok := m.getSecDefByName(sec.Name())
 		if !ok {
 			continue
 		}
@@ -124,7 +166,7 @@ func (m *Model) loadModelFromConfig(cfg *ini.File) error {
 }
 
 func (m *Model) AddDef(sec byte, key string, value string) error {
-	secDef, ok := m.secMap[sec]
+	secDef, ok := m.getSecDefByKey(sec)
 	if !ok {
 		return fmt.Errorf(str.ERR_INVALID_SEC, sec)
 	}
@@ -138,7 +180,7 @@ func (m *Model) AddDef(sec byte, key string, value string) error {
 }
 
 func (m *Model) RemoveDef(sec byte, key string) error {
-	secDef, ok := m.secMap[sec]
+	secDef, ok := m.getSecDefByKey(sec)
 	if !ok {
 		return fmt.Errorf(str.ERR_INVALID_SEC, sec)
 	}
@@ -356,4 +398,41 @@ func (m *Model) RangeMatches(matcher *matcher.Matcher, rDef *defs.RequestDef, rv
 
 func (m *Model) AddFunction(name string, function govaluate.ExpressionFunction) {
 	m.fm.AddFunction(name, function)
+}
+
+func (m *Model) RemoveFunction(name string) bool {
+	return m.fm.RemoveFunction(name)
+}
+
+func (m *Model) String() string {
+	res := ""
+	for _, sec := range sections {
+		secMap, ok := m.getSecMap(sec.keyPrefix)
+		if !ok || len(secMap) == 0 {
+			continue
+		}
+		res += fmt.Sprintf("[%s]\n", sec.name)
+
+		keys := []string{}
+		for key, _ := range secMap {
+			keys = append(keys, key)
+		}
+
+		sort.Strings(keys)
+
+		for _, key := range keys {
+			def := secMap[key]
+			switch def.(type) {
+			case *matcher.Matcher:
+				res += secMap[key].String()
+			default:
+				res += fmt.Sprintf("%s = %s", key, secMap[key].String()) + "\n"
+				break
+			}
+
+		}
+
+		res += "\n"
+	}
+	return res
 }

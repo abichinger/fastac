@@ -370,6 +370,7 @@ func (rm *testCustomRoleManager) SetMatcher(fn rbac.MatchingFunc)               
 func (rm *testCustomRoleManager) SetDomainMatcher(fn rbac.MatchingFunc)                     {}
 func (rm *testCustomRoleManager) CopyFrom(other rbac.IRoleManager)                          {}
 func (rm *testCustomRoleManager) Range(fn func(name1, name2 string, domain ...string) bool) {}
+func (rm *testCustomRoleManager) String() string                                            { return "" }
 
 func TestRBACModelWithCustomRoleManager(t *testing.T) {
 	e, _ := NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv")
