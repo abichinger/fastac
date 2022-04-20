@@ -1,6 +1,7 @@
 package model
 
 import (
+	"example.com/fastac/api"
 	"example.com/fastac/model/defs"
 	e "example.com/fastac/model/effector"
 	m "example.com/fastac/model/matcher"
@@ -8,10 +9,31 @@ import (
 	"example.com/fastac/rbac"
 )
 
-type IModel interface {
-	AddDef(sec byte, key string, value string) bool
-	RemoveDef(sec byte, key string) bool
+type IString interface {
+	String() string
+}
 
+type IClear interface {
+	Clear() error
+}
+
+type IRuleManagement interface {
+	IClear
+	api.IAddRule
+	api.IAddRules
+	api.IRemoveRule
+	api.IRemoveRules
+}
+
+type IAddDef interface {
+	AddDef(sec byte, key string, value string) bool
+}
+
+type IRemoveDef interface {
+	RemoveDef(sec byte, key string) bool
+}
+
+type IModel interface {
 	GetRoleManager(key string) (rbac.IRoleManager, bool)
 	SetRoleManager(key string, rm rbac.IRoleManager)
 
@@ -26,11 +48,6 @@ type IModel interface {
 
 	GetRequestDef(key string) (*defs.RequestDef, bool)
 	SetRequestDef(key string, def *defs.RequestDef)
-
-	AddRule(rule []string) (bool, error)
-	RemoveRule(rule []string) (bool, error)
-
-	UpdateRule(oldRule []string, newRule []string)
 
 	ClearPolicy()
 }

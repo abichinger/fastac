@@ -17,6 +17,12 @@ import (
 	"example.com/fastac/str"
 	"github.com/Knetic/govaluate"
 	"github.com/go-ini/ini"
+	em "github.com/vansante/go-event-emitter"
+)
+
+const (
+	RULE_ADDED   = "rule_added"
+	RULE_REMOVED = "rule_removed"
 )
 
 type SectionDef struct {
@@ -58,6 +64,7 @@ type Model struct {
 	//sec
 
 	fm *fm.FunctionMap
+	*em.Emitter
 }
 
 func NewModel() *Model {
@@ -85,6 +92,8 @@ func NewModel() *Model {
 		m.secDefs[sec.name] = sec
 		m.secNameMap[sec.keyPrefix] = sec.name
 	}
+
+	m.Emitter = em.NewEmitter(false)
 
 	return m
 }
