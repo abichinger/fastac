@@ -436,3 +436,20 @@ func (m *Model) String() string {
 	}
 	return res
 }
+
+func (m *Model) RangeRules(fn func(rule []string) bool) {
+	for pKey, p := range m.pMap {
+		ruleKey := []string{pKey}
+		p.Range(func(hash string, rule types.Rule) bool {
+			return fn(append(ruleKey, rule...))
+		})
+	}
+	for gKey, rm := range m.rmMap {
+		ruleKey := []string{gKey}
+		rm.Range(func(name1, name2 string, domain ...string) bool {
+			rule := append(ruleKey, name1)
+			rule = append(rule, name2)
+			return fn(append(rule, domain...))
+		})
+	}
+}
