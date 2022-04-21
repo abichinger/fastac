@@ -1,4 +1,4 @@
-module example.com/fastac
+module github.com/abichinger/fastac
 
 go 1.17
 

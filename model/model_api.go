@@ -1,12 +1,12 @@
 package model
 
 import (
-	"example.com/fastac/api"
-	"example.com/fastac/model/defs"
-	e "example.com/fastac/model/effector"
-	m "example.com/fastac/model/matcher"
-	p "example.com/fastac/model/policy"
-	"example.com/fastac/rbac"
+	"github.com/abichinger/fastac/api"
+	"github.com/abichinger/fastac/model/defs"
+	e "github.com/abichinger/fastac/model/effector"
+	m "github.com/abichinger/fastac/model/matcher"
+	p "github.com/abichinger/fastac/model/policy"
+	"github.com/abichinger/fastac/rbac"
 )
 
 type IString interface {

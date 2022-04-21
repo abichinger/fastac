@@ -18,7 +18,7 @@ import (
 	"strings"
 	"sync"
 
-	"example.com/fastac/util"
+	"github.com/abichinger/fastac/util"
 )
 
 const REDUNDANT_ROLE = "redundant_role"

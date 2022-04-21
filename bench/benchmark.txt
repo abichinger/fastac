@@ -1,6 +1,6 @@
 goos: linux
 goarch: amd64
-pkg: example.com/fastac
+pkg: github.com/abichinger/fastac
 cpu: AMD Ryzen 5 3600 6-Core Processor              
 BenchmarkRBAC/size=Large(100000)/enforcer=casbin-12         	     276	   4162842 ns/op	 1131316 B/op	   30143 allocs/op
 BenchmarkRBAC/size=Large(100000)/enforcer=fastac-12         	     480	   2457399 ns/op	  324768 B/op	   20123 allocs/op
@@ -39,4 +39,4 @@ BenchmarkABAC/size=Small(10)/enforcer=casbin-12                       	    4704	
 BenchmarkABAC/size=Small(10)/enforcer=fastac-12                       	   15421	     83119 ns/op	   17114 B/op	     475 allocs/op
 BenchmarkABAC/size=Small(10)/enforcer=fastac-index-12                 	   13989	     80703 ns/op	   17164 B/op	     493 allocs/op
 PASS
-ok  	example.com/fastac	66.935s
+ok  	github.com/abichinger/fastac	66.935s

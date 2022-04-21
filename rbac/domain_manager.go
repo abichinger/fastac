@@ -4,7 +4,7 @@ import (
 	"strings"
 	"sync"
 
-	"example.com/fastac/util"
+	"github.com/abichinger/fastac/util"
 )
 
 const defaultDomain string = "RoleManager"

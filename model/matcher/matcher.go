@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"strings"
 
-	"example.com/fastac/model/defs"
-	"example.com/fastac/model/fm"
-	p "example.com/fastac/model/policy"
-	"example.com/fastac/model/types"
-	"example.com/fastac/util"
 	"github.com/Knetic/govaluate"
+	"github.com/abichinger/fastac/model/defs"
+	"github.com/abichinger/fastac/model/fm"
+	p "github.com/abichinger/fastac/model/policy"
+	"github.com/abichinger/fastac/model/types"
+	"github.com/abichinger/fastac/util"
 )
 
 type MatcherNode struct {

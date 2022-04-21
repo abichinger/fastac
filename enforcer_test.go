@@ -19,9 +19,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"example.com/fastac/model/types"
-	"example.com/fastac/rbac"
-	"example.com/fastac/util"
+	"github.com/abichinger/fastac/model/types"
+	"github.com/abichinger/fastac/rbac"
+	"github.com/abichinger/fastac/util"
 )
 
 func testEnforce(t *testing.T, e *Enforcer, sub interface{}, obj interface{}, act string, res bool) {

@@ -3,10 +3,10 @@ package matcher
 import (
 	"testing"
 
-	"example.com/fastac/model/defs"
-	"example.com/fastac/model/fm"
-	"example.com/fastac/model/policy"
-	"example.com/fastac/model/types"
+	"github.com/abichinger/fastac/model/defs"
+	"github.com/abichinger/fastac/model/fm"
+	"github.com/abichinger/fastac/model/policy"
+	"github.com/abichinger/fastac/model/types"
 )
 
 func TestMatcher(t *testing.T) {

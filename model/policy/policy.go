@@ -1,8 +1,8 @@
 package policy
 
 import (
-	"example.com/fastac/model/defs"
-	"example.com/fastac/model/types"
+	"github.com/abichinger/fastac/model/defs"
+	"github.com/abichinger/fastac/model/types"
 	em "github.com/vansante/go-event-emitter"
 )
 

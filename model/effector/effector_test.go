@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"example.com/fastac/model/eft"
-	"example.com/fastac/model/types"
+	"github.com/abichinger/fastac/model/eft"
+	"github.com/abichinger/fastac/model/types"
 )
 
 func genEffects(effects []types.Effect, n int) ([]types.Effect, []types.Rule) {

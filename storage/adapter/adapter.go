@@ -4,7 +4,7 @@ import (
 	"encoding/csv"
 	"strings"
 
-	"example.com/fastac/api"
+	"github.com/abichinger/fastac/api"
 )
 
 // Adapter is the interface for Casbin adapters.

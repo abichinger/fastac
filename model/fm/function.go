@@ -1,8 +1,8 @@
 package fm
 
 import (
-	"example.com/fastac/util"
 	"github.com/Knetic/govaluate"
+	"github.com/abichinger/fastac/util"
 )
 
 type FunctionMap struct {

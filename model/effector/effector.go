@@ -14,7 +14,7 @@
 
 package effector
 
-import "example.com/fastac/model/types"
+import "github.com/abichinger/fastac/model/types"
 
 // Effector is the interface for Casbin effectors.
 type Effector interface {

@@ -1,8 +1,8 @@
 package fastac
 
 import (
-	"example.com/fastac/adapter"
-	"example.com/fastac/model"
+	"github.com/abichinger/fastac/model"
+	"github.com/abichinger/fastac/storage/adapter"
 )
 
 type IEnforcer interface {

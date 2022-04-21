@@ -1,6 +1,6 @@
 package eft
 
-import "example.com/fastac/model/types"
+import "github.com/abichinger/fastac/model/types"
 
 // Values for policy effect.
 const (

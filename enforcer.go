@@ -3,14 +3,14 @@ package fastac
 import (
 	"fmt"
 
-	"example.com/fastac/adapter"
-	"example.com/fastac/model"
-	"example.com/fastac/model/defs"
-	"example.com/fastac/model/effector"
-	"example.com/fastac/model/eft"
-	"example.com/fastac/model/matcher"
-	"example.com/fastac/model/types"
-	"example.com/fastac/str"
+	"github.com/abichinger/fastac/model"
+	"github.com/abichinger/fastac/model/defs"
+	"github.com/abichinger/fastac/model/effector"
+	"github.com/abichinger/fastac/model/eft"
+	"github.com/abichinger/fastac/model/matcher"
+	"github.com/abichinger/fastac/model/types"
+	"github.com/abichinger/fastac/storage/adapter"
+	"github.com/abichinger/fastac/str"
 )
 
 type Enforcer struct {

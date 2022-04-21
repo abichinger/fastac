@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"example.com/fastac/model/eft"
-	"example.com/fastac/model/types"
 	"github.com/Knetic/govaluate"
+	"github.com/abichinger/fastac/model/eft"
+	"github.com/abichinger/fastac/model/types"
 )
 
 const DefaultSep = ","

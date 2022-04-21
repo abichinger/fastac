@@ -5,7 +5,7 @@ import (
 	"errors"
 	"os"
 
-	"example.com/fastac/api"
+	"github.com/abichinger/fastac/api"
 )
 
 type FileAdapter struct {
@@ -31,7 +31,7 @@ func (a *FileAdapter) LoadPolicy(model api.IAddRuleBool) error {
 	return scanner.Err()
 }
 
-func (a *FileAdapter) SavePolicy(model *api.IRangeRules) error {
+func (a *FileAdapter) SavePolicy(model api.IRangeRules) error {
 	return errors.New("not implemented")
 }
 

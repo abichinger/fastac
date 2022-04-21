@@ -3,7 +3,7 @@ package policy
 import (
 	"testing"
 
-	"example.com/fastac/util"
+	"github.com/abichinger/fastac/util"
 	"github.com/stretchr/testify/assert"
 )
 

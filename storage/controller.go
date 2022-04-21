@@ -1,9 +1,9 @@
 package storage
 
 import (
-	"example.com/fastac/api"
-	"example.com/fastac/model"
-	"example.com/fastac/storage/adapter"
+	"github.com/abichinger/fastac/api"
+	"github.com/abichinger/fastac/model"
+	"github.com/abichinger/fastac/storage/adapter"
 	eventemitter "github.com/vansante/go-event-emitter"
 )
 
