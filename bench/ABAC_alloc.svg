@@ -5,8 +5,8 @@
 	xmlns:xlink="http://www.w3.org/1999/xlink">
 <g transform="scale(1, -1) translate(0, -280)">
 <path d="M0,0L560,0L560,280L0,280Z" style="fill:#FFFFFF" />
-<text x="235.67" y="-268.45" transform="scale(1, -1)"
-	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">BenchmarkABAC</text>
+<text x="219.18" y="-268.45" transform="scale(1, -1)"
+	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">ABAC-Benchmark Alloc</text>
 <text x="311.45" y="-3.8613" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">size</text>
 <text x="101.67" y="-15.602" transform="scale(1, -1)"
@@ -31,9 +31,9 @@
 <path d="M47.916,100.67L55.916,100.67" style="fill:none;stroke:#000000;stroke-width:0.5" />
 <path d="M47.916,171.11L55.916,171.11" style="fill:none;stroke:#000000;stroke-width:0.5" />
 <path d="M47.916,241.55L55.916,241.55" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M51.916,47.841L55.916,47.841" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M51.916,65.451L55.916,65.451" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M51.916,83.061L55.916,83.061" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M51.916,47.84L55.916,47.84" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M51.916,65.45L55.916,65.45" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M51.916,83.06L55.916,83.06" style="fill:none;stroke:#000000;stroke-width:0.5" />
 <path d="M51.916,118.28L55.916,118.28" style="fill:none;stroke:#000000;stroke-width:0.5" />
 <path d="M51.916,135.89L55.916,135.89" style="fill:none;stroke:#000000;stroke-width:0.5" />
 <path d="M51.916,153.5L55.916,153.5" style="fill:none;stroke:#000000;stroke-width:0.5" />
@@ -52,13 +52,13 @@
 <path d="M335.78,30.23L335.78,37.459L365.78,37.459L365.78,30.23Z" style="fill:#5A9BD4" />
 <path d="M530,30.23L530,31.099L560,31.099L560,30.23Z" style="fill:#5A9BD4" />
 <path d="M540,252.81L540,264.58L560,264.58L560,252.81Z" style="fill:#F15A60" />
-<text x="506.34" y="-253.03" transform="scale(1, -1)"
-	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">casbin</text>
+<text x="503.67" y="-253.03" transform="scale(1, -1)"
+	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">Casbin</text>
 <path d="M540,241.03L540,252.81L560,252.81L560,241.03Z" style="fill:#7AC36A" />
-<text x="509.02" y="-241.25" transform="scale(1, -1)"
-	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">fastac</text>
+<text x="500.33" y="-241.25" transform="scale(1, -1)"
+	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">FastAC</text>
 <path d="M540,229.25L540,241.03L560,241.03L560,229.25Z" style="fill:#5A9BD4" />
-<text x="478.37" y="-229.47" transform="scale(1, -1)"
-	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">fastac-index</text>
+<text x="469.67" y="-229.47" transform="scale(1, -1)"
+	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">FastAC-index</text>
 </g>
 </svg>

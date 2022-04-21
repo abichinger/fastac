@@ -41,13 +41,13 @@
 <path d="M327.03,30.23L327.03,264.58L357.03,264.58L357.03,30.23Z" style="fill:#5A9BD4" />
 <path d="M530,30.23L530,264.58L560,264.58L560,30.23Z" style="fill:#5A9BD4" />
 <path d="M540,252.81L540,264.58L560,264.58L560,252.81Z" style="fill:#F15A60" />
-<text x="506.34" y="-253.03" transform="scale(1, -1)"
-	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">casbin</text>
+<text x="503.67" y="-253.03" transform="scale(1, -1)"
+	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">Casbin</text>
 <path d="M540,241.03L540,252.81L560,252.81L560,241.03Z" style="fill:#7AC36A" />
-<text x="509.02" y="-241.25" transform="scale(1, -1)"
-	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">fastac</text>
+<text x="500.33" y="-241.25" transform="scale(1, -1)"
+	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">FastAC</text>
 <path d="M540,229.25L540,241.03L560,241.03L560,229.25Z" style="fill:#5A9BD4" />
-<text x="478.37" y="-229.47" transform="scale(1, -1)"
-	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">fastac-index</text>
+<text x="469.67" y="-229.47" transform="scale(1, -1)"
+	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">FastAC-index</text>
 </g>
 </svg>

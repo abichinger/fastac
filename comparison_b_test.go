@@ -158,9 +158,9 @@ func BenchmarkRBAC(b *testing.B) {
 		model string
 		init  func(model string) RulesAPI
 	}{
-		{name: "casbin", model: "examples/rbac_model.conf", init: NewRulesAPICasbinEnforcer},
-		{name: "fastac", model: "examples/rbac_model.conf", init: NewRulesAPIEnforcer},
-		{name: "fastac-index", model: "examples/rbac_model_index.conf", init: NewRulesAPIEnforcer},
+		{name: "Casbin", model: "examples/rbac_model.conf", init: NewRulesAPICasbinEnforcer},
+		{name: "FastAC", model: "examples/rbac_model.conf", init: NewRulesAPIEnforcer},
+		{name: "FastAC-index", model: "examples/rbac_model_index.conf", init: NewRulesAPIEnforcer},
 	}
 
 	for _, bm := range benchmarks {
@@ -198,9 +198,9 @@ func BenchmarkAddPolicy(b *testing.B) {
 		model string
 		init  func(model string) RulesAPI
 	}{
-		{name: "casbin", model: "examples/rbac_model.conf", init: NewRulesAPICasbinEnforcer},
-		{name: "fastac", model: "examples/rbac_model.conf", init: NewRulesAPIEnforcer},
-		{name: "fastac-index", model: "examples/rbac_model_index.conf", init: NewRulesAPIEnforcer},
+		{name: "Casbin", model: "examples/rbac_model.conf", init: NewRulesAPICasbinEnforcer},
+		{name: "FastAC", model: "examples/rbac_model.conf", init: NewRulesAPIEnforcer},
+		{name: "FastAC-index", model: "examples/rbac_model_index.conf", init: NewRulesAPIEnforcer},
 	}
 
 	for _, bm := range benchmarks {
@@ -238,9 +238,9 @@ func BenchmarkRemovePolicy(b *testing.B) {
 		model string
 		init  func(model string) RulesAPI
 	}{
-		{name: "casbin", model: "examples/rbac_model.conf", init: NewRulesAPICasbinEnforcer},
-		{name: "fastac", model: "examples/rbac_model.conf", init: NewRulesAPIEnforcer},
-		{name: "fastac-index", model: "examples/rbac_model_index.conf", init: NewRulesAPIEnforcer},
+		{name: "Casbin", model: "examples/rbac_model.conf", init: NewRulesAPICasbinEnforcer},
+		{name: "FastAC", model: "examples/rbac_model.conf", init: NewRulesAPIEnforcer},
+		{name: "FastAC-index", model: "examples/rbac_model_index.conf", init: NewRulesAPIEnforcer},
 	}
 
 	for _, bm := range benchmarks {
@@ -285,9 +285,9 @@ func BenchmarkABAC(b *testing.B) {
 		model string
 		init  func(model string) RulesAPI
 	}{
-		{name: "casbin", model: "examples/abac_rule_model.conf", init: NewRulesAPICasbinEnforcer},
-		{name: "fastac", model: "examples/abac_rule_model.conf", init: NewRulesAPIEnforcer},
-		{name: "fastac-index", model: "examples/abac_rule_model_index.conf", init: NewRulesAPIEnforcer},
+		{name: "Casbin", model: "examples/abac_rule_model.conf", init: NewRulesAPICasbinEnforcer},
+		{name: "FastAC", model: "examples/abac_rule_model.conf", init: NewRulesAPIEnforcer},
+		{name: "FastAC-index", model: "examples/abac_rule_model_index.conf", init: NewRulesAPIEnforcer},
 	}
 
 	for _, bm := range benchmarks {

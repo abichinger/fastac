@@ -5,8 +5,8 @@
 	xmlns:xlink="http://www.w3.org/1999/xlink">
 <g transform="scale(1, -1) translate(0, -280)">
 <path d="M0,0L560,0L560,280L0,280Z" style="fill:#FFFFFF" />
-<text x="236" y="-268.45" transform="scale(1, -1)"
-	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">BenchmarkRBAC</text>
+<text x="234.01" y="-268.45" transform="scale(1, -1)"
+	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">RBAC-Benchmark</text>
 <text x="316.45" y="-3.8613" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">size</text>
 <text x="106.67" y="-15.602" transform="scale(1, -1)"
@@ -16,38 +16,38 @@
 <text x="490" y="-15.602" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:10px">Small(1000)</text>
 <g transform="rotate(90)">
-<text x="134.41" y="11.555" transform="scale(1, -1)"
+<text x="132.94" y="11.555" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">ns/op</text>
 </g>
 <text x="45.416" y="-25.509" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:10px">0</text>
-<text x="15.416" y="-138.1" transform="scale(1, -1)"
+<text x="15.416" y="-140.23" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:10px">2000000</text>
-<text x="15.416" y="-250.69" transform="scale(1, -1)"
+<text x="15.416" y="-254.96" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:10px">4000000</text>
 <path d="M52.916,30.23L60.916,30.23" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M52.916,142.82L60.916,142.82" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M52.916,255.42L60.916,255.42" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M56.916,86.527L60.916,86.527" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M56.916,199.12L60.916,199.12" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M60.916,30.23L60.916,264.58" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M91.563,30.23L91.563,264.58L121.56,264.58L121.56,30.23Z" style="fill:#F15A60" />
-<path d="M280.78,30.23L280.78,71.851L310.78,71.851L310.78,30.23Z" style="fill:#F15A60" />
-<path d="M470,30.23L470,36.039L500,36.039L500,30.23Z" style="fill:#F15A60" />
-<path d="M121.56,30.23L121.56,168.57L151.56,168.57L151.56,30.23Z" style="fill:#7AC36A" />
-<path d="M310.78,30.23L310.78,48.114L340.78,48.114L340.78,30.23Z" style="fill:#7AC36A" />
-<path d="M500,30.23L500,33.887L530,33.887L530,30.23Z" style="fill:#7AC36A" />
-<path d="M151.56,30.23L151.56,43.966L181.56,43.966L181.56,30.23Z" style="fill:#5A9BD4" />
-<path d="M340.78,30.23L340.78,33.473L370.78,33.473L370.78,30.23Z" style="fill:#5A9BD4" />
-<path d="M530,30.23L530,31.903L560,31.903L560,30.23Z" style="fill:#5A9BD4" />
+<path d="M52.916,144.95L60.916,144.95" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M52.916,259.68L60.916,259.68" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M56.916,87.592L60.916,87.592" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M56.916,202.32L60.916,202.32" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M60.916,30.23L60.916,261.64" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M91.563,30.23L91.563,261.64L121.56,261.64L121.56,30.23Z" style="fill:#F15A60" />
+<path d="M280.78,30.23L280.78,71.054L310.78,71.054L310.78,30.23Z" style="fill:#F15A60" />
+<path d="M470,30.23L470,36.927L500,36.927L500,30.23Z" style="fill:#F15A60" />
+<path d="M121.56,30.23L121.56,159.57L151.56,159.57L151.56,30.23Z" style="fill:#7AC36A" />
+<path d="M310.78,30.23L310.78,50.48L340.78,50.48L340.78,30.23Z" style="fill:#7AC36A" />
+<path d="M500,30.23L500,34.336L530,34.336L530,30.23Z" style="fill:#7AC36A" />
+<path d="M151.56,30.23L151.56,43.546L181.56,43.546L181.56,30.23Z" style="fill:#5A9BD4" />
+<path d="M340.78,30.23L340.78,33.953L370.78,33.953L370.78,30.23Z" style="fill:#5A9BD4" />
+<path d="M530,30.23L530,32.029L560,32.029L560,30.23Z" style="fill:#5A9BD4" />
 <path d="M540,252.81L540,264.58L560,264.58L560,252.81Z" style="fill:#F15A60" />
-<text x="506.34" y="-253.03" transform="scale(1, -1)"
-	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">casbin</text>
+<text x="503.67" y="-253.03" transform="scale(1, -1)"
+	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">Casbin</text>
 <path d="M540,241.03L540,252.81L560,252.81L560,241.03Z" style="fill:#7AC36A" />
-<text x="509.02" y="-241.25" transform="scale(1, -1)"
-	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">fastac</text>
+<text x="500.33" y="-241.25" transform="scale(1, -1)"
+	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">FastAC</text>
 <path d="M540,229.25L540,241.03L560,241.03L560,229.25Z" style="fill:#5A9BD4" />
-<text x="478.37" y="-229.47" transform="scale(1, -1)"
-	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">fastac-index</text>
+<text x="469.67" y="-229.47" transform="scale(1, -1)"
+	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">FastAC-index</text>
 </g>
 </svg>
