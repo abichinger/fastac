@@ -27,15 +27,21 @@ func (m *ModelMock) RangeRules(fn func(rule []string) bool) {
 func testSavePolicy(t *testing.T, adapter Adapter, rules [][]string) {
 	save := &ModelMock{rules}
 	load := &ModelMock{}
-	adapter.SavePolicy(save)
-	adapter.LoadPolicy(load)
+	if err := adapter.SavePolicy(save); err != nil {
+		t.Error(err.Error())
+	}
+	if err := adapter.LoadPolicy(load); err != nil {
+		t.Error(err.Error())
+	}
 
 	assert.ElementsMatch(t, util.Join2D(save.rules, ","), util.Join2D(load.rules, ","))
 }
 
 func testLoadPolicy(t *testing.T, adapter Adapter, expected [][]string) {
 	load := &ModelMock{}
-	adapter.LoadPolicy(load)
+	if err := adapter.LoadPolicy(load); err != nil {
+		t.Error(err.Error())
+	}
 
 	assert.ElementsMatch(t, util.Join2D(expected, ","), util.Join2D(load.rules, ","))
 }

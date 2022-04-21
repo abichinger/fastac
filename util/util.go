@@ -1,6 +1,10 @@
 package util
 
-import "strings"
+import (
+	"errors"
+	"os"
+	"strings"
+)
 
 func Join2D(elems [][]string, sep string) []string {
 	res := []string{}
@@ -8,4 +12,14 @@ func Join2D(elems [][]string, sep string) []string {
 		res = append(res, strings.Join(elem, sep))
 	}
 	return res
+}
+
+func FileExists(path string) (bool, error) {
+	var err error
+	if _, err = os.Stat(path); err == nil {
+		return true, nil
+	} else if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	return false, err
 }

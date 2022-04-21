@@ -23,7 +23,7 @@ type IRemoveRuleBool interface {
 }
 
 type IRemoveRules interface {
-	RemoveRules(rule [][]string) error
+	RemoveRules(rules [][]string) error
 }
 
 type IAddListener interface {
