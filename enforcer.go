@@ -30,6 +30,8 @@ import (
 	"github.com/abichinger/fastac/str"
 )
 
+const tmpMatcherKey = "m999"
+
 type Enforcer struct {
 	model   *m.Model
 	adapter a.Adapter
@@ -63,42 +65,36 @@ func OptionStorage(enable bool) Option {
 func NewEnforcer(model interface{}, adapter interface{}, options ...Option) (*Enforcer, error) {
 	e := &Enforcer{}
 
-	switch model.(type) {
+	switch m2 := model.(type) {
 	case string:
 		if m, err := m.NewModelFromFile(model.(string)); err != nil {
 			return nil, err
 		} else {
 			e.model = m
 		}
-		break
 	case m.Model:
-		m2 := model.(m.Model)
 		e.model = &m2
-		break
 	case *m.Model:
-		e.model = model.(*m.Model)
-		break
+		e.model = m2
 	default:
 		return nil, errors.New(str.ERR_INVALID_MODEL)
 	}
 
-	var a2 a.Adapter
-	switch adapter.(type) {
+	var a3 a.Adapter
+	switch a2 := adapter.(type) {
 	case string:
-		a2 := a.NewFileAdapter(adapter.(string))
-		if err := a2.LoadPolicy(e.model); err != nil {
+		a3 := a.NewFileAdapter(a2)
+		if err := a3.LoadPolicy(e.model); err != nil {
 			return nil, err
 		}
-		break
 	case a.Adapter:
-		a2 = adapter.(a.Adapter)
-		break
+		a3 = a2
 	default:
-		a2 = &a.NoopAdapter{}
+		a3 = &a.NoopAdapter{}
 		options = append(options, OptionStorage(false))
 	}
 
-	e.SetAdapter(a2)
+	e.SetAdapter(a3)
 
 	for _, option := range options {
 		if err := option(e); err != nil {
@@ -135,8 +131,8 @@ func (e *Enforcer) SavePolicy() error {
 	return e.adapter.SavePolicy(e.model)
 }
 
-func (e *Enforcer) Flush() {
-	e.sc.Flush()
+func (e *Enforcer) Flush() error {
+	return e.sc.Flush()
 }
 
 func (e *Enforcer) AddRule(rule []string) (bool, error) {
@@ -150,8 +146,12 @@ func (e *Enforcer) RemoveRule(rule []string) (bool, error) {
 func (e *Enforcer) AddRules(rules [][]string) error {
 	if e.sc.AutosaveEnabled() {
 		e.sc.DisableAutosave()
-		defer e.sc.EnableAutosave()
-		defer e.sc.Flush()
+		defer func() {
+			e.sc.EnableAutosave()
+			if err := e.sc.Flush(); err != nil {
+				panic(err)
+			}
+		}()
 	}
 	for _, rule := range rules {
 		if _, err := e.model.AddRule(rule); err != nil {
@@ -164,8 +164,12 @@ func (e *Enforcer) AddRules(rules [][]string) error {
 func (e *Enforcer) RemoveRules(rules [][]string) error {
 	if e.sc.AutosaveEnabled() {
 		e.sc.DisableAutosave()
-		defer e.sc.EnableAutosave()
-		defer e.sc.Flush()
+		defer func() {
+			e.sc.EnableAutosave()
+			if err := e.sc.Flush(); err != nil {
+				panic(err)
+			}
+		}()
 	}
 	for _, rule := range rules {
 		if _, err := e.model.RemoveRule(rule); err != nil {
@@ -173,6 +177,20 @@ func (e *Enforcer) RemoveRules(rules [][]string) error {
 		}
 	}
 	return nil
+}
+
+func (e *Enforcer) setTempMatcher(matcher string) error {
+	if err := e.model.AddDef('m', tmpMatcherKey, matcher); err != nil {
+		return err
+	}
+	if err := e.model.BuildMatcher(tmpMatcherKey); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (e *Enforcer) removeTempMatcher() error {
+	return e.model.RemoveDef('m', tmpMatcherKey)
 }
 
 func (e *Enforcer) Enforce(rvals ...interface{}) (bool, error) {
@@ -184,11 +202,15 @@ func (e *Enforcer) EnforceWithMatcher(matcher string, rvals ...interface{}) (boo
 }
 
 func (e *Enforcer) EnforceWithMatcherAndKeys(matcher string, rKey string, eKey string, rvals ...interface{}) (bool, error) {
-	mKey := "m9999"
-	e.model.AddDef('m', mKey, matcher)
-	e.model.BuildMatcher(mKey)
-	defer e.model.RemoveDef('m', mKey)
-	return e.EnforceWithKeys(mKey, rKey, eKey, rvals...)
+	if err := e.setTempMatcher(matcher); err != nil {
+		return false, err
+	}
+	defer func() {
+		if err := e.removeTempMatcher(); err != nil {
+			panic(err)
+		}
+	}()
+	return e.EnforceWithKeys(tmpMatcherKey, rKey, eKey, rvals...)
 }
 
 func (e *Enforcer) EnforceWithKeys(mKey string, rKey string, eKey string, rvals ...interface{}) (bool, error) {
@@ -217,11 +239,15 @@ func (e *Enforcer) FilterWithMatcher(matcher string, rvals ...interface{}) ([]ty
 }
 
 func (e *Enforcer) FilterWithMatcherAndKeys(matcher string, rKey string, rvals ...interface{}) ([]types.Rule, error) {
-	mKey := "m9999"
-	e.model.AddDef('m', mKey, matcher)
-	e.model.BuildMatcher(mKey)
-	defer e.model.RemoveDef('m', mKey)
-	return e.FilterWithKeys(mKey, rKey, rvals...)
+	if err := e.setTempMatcher(matcher); err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := e.removeTempMatcher(); err != nil {
+			panic(err)
+		}
+	}()
+	return e.FilterWithKeys(tmpMatcherKey, rKey, rvals...)
 }
 
 func (e *Enforcer) FilterWithKeys(mKey string, rKey string, rvals ...interface{}) ([]types.Rule, error) {

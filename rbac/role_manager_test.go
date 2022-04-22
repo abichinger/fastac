@@ -63,14 +63,32 @@ func testPrintRolesWithDomain(t *testing.T, rm IRoleManager, name string, domain
 	assert.ElementsMatch(t, myRes, res)
 }
 
+func testAddLink(t *testing.T, rm IRoleManager, expected bool, name1 string, name2 string, domains ...string) {
+	t.Helper()
+	b, err := rm.AddLink(name1, name2, domains...)
+	if err != nil {
+		t.Error(err.Error())
+	}
+	assert.Equal(t, expected, b)
+}
+
+func testDeleteLink(t *testing.T, rm IRoleManager, expected bool, name1 string, name2 string, domains ...string) {
+	t.Helper()
+	b, err := rm.DeleteLink(name1, name2, domains...)
+	if err != nil {
+		t.Error(err.Error())
+	}
+	assert.Equal(t, expected, b)
+}
+
 func TestRole(t *testing.T) {
 	rm := NewRoleManager(3)
-	_, _ = rm.AddLink("u1", "g1")
-	_, _ = rm.AddLink("u2", "g1")
-	_, _ = rm.AddLink("u3", "g2")
-	_, _ = rm.AddLink("u4", "g2")
-	_, _ = rm.AddLink("u4", "g3")
-	_, _ = rm.AddLink("g1", "g3")
+	testAddLink(t, rm, true, "u1", "g1")
+	testAddLink(t, rm, true, "u2", "g1")
+	testAddLink(t, rm, true, "u3", "g2")
+	testAddLink(t, rm, true, "u4", "g2")
+	testAddLink(t, rm, true, "u4", "g3")
+	testAddLink(t, rm, true, "g1", "g3")
 
 	// Current role inheritance tree:
 	//             g3    g2
@@ -100,8 +118,8 @@ func TestRole(t *testing.T) {
 	testPrintRoles(t, rm, "g2", []string{})
 	testPrintRoles(t, rm, "g3", []string{})
 
-	_, _ = rm.DeleteLink("g1", "g3")
-	_, _ = rm.DeleteLink("u4", "g2")
+	testDeleteLink(t, rm, true, "g1", "g3")
+	testDeleteLink(t, rm, true, "u4", "g2")
 
 	// Current role inheritance tree after deleting the links:
 	//             g3    g2
@@ -134,12 +152,12 @@ func TestRole(t *testing.T) {
 
 func TestDomainRole(t *testing.T) {
 	rm := NewDomainManager(10)
-	_, _ = rm.AddLink("u1", "g1", "domain1")
-	_, _ = rm.AddLink("u2", "g1", "domain1")
-	_, _ = rm.AddLink("u3", "admin", "domain2")
-	_, _ = rm.AddLink("u4", "admin", "domain2")
-	_, _ = rm.AddLink("u4", "admin", "domain1")
-	_, _ = rm.AddLink("g1", "admin", "domain1")
+	testAddLink(t, rm, true, "u1", "g1", "domain1")
+	testAddLink(t, rm, true, "u2", "g1", "domain1")
+	testAddLink(t, rm, true, "u3", "admin", "domain2")
+	testAddLink(t, rm, true, "u4", "admin", "domain2")
+	testAddLink(t, rm, true, "u4", "admin", "domain1")
+	testAddLink(t, rm, true, "g1", "admin", "domain1")
 
 	// Current role inheritance tree:
 	//       domain1:admin    domain2:admin
@@ -168,8 +186,8 @@ func TestDomainRole(t *testing.T) {
 	testDomainRole(t, rm, true, "u4", "admin", "domain1")
 	testDomainRole(t, rm, true, "u4", "admin", "domain2")
 
-	_, _ = rm.DeleteLink("g1", "admin", "domain1")
-	_, _ = rm.DeleteLink("u4", "admin", "domain2")
+	testDeleteLink(t, rm, true, "g1", "admin", "domain1")
+	testDeleteLink(t, rm, true, "u4", "admin", "domain2")
 
 	// Current role inheritance tree after deleting the links:
 	//       domain1:admin    domain2:admin
@@ -201,12 +219,12 @@ func TestDomainRole(t *testing.T) {
 
 func TestClear(t *testing.T) {
 	rm := NewRoleManager(3)
-	_, _ = rm.AddLink("u1", "g1")
-	_, _ = rm.AddLink("u2", "g1")
-	_, _ = rm.AddLink("u3", "g2")
-	_, _ = rm.AddLink("u4", "g2")
-	_, _ = rm.AddLink("u4", "g3")
-	_, _ = rm.AddLink("g1", "g3")
+	testAddLink(t, rm, true, "u1", "g1")
+	testAddLink(t, rm, true, "u2", "g1")
+	testAddLink(t, rm, true, "u3", "g2")
+	testAddLink(t, rm, true, "u4", "g2")
+	testAddLink(t, rm, true, "u4", "g3")
+	testAddLink(t, rm, true, "g1", "g3")
 
 	// Current role inheritance tree:
 	//             g3    g2
@@ -246,7 +264,7 @@ func TestPatternRole(t *testing.T) {
 	}
 
 	for _, link := range links {
-		_, _ = rm.AddLink(link[0], link[1])
+		testAddLink(t, rm, true, link[0], link[1])
 	}
 
 	testRole(t, rm, "u1", "g1", true)
@@ -288,7 +306,7 @@ func TestDomainPatternRole(t *testing.T) {
 	}
 
 	for _, link := range links {
-		_, _ = rm.AddLink(link[0], link[1], link[2])
+		testAddLink(t, rm, true, link[0], link[1], link[2])
 	}
 	// Current role inheritance tree after deleting the links:
 	//       domain1:g1    domain2:g1			domain3:g2
@@ -319,8 +337,8 @@ func TestDomainPatternRole(t *testing.T) {
 
 	assert.ElementsMatch(t, util.Join2D(links, ","), util.Join2D(rules, ","))
 
-	rm.DeleteLink("u3", "g1", "*")
-	rm.AddLink("u3", "g1", "domain1")
+	testDeleteLink(t, rm, true, "u3", "g1", "*")
+	testAddLink(t, rm, true, "u3", "g1", "domain1")
 	links[2] = []string{"u3", "g1", "domain1"}
 
 	testDomainRole(t, rm, true, "u3", "g1", "domain1")
@@ -341,7 +359,7 @@ func TestAllMatchingFunc(t *testing.T) {
 	rm.SetMatcher(util.KeyMatch2)
 	rm.SetDomainMatcher(util.KeyMatch2)
 
-	_, _ = rm.AddLink("/book/:id", "book_group", "*")
+	testAddLink(t, rm, true, "/book/:id", "book_group", "*")
 	// Current role inheritance tree after deleting the links:
 	//  		*:book_group
 	//				|
@@ -354,19 +372,19 @@ func TestMatchingFuncOrder(t *testing.T) {
 	rm := NewRoleManager(10)
 	rm.SetMatcher(util.RegexMatch)
 
-	_, _ = rm.AddLink("g\\d+", "root")
-	_, _ = rm.AddLink("u1", "g1")
+	testAddLink(t, rm, true, "g\\d+", "root")
+	testAddLink(t, rm, true, "u1", "g1")
 	testRole(t, rm, "u1", "root", true)
 
 	_ = rm.Clear()
 
-	_, _ = rm.AddLink("u1", "g1")
-	_, _ = rm.AddLink("g\\d+", "root")
+	testAddLink(t, rm, true, "u1", "g1")
+	testAddLink(t, rm, true, "g\\d+", "root")
 	testRole(t, rm, "u1", "root", true)
 
 	_ = rm.Clear()
 
-	_, _ = rm.AddLink("u1", "g\\d+")
+	testAddLink(t, rm, true, "u1", "g\\d+")
 	testRole(t, rm, "u1", "g1", true)
 	testRole(t, rm, "u1", "g2", true)
 }
@@ -375,8 +393,8 @@ func TestDomainMatchingFuncWithDifferentDomain(t *testing.T) {
 	rm := NewDomainManager(10)
 	rm.SetDomainMatcher(util.KeyMatch)
 
-	_, _ = rm.AddLink("alice", "editor", "*")
-	_, _ = rm.AddLink("editor", "admin", "domain1")
+	testAddLink(t, rm, true, "alice", "editor", "*")
+	testAddLink(t, rm, true, "editor", "admin", "domain1")
 
 	testDomainRole(t, rm, true, "alice", "admin", "domain1")
 	testDomainRole(t, rm, false, "alice", "admin", "domain2")
@@ -386,7 +404,7 @@ func TestTemporaryRoles(t *testing.T) {
 	rm := NewRoleManager(10)
 	rm.SetMatcher(util.RegexMatch)
 
-	_, _ = rm.AddLink("u\\d+", "user")
+	testAddLink(t, rm, true, "u\\d+", "user")
 
 	for i := 0; i < 10; i++ {
 		testRole(t, rm, fmt.Sprintf("u%d", i), "user", true)
@@ -395,7 +413,7 @@ func TestTemporaryRoles(t *testing.T) {
 	testPrintUsers(t, rm, "user", []string{"u\\d+"})
 	testPrintRoles(t, rm, "u1", []string{"user"})
 
-	_, _ = rm.AddLink("u1", "manager")
+	testAddLink(t, rm, true, "u1", "manager")
 
 	for i := 10; i < 20; i++ {
 		testRole(t, rm, fmt.Sprintf("u%d", i), "user", true)
@@ -409,16 +427,13 @@ func TestSubdomain(t *testing.T) {
 	rm := NewDomainManager(10)
 	rm.SetDomainMatcher(util.RegexMatch)
 
-	b1, _ := rm.AddLink("alice", "admin", "domain1", "sub1")
-	b2, _ := rm.AddLink("alice", "admin", "domain1", "sub1")
-	rm.AddLink("alice", "user", "domain2", "sub2")
-	rm.AddLink("alice", "user", ".*", "sub1")
-	rm.AddLink("bob", "user", "domain1")
-	rm.AddLink("bob", "user", "domain2", "sub1")
-	rm.AddLink("bob", "user", "domain2", "sub2")
-
-	assert.Equal(t, b1, true)
-	assert.Equal(t, b2, false)
+	testAddLink(t, rm, true, "alice", "admin", "domain1", "sub1")
+	testAddLink(t, rm, false, "alice", "admin", "domain1", "sub1")
+	testAddLink(t, rm, true, "alice", "user", "domain2", "sub2")
+	testAddLink(t, rm, true, "alice", "user", ".*", "sub1")
+	testAddLink(t, rm, true, "bob", "user", "domain1")
+	testAddLink(t, rm, true, "bob", "user", "domain2", "sub1")
+	testAddLink(t, rm, true, "bob", "user", "domain2", "sub2")
 
 	allDomains := []string{"domain1/sub1", "domain2/sub1", "domain2/sub2", "domain1", ".*/sub1"}
 	allDomainsRes, _ := rm.GetAllDomains()
@@ -450,12 +465,9 @@ func TestSubdomain(t *testing.T) {
 	testDomainRole(t, rm, false, "bob", "user", "domain3", "sub1")
 	testDomainRole(t, rm, false, "bob", "user", "domain3", "sub2")
 
-	b1, _ = rm.DeleteLink("alice", "user", ".*", "sub1")
-	b2, _ = rm.DeleteLink("alice", "user", ".*", "sub1")
-	rm.DeleteLink("bob", "user", "domain2", "sub2")
-
-	assert.Equal(t, b1, true)
-	assert.Equal(t, b2, false)
+	testDeleteLink(t, rm, true, "alice", "user", ".*", "sub1")
+	testDeleteLink(t, rm, false, "alice", "user", ".*", "sub1")
+	testDeleteLink(t, rm, true, "bob", "user", "domain2", "sub2")
 
 	testDomainRole(t, rm, false, "alice", "admin", "domain1")
 	testDomainRole(t, rm, true, "alice", "admin", "domain1", "sub1")

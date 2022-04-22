@@ -60,6 +60,34 @@ func testLoadPolicy(t *testing.T, adapter Adapter, expected [][]string) {
 	assert.ElementsMatch(t, util.Join2D(expected, ","), util.Join2D(load.rules, ","))
 }
 
+func testAddRule(t *testing.T, adapter SimpleAdapter, rule []string) {
+	t.Helper()
+	if err := adapter.AddRule(rule); err != nil {
+		t.Error(err.Error())
+	}
+}
+
+func testRemoveRule(t *testing.T, adapter SimpleAdapter, rule []string) {
+	t.Helper()
+	if err := adapter.RemoveRule(rule); err != nil {
+		t.Error(err.Error())
+	}
+}
+
+func testAddRules(t *testing.T, adapter BatchAdapter, rules [][]string) {
+	t.Helper()
+	if err := adapter.AddRules(rules); err != nil {
+		t.Error(err.Error())
+	}
+}
+
+func testRemoveRules(t *testing.T, adapter BatchAdapter, rules [][]string) {
+	t.Helper()
+	if err := adapter.RemoveRules(rules); err != nil {
+		t.Error(err.Error())
+	}
+}
+
 func BasicAdapterTest(t *testing.T, adapter Adapter) {
 
 	rules := [][]string{
@@ -79,36 +107,34 @@ func BasicAdapterTest(t *testing.T, adapter Adapter) {
 	testSavePolicy(t, adapter, rules)
 	testLoadPolicy(t, adapter, rules)
 
-	switch adapter.(type) {
+	switch a := adapter.(type) {
 	case SimpleAdapter:
-		sa := adapter.(SimpleAdapter)
-		sa.AddRule(modified_rules[1])
-		sa.AddRule(modified_rules[2])
+		testAddRule(t, a, modified_rules[1])
+		testAddRule(t, a, modified_rules[2])
 
-		sa.RemoveRule(rules[1])
-		sa.RemoveRule(rules[2])
+		testRemoveRule(t, a, rules[1])
+		testRemoveRule(t, a, rules[2])
 
-		testLoadPolicy(t, sa, modified_rules)
+		testLoadPolicy(t, a, modified_rules)
 
-		sa.AddRule(modified_rules[0])
-		sa.RemoveRule(unknown_rule)
+		testAddRule(t, a, modified_rules[0])
+		testRemoveRule(t, a, unknown_rule)
 
-		testLoadPolicy(t, sa, modified_rules)
+		testLoadPolicy(t, a, modified_rules)
 	}
 
 	testSavePolicy(t, adapter, rules)
 
-	switch adapter.(type) {
+	switch a := adapter.(type) {
 	case BatchAdapter:
-		sa := adapter.(BatchAdapter)
-		sa.AddRules([][]string{modified_rules[1], modified_rules[2]})
-		sa.RemoveRules([][]string{rules[1], rules[2]})
+		testAddRules(t, a, [][]string{modified_rules[1], modified_rules[2]})
+		testRemoveRules(t, a, [][]string{rules[1], rules[2]})
 
-		testLoadPolicy(t, sa, modified_rules)
+		testLoadPolicy(t, a, modified_rules)
 
-		sa.AddRules([][]string{modified_rules[0]})
-		sa.RemoveRules([][]string{unknown_rule})
+		testAddRules(t, a, [][]string{modified_rules[0]})
+		testRemoveRules(t, a, [][]string{unknown_rule})
 
-		testLoadPolicy(t, sa, modified_rules)
+		testLoadPolicy(t, a, modified_rules)
 	}
 }

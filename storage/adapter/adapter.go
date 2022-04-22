@@ -54,9 +54,9 @@ type BatchAdapter interface {
 }
 
 // LoadPolicyLine loads a text line as a policy rule to model.
-func LoadPolicyLine(line string, m api.IAddRuleBool) {
+func LoadPolicyLine(line string, m api.IAddRuleBool) error {
 	if line == "" || strings.HasPrefix(line, "#") {
-		return
+		return nil
 	}
 
 	r := csv.NewReader(strings.NewReader(line))
@@ -66,8 +66,9 @@ func LoadPolicyLine(line string, m api.IAddRuleBool) {
 
 	tokens, err := r.Read()
 	if err != nil {
-		return
+		return err
 	}
 
-	m.AddRule(tokens)
+	_, err = m.AddRule(tokens)
+	return err
 }

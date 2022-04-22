@@ -64,7 +64,9 @@ func (a *FileAdapter) LoadPolicy(model api.IAddRuleBool) error {
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		LoadPolicyLine(scanner.Text(), model)
+		if err := LoadPolicyLine(scanner.Text(), model); err != nil {
+			return err
+		}
 	}
 
 	return scanner.Err()
@@ -123,7 +125,9 @@ func (a *FileAdapter) RemoveRule(rule []string) error {
 	if err := a.LoadPolicy(rs); err != nil {
 		return err
 	}
-	rs.RemoveRule(rule)
+	if _, err := rs.RemoveRule(rule); err != nil {
+		return err
+	}
 	if err := a.SavePolicy(rs); err != nil {
 		return err
 	}
@@ -136,7 +140,9 @@ func (a *FileAdapter) AddRules(rules [][]string) error {
 		return err
 	}
 	for _, rule := range rules {
-		rs.AddRule(rule)
+		if _, err := rs.AddRule(rule); err != nil {
+			return err
+		}
 	}
 	if err := a.SavePolicy(rs); err != nil {
 		return err
@@ -150,7 +156,9 @@ func (a *FileAdapter) RemoveRules(rules [][]string) error {
 		return err
 	}
 	for _, rule := range rules {
-		rs.RemoveRule(rule)
+		if _, err := rs.RemoveRule(rule); err != nil {
+			return err
+		}
 	}
 	if err := a.SavePolicy(rs); err != nil {
 		return err

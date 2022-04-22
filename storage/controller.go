@@ -15,6 +15,8 @@
 package storage
 
 import (
+	"errors"
+
 	"github.com/abichinger/fastac/api"
 	"github.com/abichinger/fastac/model"
 	"github.com/abichinger/fastac/storage/adapter"
@@ -121,15 +123,18 @@ func (sc *StorageController) AutosaveEnabled() bool {
 	return sc.autosave
 }
 
-func (sc *StorageController) flush() {
+func (sc *StorageController) flush() error {
 	for len(sc.q) > 0 {
 		operation := sc.q[0]
 		sc.q = sc.q[1:]
-		sc.run(operation.opc, operation.rule)
+		if err := sc.run(operation.opc, operation.rule); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func (sc *StorageController) batchFlush() {
+func (sc *StorageController) batchFlush() error {
 
 	rules := [][]string{}
 
@@ -146,56 +151,62 @@ func (sc *StorageController) batchFlush() {
 		if currentOpc == operation.opc {
 			rules = append(rules, operation.rule)
 		} else {
-			sc.runBatch(currentOpc, rules)
+			if err := sc.runBatch(currentOpc, rules); err != nil {
+				return err
+			}
 			currentOpc = operation.opc
 			rules = [][]string{operation.rule}
 		}
 	}
 
 	if len(rules) > 0 {
-		sc.runBatch(currentOpc, rules)
+		if err := sc.runBatch(currentOpc, rules); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func (sc *StorageController) Flush() {
+func (sc *StorageController) Flush() error {
+	var err error
+
 	switch sc.adapter.(type) {
 	case adapter.BatchAdapter:
-		sc.batchFlush()
-		break
+		err = sc.batchFlush()
 	case adapter.SimpleAdapter:
-		sc.flush()
-		break
+		err = sc.flush()
 	default:
-		panic("invalid adapter")
+		err = errors.New("invalid adapter")
 	}
 
 	sc.wait = 0
+	return err
 }
 
-func (sc *StorageController) run(opc opcode, rule []string) {
+func (sc *StorageController) run(opc opcode, rule []string) error {
 	adapter := sc.adapter.(adapter.SimpleAdapter)
+	var err error
 
 	switch opc {
 	case add:
-		adapter.AddRule(rule)
-		break
+		err = adapter.AddRule(rule)
 	case remove:
-		adapter.RemoveRule(rule)
-		break
+		err = adapter.RemoveRule(rule)
 	}
+	return err
 }
 
-func (sc *StorageController) runBatch(opc opcode, rules [][]string) {
+func (sc *StorageController) runBatch(opc opcode, rules [][]string) error {
 	adapter := sc.adapter.(adapter.BatchAdapter)
+	var err error
 
 	switch opc {
 	case add:
-		adapter.AddRules(rules)
-		break
+		err = adapter.AddRules(rules)
 	case remove:
-		adapter.RemoveRules(rules)
-		break
+		err = adapter.RemoveRules(rules)
 	}
+	return err
 }
 
 func (sc *StorageController) AddWait(i int) {

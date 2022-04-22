@@ -78,7 +78,7 @@ func TestRangeRules(t *testing.T) {
 	}
 
 	for _, rule := range rules {
-		m.AddRule(rule)
+		_, _ = m.AddRule(rule)
 	}
 
 	actualRules := [][]string{}

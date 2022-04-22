@@ -181,7 +181,9 @@ func (m *Model) loadModelFromConfig(cfg *ini.File) error {
 				return fmt.Errorf(str.ERR_INVALID_KEY_PREFIX, secDef.name, secDef.keyPrefix)
 			}
 
-			secDef.handler(m, key.Name(), key.String())
+			if err := secDef.handler(m, key.Name(), key.String()); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -437,7 +439,7 @@ func (m *Model) String() string {
 		res += fmt.Sprintf("[%s]\n", sec.name)
 
 		keys := []string{}
-		for key, _ := range secMap {
+		for key := range secMap {
 			keys = append(keys, key)
 		}
 
@@ -450,7 +452,6 @@ func (m *Model) String() string {
 				res += secMap[key].String()
 			default:
 				res += fmt.Sprintf("%s = %s", key, secMap[key].String()) + "\n"
-				break
 			}
 
 		}

@@ -72,8 +72,7 @@ func (def *PolicyDef) GetEft(values []string) types.Effect {
 	if def.Has(eftArg) {
 		eftStr, _ := def.GetParameter(values, eftArg)
 		switch eftStr {
-		case "":
-		case "allow":
+		case "", "allow":
 			return eft.Allow
 		case "deny":
 			return eft.Deny
@@ -159,13 +158,11 @@ func (def *RequestDef) String() string {
 }
 
 type MatcherDef struct {
-	key          string
-	index        int
-	expr         string
-	ruleNames    []string
-	exprTemplate string
-	pArgs        []string
-	rArgs        []string
+	key   string
+	index int
+	expr  string
+	pArgs []string
+	rArgs []string
 }
 
 func NewMatcherDef(key, expr string) *MatcherDef {

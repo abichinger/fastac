@@ -122,7 +122,7 @@ func (r *Role) rangeUsers(fn func(key, value interface{}) bool) {
 	})
 }
 
-func (r *Role) toString() string {
+func (r *Role) String() string {
 	roles := r.getRoles()
 
 	if len(roles) == 0 {

@@ -66,17 +66,14 @@ func (e *DefaultEffector) MergeEffects(effects []types.Effect, matches []types.R
 		if effect == eft.Allow {
 			return effect, match, nil
 		}
-		break
 	case "!some(where(p.eft==deny))":
 		if effect == eft.Deny {
 			return effect, match, nil
 		}
-		break
 	case "some(where(p.eft==allow))&&!some(where(p.eft==deny))":
 		if effect == eft.Deny {
 			return effect, match, nil
 		}
-		break
 	default:
 		return eft.Deny, types.Rule{}, errors.New("unsupported effect")
 	}

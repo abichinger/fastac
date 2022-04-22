@@ -22,7 +22,7 @@ import (
 
 const (
 	PolicyAdded   em.EventType = "PolicyAdded"
-	PolicyRemoved              = "PolicyRemoved"
+	PolicyRemoved em.EventType = "PolicyRemoved"
 )
 
 type Policy struct {
