@@ -69,9 +69,13 @@ func (sc *StorageController) addListener(event eventemitter.EventType, opc opcod
 	sc.listeners = append(sc.listeners, listener{event, l})
 }
 
+func (sc *StorageController) Enabled() bool {
+	return len(sc.listeners) > 0
+}
+
 func (sc *StorageController) Enable() {
 
-	if len(sc.listeners) > 0 {
+	if sc.Enabled() {
 		return
 	}
 
@@ -111,6 +115,10 @@ func (sc *StorageController) EnableAutosave() {
 
 func (sc *StorageController) DisableAutosave() {
 	sc.autosave = false
+}
+
+func (sc *StorageController) AutosaveEnabled() bool {
+	return sc.autosave
 }
 
 func (sc *StorageController) flush() {

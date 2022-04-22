@@ -1,6 +1,15 @@
 SHELL = /bin/bash
 GOBIN = $(shell go env GOPATH)/bin
 
+test: 
+	go test -race -v ./...
+
+coverage:
+	go test -race -covermode=atomic ./...
+
+lint:
+	golangci-lint run --verbose
+
 bench: benchmark draw_benchmarks
 
 benchmark:

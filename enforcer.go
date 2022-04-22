@@ -15,68 +15,164 @@
 package fastac
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/abichinger/fastac/model"
+	m "github.com/abichinger/fastac/model"
 	"github.com/abichinger/fastac/model/defs"
 	"github.com/abichinger/fastac/model/effector"
 	"github.com/abichinger/fastac/model/eft"
 	"github.com/abichinger/fastac/model/matcher"
 	"github.com/abichinger/fastac/model/types"
-	"github.com/abichinger/fastac/storage/adapter"
+	"github.com/abichinger/fastac/storage"
+	a "github.com/abichinger/fastac/storage/adapter"
 	"github.com/abichinger/fastac/str"
 )
 
 type Enforcer struct {
-	m model.Model
-	a adapter.Adapter
+	model   *m.Model
+	adapter a.Adapter
+	sc      *storage.StorageController
 }
 
-func NewEnforcer(args ...interface{}) (*Enforcer, error) {
+type Option func(*Enforcer) error
+
+func OptionAutosave(autosave bool) Option {
+	return func(e *Enforcer) error {
+		if autosave {
+			e.sc.EnableAutosave()
+		} else {
+			e.sc.DisableAutosave()
+		}
+		return nil
+	}
+}
+
+func OptionStorage(enable bool) Option {
+	return func(e *Enforcer) error {
+		if enable {
+			e.sc.Enable()
+		} else {
+			e.sc.Disable()
+		}
+		return nil
+	}
+}
+
+func NewEnforcer(model interface{}, adapter interface{}, options ...Option) (*Enforcer, error) {
 	e := &Enforcer{}
 
-	if len(args) > 0 {
-		modelParam := args[0]
-		switch modelParam.(type) {
-		case string:
-			if m, err := model.NewModelFromFile(modelParam.(string)); err != nil {
-				return nil, err
-			} else {
-				e.m = *m
-			}
-			break
-		case model.Model:
-			e.m = modelParam.(model.Model)
-			break
+	switch model.(type) {
+	case string:
+		if m, err := m.NewModelFromFile(model.(string)); err != nil {
+			return nil, err
+		} else {
+			e.model = m
 		}
+		break
+	case m.Model:
+		m2 := model.(m.Model)
+		e.model = &m2
+		break
+	case *m.Model:
+		e.model = model.(*m.Model)
+		break
+	default:
+		return nil, errors.New(str.ERR_INVALID_MODEL)
 	}
 
-	if len(args) > 1 {
-		adapterParam := args[1]
-		switch adapterParam.(type) {
-		case string:
-			a := adapter.NewFileAdapter(adapterParam.(string))
-			if err := a.LoadPolicy(&e.m); err != nil {
-				return nil, err
-			} else {
-				e.a = a
-			}
-			break
-		case adapter.Adapter:
-			e.a = adapterParam.(adapter.Adapter)
-			break
+	var a2 a.Adapter
+	switch adapter.(type) {
+	case string:
+		a2 := a.NewFileAdapter(adapter.(string))
+		if err := a2.LoadPolicy(e.model); err != nil {
+			return nil, err
+		}
+		break
+	case a.Adapter:
+		a2 = adapter.(a.Adapter)
+		break
+	default:
+		a2 = &a.NoopAdapter{}
+		options = append(options, OptionStorage(false))
+	}
+
+	e.SetAdapter(a2)
+
+	for _, option := range options {
+		if err := option(e); err != nil {
+			return nil, err
 		}
 	}
 
 	return e, nil
 }
 
-func (e *Enforcer) AddRule(params ...string) (bool, error) {
-	return e.m.AddRule(params)
+func (e *Enforcer) SetOption(option Option) error {
+	return option(e)
 }
 
-func (e *Enforcer) RemoveRule(params ...string) (bool, error) {
-	return e.m.RemoveRule(params)
+func (e *Enforcer) SetAdapter(adapter a.Adapter) {
+	autosave := false
+	if e.sc != nil {
+		autosave = e.sc.AutosaveEnabled()
+		e.sc.Disable()
+	}
+	e.sc = storage.NewStorageController(e.model, adapter, autosave)
+	e.adapter = adapter
+}
+
+func (e *Enforcer) LoadPolicy() error {
+	if e.sc.Enabled() {
+		e.sc.Disable()
+		defer e.sc.Enable()
+	}
+	return e.adapter.LoadPolicy(e.model)
+}
+
+func (e *Enforcer) SavePolicy() error {
+	return e.adapter.SavePolicy(e.model)
+}
+
+func (e *Enforcer) Flush() {
+	e.sc.Flush()
+}
+
+func (e *Enforcer) AddRule(rule []string) (bool, error) {
+	return e.model.AddRule(rule)
+}
+
+func (e *Enforcer) RemoveRule(rule []string) (bool, error) {
+	return e.model.RemoveRule(rule)
+}
+
+func (e *Enforcer) AddRules(rules [][]string) error {
+	if e.sc.AutosaveEnabled() {
+		e.sc.DisableAutosave()
+		defer e.sc.EnableAutosave()
+		defer e.sc.Flush()
+	}
+	for _, rule := range rules {
+		if _, err := e.model.AddRule(rule); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (e *Enforcer) RemoveRules(rules [][]string) error {
+	if e.sc.AutosaveEnabled() {
+		e.sc.DisableAutosave()
+		defer e.sc.EnableAutosave()
+		defer e.sc.Flush()
+	}
+	for _, rule := range rules {
+		if _, err := e.model.RemoveRule(rule); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (e *Enforcer) Enforce(rvals ...interface{}) (bool, error) {
@@ -89,22 +185,22 @@ func (e *Enforcer) EnforceWithMatcher(matcher string, rvals ...interface{}) (boo
 
 func (e *Enforcer) EnforceWithMatcherAndKeys(matcher string, rKey string, eKey string, rvals ...interface{}) (bool, error) {
 	mKey := "m9999"
-	e.m.AddDef('m', mKey, matcher)
-	e.m.BuildMatcher(mKey)
-	defer e.m.RemoveDef('m', mKey)
+	e.model.AddDef('m', mKey, matcher)
+	e.model.BuildMatcher(mKey)
+	defer e.model.RemoveDef('m', mKey)
 	return e.EnforceWithKeys(mKey, rKey, eKey, rvals...)
 }
 
 func (e *Enforcer) EnforceWithKeys(mKey string, rKey string, eKey string, rvals ...interface{}) (bool, error) {
-	matcher, mOk := e.m.GetMatcher(mKey)
+	matcher, mOk := e.model.GetMatcher(mKey)
 	if !mOk {
 		return false, fmt.Errorf(str.ERR_MATCHER_NOT_FOUND, mKey)
 	}
-	rDef, rOk := e.m.GetRequestDef(rKey)
+	rDef, rOk := e.model.GetRequestDef(rKey)
 	if !rOk {
 		return false, fmt.Errorf(str.ERR_REQUESTDEF_NOT_FOUND, rKey)
 	}
-	effector, eOk := e.m.GetEffector(eKey)
+	effector, eOk := e.model.GetEffector(eKey)
 	if !eOk {
 		return false, fmt.Errorf(str.ERR_EFFECTOR_NOT_FOUND, eKey)
 	}
@@ -122,9 +218,9 @@ func (e *Enforcer) FilterWithMatcher(matcher string, rvals ...interface{}) ([]ty
 
 func (e *Enforcer) FilterWithMatcherAndKeys(matcher string, rKey string, rvals ...interface{}) ([]types.Rule, error) {
 	mKey := "m9999"
-	e.m.AddDef('m', mKey, matcher)
-	e.m.BuildMatcher(mKey)
-	defer e.m.RemoveDef('m', mKey)
+	e.model.AddDef('m', mKey, matcher)
+	e.model.BuildMatcher(mKey)
+	defer e.model.RemoveDef('m', mKey)
 	return e.FilterWithKeys(mKey, rKey, rvals...)
 }
 
@@ -138,15 +234,15 @@ func (e *Enforcer) FilterWithKeys(mKey string, rKey string, rvals ...interface{}
 }
 
 func (e *Enforcer) RangeMatches(matcher *matcher.Matcher, rDef *defs.RequestDef, rvals []interface{}, fn func(rule types.Rule) bool) error {
-	return e.m.RangeMatches(matcher, rDef, rvals, fn)
+	return e.model.RangeMatches(matcher, rDef, rvals, fn)
 }
 
 func (e *Enforcer) RangeMatchesWithKeys(mKey string, rKey string, rvals []interface{}, fn func(rule types.Rule) bool) error {
-	matcher, mOk := e.m.GetMatcher(mKey)
+	matcher, mOk := e.model.GetMatcher(mKey)
 	if !mOk {
 		return fmt.Errorf(str.ERR_MATCHER_NOT_FOUND, mKey)
 	}
-	rDef, rOk := e.m.GetRequestDef(rKey)
+	rDef, rOk := e.model.GetRequestDef(rKey)
 	if !rOk {
 		return fmt.Errorf(str.ERR_REQUESTDEF_NOT_FOUND, rKey)
 	}
@@ -189,5 +285,5 @@ func (e *Enforcer) enforce(matcher *matcher.Matcher, rDef *defs.RequestDef, effe
 }
 
 func (e *Enforcer) GetModel() *model.Model {
-	return &e.m
+	return e.model
 }

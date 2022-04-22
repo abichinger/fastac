@@ -22,4 +22,5 @@ const (
 	ERR_RM_NOT_FOUND         = "error: role manager %s not found"
 	ERR_REQUESTDEF_NOT_FOUND = "error: request definition %s not found"
 	ERR_EFFECTOR_NOT_FOUND   = "error: effect definition %s not found"
+	ERR_INVALID_MODEL        = "invalid model"
 )

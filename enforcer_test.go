@@ -72,7 +72,7 @@ func TestBasicModelWithoutSpaces(t *testing.T) {
 }
 
 func TestBasicModelNoPolicy(t *testing.T) {
-	e, _ := NewEnforcer("examples/basic_model.conf")
+	e, _ := NewEnforcer("examples/basic_model.conf", nil)
 
 	testEnforce(t, e, "alice", "data1", "read", false)
 	testEnforce(t, e, "alice", "data1", "write", false)
@@ -102,7 +102,7 @@ func TestBasicModelWithRoot(t *testing.T) {
 }
 
 func TestBasicModelWithRootNoPolicy(t *testing.T) {
-	e, _ := NewEnforcer("examples/basic_with_root_model.conf")
+	e, _ := NewEnforcer("examples/basic_with_root_model.conf", nil)
 
 	testEnforce(t, e, "alice", "data1", "read", false)
 	testEnforce(t, e, "alice", "data1", "write", false)
@@ -176,15 +176,15 @@ func TestRBACModelWithDomains(t *testing.T) {
 }
 
 func TestRBACModelWithDomainsAtRuntime(t *testing.T) {
-	e, _ := NewEnforcer("examples/rbac_with_domains_model.conf")
+	e, _ := NewEnforcer("examples/rbac_with_domains_model.conf", nil)
 
-	_, _ = e.AddRule("p", "admin", "domain1", "data1", "read")
-	_, _ = e.AddRule("p", "admin", "domain1", "data1", "write")
-	_, _ = e.AddRule("p", "admin", "domain2", "data2", "read")
-	_, _ = e.AddRule("p", "admin", "domain2", "data2", "write")
+	_, _ = e.AddRule([]string{"p", "admin", "domain1", "data1", "read"})
+	_, _ = e.AddRule([]string{"p", "admin", "domain1", "data1", "write"})
+	_, _ = e.AddRule([]string{"p", "admin", "domain2", "data2", "read"})
+	_, _ = e.AddRule([]string{"p", "admin", "domain2", "data2", "write"})
 
-	_, _ = e.AddRule("g", "alice", "admin", "domain1")
-	_, _ = e.AddRule("g", "bob", "admin", "domain2")
+	_, _ = e.AddRule([]string{"g", "alice", "admin", "domain1"})
+	_, _ = e.AddRule([]string{"g", "bob", "admin", "domain2"})
 
 	testDomainEnforce(t, e, "alice", "domain1", "data1", "read", true)
 	testDomainEnforce(t, e, "alice", "domain1", "data1", "write", true)
@@ -198,7 +198,7 @@ func TestRBACModelWithDomainsAtRuntime(t *testing.T) {
 	// Remove all policy rules related to domain1 and data1.
 	rules, _ := e.FilterWithMatcher("p.dom == \"domain1\" && p.obj == \"data1\"")
 	for _, rule := range rules {
-		e.RemoveRule(append([]string{"p"}, rule...)...)
+		e.RemoveRule(append([]string{"p"}, rule...))
 	}
 
 	testDomainEnforce(t, e, "alice", "domain1", "data1", "read", false)
@@ -211,7 +211,7 @@ func TestRBACModelWithDomainsAtRuntime(t *testing.T) {
 	testDomainEnforce(t, e, "bob", "domain2", "data2", "write", true)
 
 	// Remove the specified policy rule.
-	_, _ = e.RemoveRule("p", "admin", "domain2", "data2", "read")
+	_, _ = e.RemoveRule([]string{"p", "admin", "domain2", "data2", "read"})
 
 	testDomainEnforce(t, e, "alice", "domain1", "data1", "read", false)
 	testDomainEnforce(t, e, "alice", "domain1", "data1", "write", false)
@@ -226,8 +226,8 @@ func TestRBACModelWithDomainsAtRuntime(t *testing.T) {
 func TestRBACModelWithDomainsExtendAtRuntime(t *testing.T) {
 	e, _ := NewEnforcer("examples/rbac_with_domains_model.conf", "examples/rbac_with_domains_policy.csv")
 
-	_, _ = e.AddRule("p", "admin", "domain3", "data1", "read")
-	_, _ = e.AddRule("g", "alice", "admin", "domain3")
+	_, _ = e.AddRule([]string{"p", "admin", "domain3", "data1", "read"})
+	_, _ = e.AddRule([]string{"g", "alice", "admin", "domain3"})
 
 	testDomainEnforce(t, e, "alice", "domain3", "data1", "read", true)
 	testDomainEnforce(t, e, "alice", "domain1", "data1", "read", true)
@@ -235,12 +235,12 @@ func TestRBACModelWithDomainsExtendAtRuntime(t *testing.T) {
 	// Remove all policy rules related to domain1 and data1.
 	rules, _ := e.FilterWithMatcher("p.dom == \"domain1\" && p.obj == \"data1\"")
 	for _, rule := range rules {
-		e.RemoveRule(append([]string{"p"}, rule...)...)
+		e.RemoveRule(append([]string{"p"}, rule...))
 	}
 	testDomainEnforce(t, e, "alice", "domain1", "data1", "read", false)
 	testDomainEnforce(t, e, "bob", "domain2", "data2", "read", true)
 
-	_, _ = e.RemoveRule("p", "admin", "domain2", "data2", "read")
+	_, _ = e.RemoveRule([]string{"p", "admin", "domain2", "data2", "read"})
 	testDomainEnforce(t, e, "bob", "domain2", "data2", "read", false)
 }
 
@@ -267,7 +267,7 @@ func TestRBACModelExtendAtRuntime(t *testing.T) {
 	e, _ := NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv")
 
 	//equivalent to: e.AddRule("g", "bob", "data2_admin")
-	ok, err := e.AddRule("g", "bob", "data2_admin", "gets_ignored")
+	ok, err := e.AddRule([]string{"g", "bob", "data2_admin", "gets_ignored"})
 	if !ok {
 		t.Error("g, bob, data2_admin: should have been added")
 	}
@@ -285,7 +285,7 @@ func TestRBACModelExtendAtRuntime(t *testing.T) {
 	testEnforce(t, e, "bob", "data2", "write", true)
 
 	//equivalent to: e.RemoveRule("g", "bob", "data2_admin")
-	ok, err = e.RemoveRule("g", "bob", "data2_admin", "gets_also_ignored")
+	ok, err = e.RemoveRule([]string{"g", "bob", "data2_admin", "gets_also_ignored"})
 	if !ok {
 		t.Error("g, bob, data2_admin: should have been removed")
 	}
@@ -399,7 +399,7 @@ func newTestResource(name string, owner string) testResource {
 }
 
 func TestABACModel(t *testing.T) {
-	e, _ := NewEnforcer("examples/abac_model.conf")
+	e, _ := NewEnforcer("examples/abac_model.conf", nil)
 
 	data1 := newTestResource("data1", "alice")
 	data2 := newTestResource("data2", "bob")
@@ -469,7 +469,7 @@ func CustomFunctionWrapper(args ...interface{}) (interface{}, error) {
 func TestKeyMatchCustomModel(t *testing.T) {
 	e, _ := NewEnforcer("examples/keymatch_custom_model.conf", "examples/keymatch2_policy.csv")
 
-	e.m.AddFunction("keyMatchCustom", CustomFunctionWrapper)
+	e.model.AddFunction("keyMatchCustom", CustomFunctionWrapper)
 
 	testEnforce(t, e, "alice", "/alice_data2/myid", "GET", false)
 	testEnforce(t, e, "alice", "/alice_data2/myid/using/res_id", "GET", true)

@@ -65,7 +65,7 @@ type RulesAPIEnforcer struct {
 
 func NewRulesAPIEnforcer(model string) RulesAPI {
 	e := RulesAPIEnforcer{}
-	enforcer, err := NewEnforcer(model)
+	enforcer, err := NewEnforcer(model, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -82,16 +82,16 @@ func (e *RulesAPIEnforcer) GeParams(key string, params ...interface{}) []string 
 }
 
 func (e *RulesAPIEnforcer) AddPolicy(params ...interface{}) (bool, error) {
-	return e.AddRule(e.GeParams("p", params...)...)
+	return e.AddRule(e.GeParams("p", params...))
 }
 func (e *RulesAPIEnforcer) AddGroupingPolicy(params ...interface{}) (bool, error) {
-	return e.AddRule(e.GeParams("g", params...)...)
+	return e.AddRule(e.GeParams("g", params...))
 }
 func (e *RulesAPIEnforcer) RemovePolicy(params ...interface{}) (bool, error) {
-	return e.RemoveRule(e.GeParams("p", params...)...)
+	return e.RemoveRule(e.GeParams("p", params...))
 }
 func (e *RulesAPIEnforcer) RemoveGroupingPolicy(params ...interface{}) (bool, error) {
-	return e.RemoveRule(e.GeParams("g", params...)...)
+	return e.RemoveRule(e.GeParams("g", params...))
 }
 
 func genRBACPolicy(e RulesAPI, n int) error {
