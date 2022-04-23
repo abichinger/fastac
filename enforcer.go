@@ -16,21 +16,16 @@ package fastac
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/abichinger/fastac/model"
 	m "github.com/abichinger/fastac/model"
 	"github.com/abichinger/fastac/model/defs"
-	"github.com/abichinger/fastac/model/effector"
 	"github.com/abichinger/fastac/model/eft"
-	"github.com/abichinger/fastac/model/matcher"
 	"github.com/abichinger/fastac/model/types"
 	"github.com/abichinger/fastac/storage"
 	a "github.com/abichinger/fastac/storage/adapter"
 	"github.com/abichinger/fastac/str"
 )
-
-const tmpMatcherKey = "m999"
 
 type Enforcer struct {
 	model   *m.Model
@@ -40,6 +35,12 @@ type Enforcer struct {
 
 type Option func(*Enforcer) error
 
+// Option to disable/enable the autosave feature (default: disabled)
+// If autosave is disabled, Flush needs to be called to save modified rules
+// Enable autosave:
+// 	NewEnforcer(model, adapter, OptionAutosave(true))
+// Or:
+// 	e.SetOption(OptionAutosave(true))
 func OptionAutosave(autosave bool) Option {
 	return func(e *Enforcer) error {
 		if autosave {
@@ -51,6 +52,8 @@ func OptionAutosave(autosave bool) Option {
 	}
 }
 
+// Option to disable/enable the storage feature (default: enabled, if an adapter is supplied)
+// If storage is disabled, the StorageController will not listen for rule updates
 func OptionStorage(enable bool) Option {
 	return func(e *Enforcer) error {
 		if enable {
@@ -62,6 +65,16 @@ func OptionStorage(enable bool) Option {
 	}
 }
 
+// NewEnforcer creates a new Enforcer instance. An Enforcer is the main item of FastAC
+//
+// Without adapter and default options:
+//
+//  NewEnforcer("model.conf", nil)
+//
+// With adapter and autosave enabled
+//
+//  adapter := gormadapter.NewAdapter(db, tableName)
+//  NewEnforcer("model.conf", adapter, OptionAutosave(true))
 func NewEnforcer(model interface{}, adapter interface{}, options ...Option) (*Enforcer, error) {
 	e := &Enforcer{}
 
@@ -105,10 +118,12 @@ func NewEnforcer(model interface{}, adapter interface{}, options ...Option) (*En
 	return e, nil
 }
 
+// SetOption applies an option to the Enforcer
 func (e *Enforcer) SetOption(option Option) error {
 	return option(e)
 }
 
+// SetAdapter sets the storage adapter
 func (e *Enforcer) SetAdapter(adapter a.Adapter) {
 	autosave := false
 	if e.sc != nil {
@@ -119,6 +134,8 @@ func (e *Enforcer) SetAdapter(adapter a.Adapter) {
 	e.adapter = adapter
 }
 
+// LoadPolicy loads all rules from the storage adapter into the model.
+// The model is not cleared before the loading process
 func (e *Enforcer) LoadPolicy() error {
 	if e.sc.Enabled() {
 		e.sc.Disable()
@@ -127,22 +144,43 @@ func (e *Enforcer) LoadPolicy() error {
 	return e.adapter.LoadPolicy(e.model)
 }
 
+//SavePolicy stores all rules from the model into the storage adapter.
 func (e *Enforcer) SavePolicy() error {
 	return e.adapter.SavePolicy(e.model)
 }
 
+// Flush sends all the modifications of the rule set to the storage adapter.
+//
+// store rule, when autosave is disabled:
+//  e.AddRule("g", "alice", "group1")
+//  e.Flush()
 func (e *Enforcer) Flush() error {
 	return e.sc.Flush()
 }
 
+// AddRule adds a rule to the model
+// Returns false, if the rule was already present
+//
+// Add policy rule:
+//  e.AddRule("p", "alice", "data1", "read")
+// Add grouping rule:
+//  e.AddRule("g", "alice", "group1")
 func (e *Enforcer) AddRule(rule []string) (bool, error) {
 	return e.model.AddRule(rule)
 }
 
+// RemoveRule removes a rule from the model
+// Returns false, if the rule was not present
+//
+// Add policy rule:
+//  e.RemoveRule("p", "alice", "data1", "read")
+// Add grouping rule:
+//  e.RemoveRule("g", "alice", "group1")
 func (e *Enforcer) RemoveRule(rule []string) (bool, error) {
 	return e.model.RemoveRule(rule)
 }
 
+// AddRules adds multiple rules to the model
 func (e *Enforcer) AddRules(rules [][]string) error {
 	if e.sc.AutosaveEnabled() {
 		e.sc.DisableAutosave()
@@ -161,6 +199,7 @@ func (e *Enforcer) AddRules(rules [][]string) error {
 	return nil
 }
 
+// RemoveRules removes multiple rules from the model
 func (e *Enforcer) RemoveRules(rules [][]string) error {
 	if e.sc.AutosaveEnabled() {
 		e.sc.DisableAutosave()
@@ -179,118 +218,82 @@ func (e *Enforcer) RemoveRules(rules [][]string) error {
 	return nil
 }
 
-func (e *Enforcer) setTempMatcher(matcher string) error {
-	if err := e.model.SetDef('m', tmpMatcherKey, matcher); err != nil {
-		return err
+func (e *Enforcer) splitParams(params ...interface{}) (ctx *Context, request []interface{}, err error) {
+	request = []interface{}{}
+	options := []ContextOption{}
+
+	for _, value := range params {
+		switch v := value.(type) {
+		case ContextOption:
+			options = append(options, v)
+		default:
+			request = append(request, v)
+		}
 	}
-	if err := e.model.BuildMatcher(tmpMatcherKey); err != nil {
-		return err
-	}
-	return nil
+
+	ctx, err = NewContext(e.model, options...)
+	return ctx, request, err
 }
 
-func (e *Enforcer) removeTempMatcher() error {
-	return e.model.RemoveDef('m', tmpMatcherKey)
-}
-
-func (e *Enforcer) Enforce(rvals ...interface{}) (bool, error) {
-	return e.EnforceWithKeys("m", "r", "e", rvals...)
-}
-
-func (e *Enforcer) EnforceWithMatcher(matcher string, rvals ...interface{}) (bool, error) {
-	return e.EnforceWithMatcherAndKeys(matcher, "r", "e", rvals...)
-}
-
-func (e *Enforcer) EnforceWithMatcherAndKeys(matcher string, rKey string, eKey string, rvals ...interface{}) (bool, error) {
-	if err := e.setTempMatcher(matcher); err != nil {
+// Enforce decides whether to allow or deny a request
+func (e *Enforcer) Enforce(params ...interface{}) (bool, error) {
+	ctx, rvals, err := e.splitParams(params...)
+	if err != nil {
 		return false, err
 	}
-	defer func() {
-		if err := e.removeTempMatcher(); err != nil {
-			panic(err)
-		}
-	}()
-	return e.EnforceWithKeys(tmpMatcherKey, rKey, eKey, rvals...)
+	return e.EnforceWithContext(ctx, rvals...)
 }
 
-func (e *Enforcer) EnforceWithKeys(mKey string, rKey string, eKey string, rvals ...interface{}) (bool, error) {
-	matcher, mOk := e.model.GetMatcher(mKey)
-	if !mOk {
-		return false, fmt.Errorf(str.ERR_MATCHER_NOT_FOUND, mKey)
-	}
-	rDef, rOk := e.model.GetRequestDef(rKey)
-	if !rOk {
-		return false, fmt.Errorf(str.ERR_REQUESTDEF_NOT_FOUND, rKey)
-	}
-	effector, eOk := e.model.GetEffector(eKey)
-	if !eOk {
-		return false, fmt.Errorf(str.ERR_EFFECTOR_NOT_FOUND, eKey)
-	}
-
-	return e.enforce(matcher, rDef, effector, rvals)
+func (e *Enforcer) EnforceWithContext(ctx *Context, rvals ...interface{}) (bool, error) {
+	return e.enforce(ctx, rvals)
 }
 
-func (e *Enforcer) Filter(rvals ...interface{}) ([]types.Rule, error) {
-	return e.FilterWithKeys("m", "r", rvals...)
-}
-
-func (e *Enforcer) FilterWithMatcher(matcher string, rvals ...interface{}) ([]types.Rule, error) {
-	return e.FilterWithMatcherAndKeys(matcher, "r", rvals...)
-}
-
-func (e *Enforcer) FilterWithMatcherAndKeys(matcher string, rKey string, rvals ...interface{}) ([]types.Rule, error) {
-	if err := e.setTempMatcher(matcher); err != nil {
+// Filter will fetch all rules which match the given request
+// The effect of rules does not matter.
+func (e *Enforcer) Filter(params ...interface{}) ([]types.Rule, error) {
+	ctx, rvals, err := e.splitParams(params...)
+	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		if err := e.removeTempMatcher(); err != nil {
-			panic(err)
-		}
-	}()
-	return e.FilterWithKeys(tmpMatcherKey, rKey, rvals...)
+	return e.FilterWithContext(ctx, rvals...)
 }
 
-func (e *Enforcer) FilterWithKeys(mKey string, rKey string, rvals ...interface{}) ([]types.Rule, error) {
+func (e *Enforcer) FilterWithContext(ctx *Context, rvals ...interface{}) ([]types.Rule, error) {
 	rules := []types.Rule{}
-	err := e.RangeMatchesWithKeys(mKey, rKey, rvals, func(rule types.Rule) bool {
+	err := e.RangeMatchesWithContext(ctx, rvals, func(rule types.Rule) bool {
 		rules = append(rules, rule)
 		return true
 	})
 	return rules, err
 }
 
-func (e *Enforcer) RangeMatches(matcher matcher.IMatcher, rDef *defs.RequestDef, rvals []interface{}, fn func(rule types.Rule) bool) error {
-	return e.model.RangeMatches(matcher, rDef, rvals, fn)
+func (e *Enforcer) RangeMatches(params []interface{}, fn func(rule types.Rule) bool) error {
+	ctx, rvals, err := e.splitParams(params...)
+	if err != nil {
+		return err
+	}
+	return e.RangeMatchesWithContext(ctx, rvals, fn)
 }
 
-func (e *Enforcer) RangeMatchesWithKeys(mKey string, rKey string, rvals []interface{}, fn func(rule types.Rule) bool) error {
-	matcher, mOk := e.model.GetMatcher(mKey)
-	if !mOk {
-		return fmt.Errorf(str.ERR_MATCHER_NOT_FOUND, mKey)
-	}
-	rDef, rOk := e.model.GetRequestDef(rKey)
-	if !rOk {
-		return fmt.Errorf(str.ERR_REQUESTDEF_NOT_FOUND, rKey)
-	}
-
-	return e.RangeMatches(matcher, rDef, rvals, fn)
+func (e *Enforcer) RangeMatchesWithContext(ctx *Context, rvals []interface{}, fn func(rule types.Rule) bool) error {
+	return e.model.RangeMatches(ctx.matcher, ctx.rDef, rvals, fn)
 }
 
-func (e *Enforcer) enforce(matcher matcher.IMatcher, rDef *defs.RequestDef, effector effector.IEffector, rvals []interface{}) (bool, error) {
-	def, _ := e.model.GetDef(model.P_SEC, matcher.GetPolicyKey())
+func (e *Enforcer) enforce(ctx *Context, rvals []interface{}) (bool, error) {
+	def, _ := e.model.GetDef(model.P_SEC, ctx.matcher.GetPolicyKey())
 	pDef := def.(*defs.PolicyDef)
 	res := eft.Indeterminate
 	effects := []types.Effect{}
 	matches := []types.Rule{}
 
 	var eftErr error = nil
-	err := e.RangeMatches(matcher, rDef, rvals, func(rule types.Rule) bool {
+	err := e.RangeMatchesWithContext(ctx, rvals, func(rule types.Rule) bool {
 		effect := pDef.GetEft(rule)
 
 		effects = append(effects, effect)
 		matches = append(matches, rule)
 
-		res, _, eftErr = effector.MergeEffects(effects, matches, false)
+		res, _, eftErr = ctx.effector.MergeEffects(effects, matches, false)
 
 		if eftErr != nil || res != eft.Indeterminate {
 			return false
@@ -305,7 +308,7 @@ func (e *Enforcer) enforce(matcher matcher.IMatcher, rDef *defs.RequestDef, effe
 	}
 
 	if res == eft.Indeterminate {
-		res, _, _ = effector.MergeEffects(effects, matches, true)
+		res, _, _ = ctx.effector.MergeEffects(effects, matches, true)
 	}
 
 	return res == eft.Allow, nil

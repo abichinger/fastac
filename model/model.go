@@ -17,7 +17,6 @@ package model
 import (
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/Knetic/govaluate"
 	"github.com/abichinger/fastac/model/defs"
@@ -247,26 +246,28 @@ func (m *Model) BuildMatcher(key string) error {
 	if !ok {
 		return fmt.Errorf(str.ERR_MATCHER_NOT_FOUND, key)
 	}
-
 	mDef := def.(*defs.MatcherDef)
-	pArgs := mDef.GetPolicyArgs()
-	pKey := "p"
-	if len(pArgs) > 0 {
-		pKey = strings.Split(pArgs[0], "_")[0]
+	matcher, err := m.BuildMatcherFromDef(mDef)
+	if err != nil {
+		return err
 	}
+	m.mMap[key] = matcher
+	return nil
+}
 
+func (m *Model) BuildMatcherFromDef(mDef *defs.MatcherDef) (matcher.IMatcher, error) {
+	pKey := mDef.GetPolicyKey()
 	pDef, ok := m.defs[P_SEC][pKey]
 	if !ok {
-		return fmt.Errorf(str.ERR_POLICY_NOT_FOUND, pKey)
+		return nil, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, pKey)
 	}
 
 	policy, ok := m.pMap[pKey]
 	if !ok {
-		return fmt.Errorf(str.ERR_POLICY_NOT_FOUND, pKey)
+		return nil, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, pKey)
 	}
 
-	m.mMap[key] = matcher.NewMatcher(pDef.(*defs.PolicyDef), policy, mDef.Stages())
-	return nil
+	return matcher.NewMatcher(pDef.(*defs.PolicyDef), policy, mDef.Stages()), nil
 }
 
 func addRoleDef(m *Model, key, arguments string) error {

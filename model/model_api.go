@@ -19,6 +19,7 @@ import (
 	"github.com/abichinger/fastac/api"
 	"github.com/abichinger/fastac/model/defs"
 	e "github.com/abichinger/fastac/model/effector"
+	"github.com/abichinger/fastac/model/matcher"
 	m "github.com/abichinger/fastac/model/matcher"
 	p "github.com/abichinger/fastac/model/policy"
 	"github.com/abichinger/fastac/rbac"
@@ -51,6 +52,8 @@ type IModel interface {
 
 	SetFunction(name string, function govaluate.ExpressionFunction)
 	RemoveFunction(name string) bool
+
+	BuildMatcherFromDef(mDef *defs.MatcherDef) (matcher.IMatcher, error)
 
 	String() string
 }

@@ -202,6 +202,15 @@ func (def *MatcherDef) GetRequestArgs() []string {
 	return args
 }
 
+func (def *MatcherDef) GetPolicyKey() string {
+	pArgs := def.GetPolicyArgs()
+	pKey := "p"
+	if len(pArgs) > 0 {
+		pKey = strings.Split(pArgs[0], "_")[0]
+	}
+	return pKey
+}
+
 func (def *MatcherDef) String() string {
 	if len(def.stages) == 1 {
 		return fmt.Sprintf("%s = %s", def.key, ArgReg.ReplaceAllString(def.stages[0].expr, "${1}.${3}"))

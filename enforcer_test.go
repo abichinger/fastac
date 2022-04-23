@@ -196,7 +196,7 @@ func TestRBACModelWithDomainsAtRuntime(t *testing.T) {
 	testDomainEnforce(t, e, "bob", "domain2", "data2", "write", true)
 
 	//Remove all policy rules related to domain1 and data1.
-	rules, err := e.FilterWithMatcher("p.dom == \"domain1\" && p.obj == \"data1\"")
+	rules, err := e.Filter(SetMatcher([]string{"p.dom == \"domain1\" && p.obj == \"data1\""}))
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -236,7 +236,7 @@ func TestRBACModelWithDomainsExtendAtRuntime(t *testing.T) {
 	testDomainEnforce(t, e, "alice", "domain1", "data1", "read", true)
 
 	// Remove all policy rules related to domain1 and data1.
-	rules, _ := e.FilterWithMatcher("p.dom == \"domain1\" && p.obj == \"data1\"")
+	rules, _ := e.Filter(SetMatcher([]string{"p.dom == \"domain1\" && p.obj == \"data1\""}))
 	for _, rule := range rules {
 		_, _ = e.RemoveRule(append([]string{"p"}, rule...))
 	}
@@ -654,7 +654,7 @@ func TestFilterWithMatcher(t *testing.T) {
 		"admin,domain2,data2,read",
 	}
 
-	rules, err := e.FilterWithMatcher("p.act == \"read\"")
+	rules, err := e.Filter(SetMatcher([]string{"p.act == \"read\""}))
 	if err != nil {
 		t.Error(err.Error())
 	}
