@@ -21,21 +21,36 @@ import (
 	"github.com/abichinger/fastac/model/fm"
 	"github.com/abichinger/fastac/model/policy"
 	"github.com/abichinger/fastac/model/types"
+	"github.com/abichinger/fastac/util"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestMatcher(t *testing.T) {
+func testRangeMatches(t *testing.T, matcher *Matcher, expected [][]string, rDef defs.RequestDef, rvals []interface{}, fm fm.FunctionMap) {
+	t.Helper()
+	rules := [][]string{}
+	matcher.RangeMatches(rDef, rvals, fm, func(rule types.Rule) bool {
+		rules = append(rules, rule)
+		return true
+	})
+
+	assert.ElementsMatch(t, util.Join2D(expected, ","), util.Join2D(rules, ","))
+}
+
+func TestRangeMatches(t *testing.T) {
 
 	fm := fm.DefaultFunctionMap()
 
-	p := policy.NewPolicy("p", "sub, obj, act")
+	pDef := defs.NewPolicyDef("p", "sub, obj, act")
+	p := policy.NewPolicy(pDef)
 
 	rDef := defs.NewRequestDef("r", "sub, obj, act")
 
-	mDef1 := defs.NewMatcherDef("m.1", "r.sub == p.sub")
-	mDef2 := defs.NewMatcherDef("m.2", "r.obj == p.obj && r.act == p.act")
-	m1 := NewMatcher(p, []*defs.MatcherDef{mDef1, mDef2})
+	mDef := defs.NewMatcherDef("m")
+	mDef.AddStage(0, "r.sub == p.sub")
+	mDef.AddStage(1, "r.obj == p.obj && r.act == p.act")
 
-	m2 := NewMatcher(p, []*defs.MatcherDef{mDef1})
+	m1 := NewMatcher(p, mDef.Stages())
+	m2 := NewMatcher(p, mDef.Stages()[:1])
 
 	p.AddPolicy([]string{"alice", "data1", "read"})
 	p.AddPolicy([]string{"alice", "data2", "read"})
@@ -44,21 +59,15 @@ func TestMatcher(t *testing.T) {
 	p.AddPolicy([]string{"bob", "data1", "read"})
 	p.AddPolicy([]string{"bob", "data2", "read"})
 
-	t.Logf("M1")
-	err := m1.RangeMatches(*rDef, []interface{}{"alice", "data2", "read"}, *fm, func(rule types.Rule) bool {
-		t.Logf("match: %s", rule.Hash())
-		return true
-	})
-	if err != nil {
-		t.Errorf(err.Error())
+	expected1 := [][]string{
+		{"alice", "data2", "read"},
 	}
 
-	t.Logf("M2")
-	err = m2.RangeMatches(*rDef, []interface{}{"alice", "", ""}, *fm, func(rule types.Rule) bool {
-		t.Logf("match: %s", rule.Hash())
-		return true
-	})
-	if err != nil {
-		t.Errorf(err.Error())
+	expected2 := [][]string{
+		{"bob", "data1", "read"},
+		{"bob", "data2", "read"},
 	}
+
+	testRangeMatches(t, m1, expected1, *rDef, []interface{}{"alice", "data2", "read"}, *fm)
+	testRangeMatches(t, m2, expected2, *rDef, []interface{}{"bob", "", ""}, *fm)
 }

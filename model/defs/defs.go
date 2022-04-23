@@ -18,7 +18,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/Knetic/govaluate"
@@ -104,7 +103,7 @@ func (def *PolicyDef) GetParameters(values, names []string) (types.Rule, error) 
 }
 
 func (def *PolicyDef) String() string {
-	return strings.Join(def.args, DefaultSep+" ")
+	return fmt.Sprintf("%s = %s", def.key, strings.Join(def.args, DefaultSep+" "))
 }
 
 type RequestDef struct {
@@ -154,60 +153,93 @@ func (def *RequestDef) GetParameters(values []interface{}, names []string) ([]in
 }
 
 func (def *RequestDef) String() string {
-	return strings.Join(def.args, DefaultSep+" ")
+	return fmt.Sprintf("%s = %s", def.key, strings.Join(def.args, DefaultSep+" "))
 }
 
 type MatcherDef struct {
-	key   string
-	index int
-	expr  string
-	pArgs []string
-	rArgs []string
+	key    string
+	stages []*MatcherStage
 }
 
-func NewMatcherDef(key, expr string) *MatcherDef {
-	def := &MatcherDef{}
-
-	split := strings.Split(key, ".")
-	if len(split) <= 1 {
-		def.key = key
-		def.index = -1
-	} else {
-		def.key = split[0]
-		def.index, _ = strconv.Atoi(split[1])
-	}
-
-	def.expr = ArgReg.ReplaceAllString(expr, "${1}_${3}")
-	def.pArgs = pArgReg.FindAllString(def.expr, -1)
-	def.rArgs = rArgReg.FindAllString(def.expr, -1)
-
-	return def
+func NewMatcherDef(key string) *MatcherDef {
+	return &MatcherDef{key, []*MatcherStage{}}
 }
 
 func (def *MatcherDef) GetKey() string {
 	return def.key
 }
 
-func (def *MatcherDef) GetIndex() int {
-	return def.index
+func (def *MatcherDef) AddStage(index int, expr string) {
+	newStage := NewMatcherStage(index, expr)
+	for i, stage := range def.stages {
+		if stage.index > newStage.index {
+			def.stages = append(def.stages[0:i+1], def.stages[i:]...)
+			def.stages[i] = newStage
+			goto END
+		}
+	}
+	def.stages = append(def.stages, newStage)
+END:
 }
 
-func (def *MatcherDef) String() string {
-	if def.index == -1 {
-		return fmt.Sprintf("%s = %s", def.key, ArgReg.ReplaceAllString(def.expr, "${1}.${3}"))
-	}
-	return fmt.Sprintf("%s.%d = %s", def.key, def.index, ArgReg.ReplaceAllString(def.expr, "${1}.${3}"))
+func (def *MatcherDef) Stages() []*MatcherStage {
+	return def.stages
 }
 
 func (def *MatcherDef) GetPolicyArgs() []string {
-	return def.pArgs
+	args := []string{}
+	for _, stage := range def.stages {
+		args = append(args, stage.pArgs...)
+	}
+	return args
 }
 
 func (def *MatcherDef) GetRequestArgs() []string {
-	return def.rArgs
+	args := []string{}
+	for _, stage := range def.stages {
+		args = append(args, stage.rArgs...)
+	}
+	return args
 }
 
-func (def *MatcherDef) NewExpressionWithFunctions(functions map[string]govaluate.ExpressionFunction) (*govaluate.EvaluableExpression, error) {
+func (def *MatcherDef) String() string {
+	if len(def.stages) == 1 {
+		return fmt.Sprintf("%s = %s", def.key, ArgReg.ReplaceAllString(def.stages[0].expr, "${1}.${3}"))
+	}
+
+	defs := []string{}
+	for i, stage := range def.stages {
+		defs = append(defs, fmt.Sprintf("%s.%d = %s", def.key, i, ArgReg.ReplaceAllString(stage.expr, "${1}.${3}")))
+	}
+	return strings.Join(defs, "\n")
+
+}
+
+type MatcherStage struct {
+	index int
+	expr  string
+	pArgs []string
+	rArgs []string
+}
+
+func NewMatcherStage(index int, expr string) *MatcherStage {
+	stage := &MatcherStage{}
+	stage.index = index
+	stage.expr = ArgReg.ReplaceAllString(expr, "${1}_${3}")
+	stage.pArgs = pArgReg.FindAllString(stage.expr, -1)
+	stage.rArgs = rArgReg.FindAllString(stage.expr, -1)
+	return stage
+}
+
+func (stage *MatcherStage) GetPolicyArgs() []string {
+	return stage.pArgs
+}
+
+func (stage *MatcherStage) GetRequestArgs() []string {
+	return stage.rArgs
+}
+
+func (def *MatcherStage) NewExpressionWithFunctions(functions map[string]govaluate.ExpressionFunction) (*govaluate.EvaluableExpression, error) {
 	return govaluate.NewEvaluableExpressionWithFunctions(def.expr, functions)
 }
 
@@ -232,7 +264,7 @@ func (def *EffectDef) Expr() string {
 }
 
 func (def *EffectDef) String() string {
-	return def.expr
+	return fmt.Sprintf("%s = %s", def.key, def.expr)
 }
 
 type RoleDef struct {
@@ -258,7 +290,7 @@ func (def *RoleDef) NArgs() int {
 func (def *RoleDef) String() string {
 	args := make([]string, def.nargs)
 	for i := 0; i < def.nargs; i++ {
-		args = append(args, DefaultRoleParty)
+		args[i] = DefaultRoleParty
 	}
-	return strings.Join(args, DefaultSep)
+	return fmt.Sprintf("%s = %s", def.key, strings.Join(args, DefaultSep))
 }

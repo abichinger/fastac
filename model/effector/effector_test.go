@@ -19,6 +19,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/abichinger/fastac/model/defs"
 	"github.com/abichinger/fastac/model/eft"
 	"github.com/abichinger/fastac/model/types"
 )
@@ -46,7 +47,8 @@ func testMerge(t *testing.T, e Effector, effects []types.Effect, matches []types
 }
 
 func TestSomeAllow(t *testing.T) {
-	e := NewDefaultEffector("e", "some(where (p.eft == allow))")
+	def := defs.NewEffectDef("e", "some(where (p.eft == allow))")
+	e := NewEffector(def)
 
 	effects, matches := genEffects([]types.Effect{eft.Allow}, 1)
 	testMerge(t, e, effects, matches, false, eft.Allow)
@@ -57,7 +59,8 @@ func TestSomeAllow(t *testing.T) {
 }
 
 func TestNoDeny(t *testing.T) {
-	e := NewDefaultEffector("e", "!some(where (p.eft == deny))")
+	def := defs.NewEffectDef("e", "!some(where (p.eft == deny))")
+	e := NewEffector(def)
 
 	effects, matches := genEffects([]types.Effect{eft.Allow}, 1)
 	testMerge(t, e, effects, matches, false, eft.Indeterminate)
@@ -68,7 +71,8 @@ func TestNoDeny(t *testing.T) {
 }
 
 func TestSomeAllowNoDeny(t *testing.T) {
-	e := NewDefaultEffector("e", "some(where (p.eft == allow)) && !some(where (p.eft == deny))")
+	def := defs.NewEffectDef("e", "some(where (p.eft == allow)) && !some(where (p.eft == deny))")
+	e := NewEffector(def)
 
 	effects, matches := genEffects([]types.Effect{eft.Allow}, 1)
 	testMerge(t, e, effects, matches, false, eft.Indeterminate)

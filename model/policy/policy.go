@@ -32,17 +32,12 @@ type Policy struct {
 	*defs.PolicyDef
 }
 
-func NewPolicyFromDef(pDef *defs.PolicyDef) *Policy {
+func NewPolicy(pDef *defs.PolicyDef) *Policy {
 	p := &Policy{}
 	p.PolicyDef = pDef
 	p.Emitter = em.NewEmitter(false)
 	p.ruleMap = make(map[string]types.Rule)
 	return p
-}
-
-func NewPolicy(key, arguments string) *Policy {
-	pDef := defs.NewPolicyDef(key, arguments)
-	return NewPolicyFromDef(pDef)
 }
 
 func (p *Policy) AddPolicy(rule types.Rule) bool {

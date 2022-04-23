@@ -28,9 +28,9 @@ type DefaultEffector struct {
 }
 
 // NewDefaultEffector is the constructor for DefaultEffector.
-func NewDefaultEffector(key, expr string) *DefaultEffector {
+func NewEffector(def *defs.EffectDef) *DefaultEffector {
 	e := DefaultEffector{}
-	e.EffectDef = defs.NewEffectDef(key, expr)
+	e.EffectDef = def
 	return &e
 }
 

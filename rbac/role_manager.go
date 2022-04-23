@@ -255,7 +255,3 @@ func rangeLinks(users *sync.Map, fn func(name1, name2 string, domain ...string) 
 func (rm *RoleManager) Range(fn func(name1, name2 string, domain ...string) bool) {
 	rangeLinks(rm.allRoles, fn)
 }
-
-func (dm *RoleManager) String() string {
-	return "_, _"
-}

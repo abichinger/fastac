@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/abichinger/fastac/api"
+	"github.com/abichinger/fastac/model/defs"
 	"github.com/abichinger/fastac/model/policy"
 	"github.com/abichinger/fastac/model/types"
 	"github.com/abichinger/fastac/util"
@@ -34,7 +35,8 @@ type RuleSet struct {
 }
 
 func NewRuleSet() *RuleSet {
-	return &RuleSet{Policy: policy.NewPolicy("", "")}
+	def := defs.NewPolicyDef("", "")
+	return &RuleSet{Policy: policy.NewPolicy(def)}
 }
 
 func (set *RuleSet) AddRule(rule []string) (bool, error) {

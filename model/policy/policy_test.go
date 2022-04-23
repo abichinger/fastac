@@ -17,6 +17,7 @@ package policy
 import (
 	"testing"
 
+	"github.com/abichinger/fastac/model/defs"
 	"github.com/abichinger/fastac/util"
 	"github.com/stretchr/testify/assert"
 )
@@ -28,7 +29,8 @@ func loadTestPolicy(p *Policy, rules [][]string) {
 }
 
 func TestGetDistinct(t *testing.T) {
-	p := NewPolicy("p", "sub, obj, act")
+	def := defs.NewPolicyDef("p", "sub, obj, act")
+	p := NewPolicy(def)
 	rules := [][]string{
 		{"alice", "data1", "read"},
 		{"bob", "data2", "write"},

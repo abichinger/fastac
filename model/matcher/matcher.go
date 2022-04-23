@@ -17,7 +17,6 @@ package matcher
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/Knetic/govaluate"
 	"github.com/abichinger/fastac/model/defs"
@@ -77,12 +76,12 @@ func (params *MatchParameters) Get(name string) (interface{}, error) {
 }
 
 type Matcher struct {
-	matchers []*defs.MatcherDef
+	matchers []*defs.MatcherStage
 	policy   *p.Policy
 	root     *MatcherNode
 }
 
-func NewMatcher(policy *p.Policy, matchers []*defs.MatcherDef) *Matcher {
+func NewMatcher(policy *p.Policy, matchers []*defs.MatcherStage) *Matcher {
 	m := &Matcher{}
 	m.policy = policy
 	m.matchers = matchers
@@ -213,14 +212,6 @@ func (m *Matcher) RangeMatches(rDef defs.RequestDef, rvals []interface{}, fMap f
 		level++
 	}
 	return nil
-}
-
-func (m *Matcher) String() string {
-	res := []string{}
-	for _, mDef := range m.matchers {
-		res = append(res, mDef.String())
-	}
-	return strings.Join(res, "\n")
 }
 
 func eval(expression string, functions map[string]govaluate.ExpressionFunction, parameters *MatchParameters) (interface{}, error) {
