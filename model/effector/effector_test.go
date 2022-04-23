@@ -35,7 +35,7 @@ func genEffects(effects []types.Effect, n int) ([]types.Effect, []types.Rule) {
 	return e, m
 }
 
-func testMerge(t *testing.T, e Effector, effects []types.Effect, matches []types.Rule, complete bool, exprected types.Effect) {
+func testMerge(t *testing.T, e IEffector, effects []types.Effect, matches []types.Rule, complete bool, exprected types.Effect) {
 	t.Helper()
 	effect, _, err := e.MergeEffects(effects, matches, complete)
 	if err != nil {

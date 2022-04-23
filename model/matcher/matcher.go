@@ -77,73 +77,79 @@ func (params *MatchParameters) Get(name string) (interface{}, error) {
 
 type Matcher struct {
 	matchers []*defs.MatcherStage
-	policy   *p.Policy
+	pDef     *defs.PolicyDef
+	policy   p.IPolicy
 	root     *MatcherNode
 }
 
-func NewMatcher(policy *p.Policy, matchers []*defs.MatcherStage) *Matcher {
+func NewMatcher(pDef *defs.PolicyDef, policy p.IPolicy, matchers []*defs.MatcherStage) *Matcher {
 	m := &Matcher{}
+	m.pDef = pDef
 	m.policy = policy
 	m.matchers = matchers
 	m.root = NewMatcherNode([]string{""})
 
-	policy.Range(func(hash string, rule types.Rule) bool {
-		m.AddPolicy(rule)
+	policy.Range(func(hash string, rule []string) bool {
+		m.addRule(rule)
 		return true
 	})
 
-	policy.AddListener(p.PolicyAdded, func(arguments ...interface{}) {
-		rule := arguments[0].(types.Rule)
-		m.AddPolicy(rule)
+	policy.AddListener(p.EVT_RULE_ADDED, func(arguments ...interface{}) {
+		rule := arguments[0].([]string)
+		m.addRule(rule)
 	})
 
-	policy.AddListener(p.PolicyRemoved, func(arguments ...interface{}) {
-		rule := arguments[0].(types.Rule)
-		m.RemovePolicy(rule)
+	policy.AddListener(p.EVT_RULE_REMOVED, func(arguments ...interface{}) {
+		rule := arguments[0].([]string)
+		m.removeRule(rule)
+	})
+
+	policy.AddListener(p.EVT_CLEARED, func(arguments ...interface{}) {
+		m.root = NewMatcherNode([]string{""})
 	})
 
 	return m
 }
 
-func (m *Matcher) GetPolicy() *p.Policy {
-	return m.policy
+func (m *Matcher) GetPolicyKey() string {
+	return m.pDef.GetKey()
 }
 
-func (m *Matcher) AddPolicy(rule types.Rule) {
-	m.addPolicy(rule, 0, m.root)
+func (m *Matcher) addRule(rule types.Rule) {
+	m.addRuleHelper(rule, 0, m.root)
 }
 
-func (m *Matcher) addPolicy(rule types.Rule, level int, node *MatcherNode) {
+func (m *Matcher) addRuleHelper(rule types.Rule, level int, node *MatcherNode) {
 	pArgs := m.matchers[level].GetPolicyArgs()
 	if len(pArgs) == 0 {
 		return
 	}
 
 	if level < len(m.matchers)-1 {
-		key, _ := m.policy.GetParameters(rule, pArgs)
+		key, _ := m.pDef.GetParameters(rule, pArgs)
 		nextNode := node.GetOrCreate(key, rule)
-		m.addPolicy(rule, level+1, nextNode)
+		m.addRuleHelper(rule, level+1, nextNode)
 	} else {
 		hash := rule.Hash()
 		node.children[hash] = NewMatcherNode(rule)
 	}
 }
 
-func (m *Matcher) RemovePolicy(rule types.Rule) {
-	m.removePolicy(rule, 0, m.root)
+func (m *Matcher) removeRule(rule types.Rule) {
+	m.removeRuleHelper(rule, 0, m.root)
 }
 
-func (m *Matcher) removePolicy(rule types.Rule, level int, node *MatcherNode) {
+func (m *Matcher) removeRuleHelper(rule types.Rule, level int, node *MatcherNode) {
 	pArgs := m.matchers[level].GetPolicyArgs()
 	if len(pArgs) == 0 {
 		return
 	}
 
 	if level < len(m.matchers)-1 {
-		key, _ := m.policy.GetParameters(rule, pArgs)
+		key, _ := m.pDef.GetParameters(rule, pArgs)
 		strKey := key.Hash()
 		if nextNode, ok := node.children[strKey]; ok {
-			m.removePolicy(rule, level+1, nextNode)
+			m.removeRuleHelper(rule, level+1, nextNode)
 		}
 	} else {
 		hash := rule.Hash()
@@ -157,8 +163,8 @@ func (m *Matcher) RangeMatches(rDef defs.RequestDef, rvals []interface{}, fMap f
 	q = append(q, m.root)
 	empty := true
 
-	params := NewMatchParameters(*m.policy.PolicyDef, nil, rDef, rvals)
-	fMap.AddFunction("eval", generateEvalFunction(fMap, params))
+	params := NewMatchParameters(*m.pDef, nil, rDef, rvals)
+	fMap.SetFunction("eval", generateEvalFunction(fMap, params))
 	functions := fMap.GetFunctions()
 
 	for len(q) > 0 {
@@ -199,7 +205,7 @@ func (m *Matcher) RangeMatches(rDef defs.RequestDef, rvals []interface{}, fMap f
 		}
 
 		if empty && level == len(m.matchers)-1 {
-			params.pvals = make(types.Rule, len(m.policy.GetArgs()))
+			params.pvals = make(types.Rule, len(m.pDef.GetArgs()))
 			res, err := expr.Eval(params)
 			if err != nil {
 				return err

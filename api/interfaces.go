@@ -16,6 +16,14 @@ package api
 
 import em "github.com/vansante/go-event-emitter"
 
+type IString interface {
+	String() string
+}
+
+type IClear interface {
+	Clear() error
+}
+
 type IAddRule interface {
 	AddRule(rule []string) error
 }

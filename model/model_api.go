@@ -15,6 +15,7 @@
 package model
 
 import (
+	"github.com/Knetic/govaluate"
 	"github.com/abichinger/fastac/api"
 	"github.com/abichinger/fastac/model/defs"
 	e "github.com/abichinger/fastac/model/effector"
@@ -23,45 +24,33 @@ import (
 	"github.com/abichinger/fastac/rbac"
 )
 
-type IString interface {
-	String() string
-}
-
-type IClear interface {
-	Clear() error
-}
-
-type IRuleManagement interface {
-	IClear
-	api.IAddRule
-	api.IAddRules
-	api.IRemoveRule
-	api.IRemoveRules
-}
-
-type IAddDef interface {
-	AddDef(sec byte, key string, value string) bool
-}
-
-type IRemoveDef interface {
-	RemoveDef(sec byte, key string) bool
-}
-
 type IModel interface {
+	api.IAddRuleBool
+	api.IRemoveRuleBool
+
+	GetDef(sec byte, key string) (defs.IDef, bool)
+	SetDef(sec byte, key string, value string) error
+	RemoveDef(sec byte, key string) error
+
 	GetRoleManager(key string) (rbac.IRoleManager, bool)
 	SetRoleManager(key string, rm rbac.IRoleManager)
 
-	GetPolicy(key string) (*p.Policy, bool)
-	SetPolicy(key string, policy *p.Policy)
+	GetPolicy(key string) (p.IPolicy, bool)
+	SetPolicy(key string, policy p.IPolicy)
 
-	GetEffector(key string) (e.Effector, bool)
-	SetEffector(key string, eft e.Effector)
+	GetEffector(key string) (e.IEffector, bool)
+	SetEffector(key string, eft e.IEffector)
 
-	GetMatcher(key string) (*m.Matcher, bool)
-	SetMatcher(key string, matcher *m.Matcher)
+	GetMatcher(key string) (m.IMatcher, bool)
+	SetMatcher(key string, matcher m.IMatcher)
 
 	GetRequestDef(key string) (*defs.RequestDef, bool)
 	SetRequestDef(key string, def *defs.RequestDef)
 
-	ClearPolicy()
+	ClearPolicy(key string) error
+
+	SetFunction(name string, function govaluate.ExpressionFunction)
+	RemoveFunction(name string) bool
+
+	String() string
 }

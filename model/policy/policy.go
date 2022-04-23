@@ -17,12 +17,8 @@ package policy
 import (
 	"github.com/abichinger/fastac/model/defs"
 	"github.com/abichinger/fastac/model/types"
+	"github.com/abichinger/fastac/util"
 	em "github.com/vansante/go-event-emitter"
-)
-
-const (
-	PolicyAdded   em.EventType = "PolicyAdded"
-	PolicyRemoved em.EventType = "PolicyRemoved"
 )
 
 type Policy struct {
@@ -40,25 +36,25 @@ func NewPolicy(pDef *defs.PolicyDef) *Policy {
 	return p
 }
 
-func (p *Policy) AddPolicy(rule types.Rule) bool {
-	hash := rule.Hash()
-	if _, ok := p.ruleMap[hash]; ok {
-		return false
+func (p *Policy) AddRule(rule []string) (bool, error) {
+	key := util.Hash(rule)
+	if _, ok := p.ruleMap[key]; ok {
+		return false, nil
 	}
-	p.ruleMap[hash] = rule
-	p.Emitter.EmitEvent(PolicyAdded, rule)
-	return true
+	p.ruleMap[key] = rule
+	p.Emitter.EmitEvent(EVT_RULE_ADDED, rule)
+	return true, nil
 }
 
-func (p *Policy) RemovePolicy(rule types.Rule) bool {
-	key := rule.Hash()
+func (p *Policy) RemoveRule(rule []string) (bool, error) {
+	key := util.Hash(rule)
 	_, ok := p.ruleMap[key]
 	if !ok {
-		return false
+		return false, nil
 	}
 	delete(p.ruleMap, key)
-	p.Emitter.EmitEvent(PolicyRemoved, rule)
-	return true
+	p.Emitter.EmitEvent(EVT_RULE_REMOVED, rule)
+	return true, nil
 }
 
 func (p *Policy) GetDistinct(args []string) ([][]string, error) {
@@ -80,10 +76,16 @@ func (p *Policy) GetDistinct(args []string) ([][]string, error) {
 	return res, nil
 }
 
-func (p *Policy) Range(fn func(hash string, rule types.Rule) bool) {
+func (p *Policy) Range(fn func(hash string, rule []string) bool) {
 	for hash, r := range p.ruleMap {
 		if !fn(hash, r) {
 			break
 		}
 	}
+}
+
+func (p *Policy) Clear() error {
+	p.ruleMap = make(map[string]types.Rule)
+	p.Emitter.EmitEvent(EVT_CLEARED)
+	return nil
 }

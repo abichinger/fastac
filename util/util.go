@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+const DefaultSep = ","
+
 func Join2D(elems [][]string, sep string) []string {
 	res := []string{}
 	for _, elem := range elems {
@@ -22,4 +24,8 @@ func FileExists(path string) (bool, error) {
 		return false, nil
 	}
 	return false, err
+}
+
+func Hash(rule []string) string {
+	return strings.Join(rule, DefaultSep)
 }

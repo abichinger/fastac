@@ -22,9 +22,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func loadTestPolicy(p *Policy, rules [][]string) {
+func loadTestPolicy(t *testing.T, p *Policy, rules [][]string) {
+	t.Helper()
+
 	for _, rule := range rules {
-		p.AddPolicy(rule)
+		_, _ = p.AddRule(rule)
 	}
 }
 
@@ -38,7 +40,7 @@ func TestGetDistinct(t *testing.T) {
 		{"data2_admin", "data2", "write"},
 	}
 
-	loadTestPolicy(p, rules)
+	loadTestPolicy(t, p, rules)
 
 	subjects, _ := p.GetDistinct([]string{"sub"})
 	objects, _ := p.GetDistinct([]string{"obj"})

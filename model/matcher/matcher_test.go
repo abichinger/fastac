@@ -28,10 +28,13 @@ import (
 func testRangeMatches(t *testing.T, matcher *Matcher, expected [][]string, rDef defs.RequestDef, rvals []interface{}, fm fm.FunctionMap) {
 	t.Helper()
 	rules := [][]string{}
-	matcher.RangeMatches(rDef, rvals, fm, func(rule types.Rule) bool {
+	err := matcher.RangeMatches(rDef, rvals, fm, func(rule types.Rule) bool {
 		rules = append(rules, rule)
 		return true
 	})
+	if err != nil {
+		t.Error(err.Error())
+	}
 
 	assert.ElementsMatch(t, util.Join2D(expected, ","), util.Join2D(rules, ","))
 }
@@ -49,15 +52,21 @@ func TestRangeMatches(t *testing.T) {
 	mDef.AddStage(0, "r.sub == p.sub")
 	mDef.AddStage(1, "r.obj == p.obj && r.act == p.act")
 
-	m1 := NewMatcher(p, mDef.Stages())
-	m2 := NewMatcher(p, mDef.Stages()[:1])
+	m1 := NewMatcher(pDef, p, mDef.Stages())
+	m2 := NewMatcher(pDef, p, mDef.Stages()[:1])
 
-	p.AddPolicy([]string{"alice", "data1", "read"})
-	p.AddPolicy([]string{"alice", "data2", "read"})
-	p.AddPolicy([]string{"alice", "data1", "write"})
-	p.AddPolicy([]string{"alice", "data1", "delete"})
-	p.AddPolicy([]string{"bob", "data1", "read"})
-	p.AddPolicy([]string{"bob", "data2", "read"})
+	rules := [][]string{
+		{"alice", "data1", "read"},
+		{"alice", "data2", "read"},
+		{"alice", "data1", "write"},
+		{"alice", "data1", "delete"},
+		{"bob", "data1", "read"},
+		{"bob", "data2", "read"},
+	}
+
+	for _, rule := range rules {
+		_, _ = p.AddRule(rule)
+	}
 
 	expected1 := [][]string{
 		{"alice", "data2", "read"},

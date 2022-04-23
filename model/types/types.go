@@ -14,14 +14,14 @@
 
 package types
 
-import "strings"
-
-const DefaultSep = ","
+import (
+	"github.com/abichinger/fastac/util"
+)
 
 type Rule []string
 
 func (r *Rule) Hash() string {
-	return strings.Join(*r, DefaultSep)
+	return util.Hash(*r)
 }
 
 // Effect is the result for a policy rule.

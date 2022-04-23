@@ -20,8 +20,8 @@ import (
 )
 
 type IEnforcer interface {
-	GetModel() *model.Model
-	SetModel(m *model.Model)
+	GetModel() model.IModel
+	SetModel(m model.IModel)
 	GetAdapter() *adapter.Adapter
 	SetAdapter(*adapter.Adapter)
 

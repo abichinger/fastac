@@ -195,8 +195,11 @@ func TestRBACModelWithDomainsAtRuntime(t *testing.T) {
 	testDomainEnforce(t, e, "bob", "domain2", "data2", "read", true)
 	testDomainEnforce(t, e, "bob", "domain2", "data2", "write", true)
 
-	// Remove all policy rules related to domain1 and data1.
-	rules, _ := e.FilterWithMatcher("p.dom == \"domain1\" && p.obj == \"data1\"")
+	//Remove all policy rules related to domain1 and data1.
+	rules, err := e.FilterWithMatcher("p.dom == \"domain1\" && p.obj == \"data1\"")
+	if err != nil {
+		t.Error(err.Error())
+	}
 	for _, rule := range rules {
 		_, _ = e.RemoveRule(append([]string{"p"}, rule...))
 	}
@@ -469,7 +472,7 @@ func CustomFunctionWrapper(args ...interface{}) (interface{}, error) {
 func TestKeyMatchCustomModel(t *testing.T) {
 	e, _ := NewEnforcer("examples/keymatch_custom_model.conf", "examples/keymatch2_policy.csv")
 
-	e.model.AddFunction("keyMatchCustom", CustomFunctionWrapper)
+	e.model.SetFunction("keyMatchCustom", CustomFunctionWrapper)
 
 	testEnforce(t, e, "alice", "/alice_data2/myid", "GET", false)
 	testEnforce(t, e, "alice", "/alice_data2/myid/using/res_id", "GET", true)

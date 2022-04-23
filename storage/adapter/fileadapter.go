@@ -22,7 +22,6 @@ import (
 	"github.com/abichinger/fastac/api"
 	"github.com/abichinger/fastac/model/defs"
 	"github.com/abichinger/fastac/model/policy"
-	"github.com/abichinger/fastac/model/types"
 	"github.com/abichinger/fastac/util"
 )
 
@@ -39,16 +38,8 @@ func NewRuleSet() *RuleSet {
 	return &RuleSet{Policy: policy.NewPolicy(def)}
 }
 
-func (set *RuleSet) AddRule(rule []string) (bool, error) {
-	return set.AddPolicy(rule), nil
-}
-
-func (set *RuleSet) RemoveRule(rule []string) (bool, error) {
-	return set.RemovePolicy(rule), nil
-}
-
 func (set *RuleSet) RangeRules(fn func(rule []string) bool) {
-	set.Range(func(hash string, rule types.Rule) bool {
+	set.Range(func(hash string, rule []string) bool {
 		return fn(rule)
 	})
 }
@@ -115,7 +106,9 @@ func (a *FileAdapter) AddRule(rule []string) error {
 	if err := a.LoadPolicy(rs); err != nil {
 		return err
 	}
-	rs.AddPolicy(rule)
+	if _, err := rs.AddRule(rule); err != nil {
+		return err
+	}
 	if err := a.SavePolicy(rs); err != nil {
 		return err
 	}

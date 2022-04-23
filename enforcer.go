@@ -180,7 +180,7 @@ func (e *Enforcer) RemoveRules(rules [][]string) error {
 }
 
 func (e *Enforcer) setTempMatcher(matcher string) error {
-	if err := e.model.AddDef('m', tmpMatcherKey, matcher); err != nil {
+	if err := e.model.SetDef('m', tmpMatcherKey, matcher); err != nil {
 		return err
 	}
 	if err := e.model.BuildMatcher(tmpMatcherKey); err != nil {
@@ -259,7 +259,7 @@ func (e *Enforcer) FilterWithKeys(mKey string, rKey string, rvals ...interface{}
 	return rules, err
 }
 
-func (e *Enforcer) RangeMatches(matcher *matcher.Matcher, rDef *defs.RequestDef, rvals []interface{}, fn func(rule types.Rule) bool) error {
+func (e *Enforcer) RangeMatches(matcher matcher.IMatcher, rDef *defs.RequestDef, rvals []interface{}, fn func(rule types.Rule) bool) error {
 	return e.model.RangeMatches(matcher, rDef, rvals, fn)
 }
 
@@ -276,8 +276,9 @@ func (e *Enforcer) RangeMatchesWithKeys(mKey string, rKey string, rvals []interf
 	return e.RangeMatches(matcher, rDef, rvals, fn)
 }
 
-func (e *Enforcer) enforce(matcher *matcher.Matcher, rDef *defs.RequestDef, effector effector.Effector, rvals []interface{}) (bool, error) {
-	pDef := matcher.GetPolicy()
+func (e *Enforcer) enforce(matcher matcher.IMatcher, rDef *defs.RequestDef, effector effector.IEffector, rvals []interface{}) (bool, error) {
+	def, _ := e.model.GetDef(model.P_SEC, matcher.GetPolicyKey())
+	pDef := def.(*defs.PolicyDef)
 	res := eft.Indeterminate
 	effects := []types.Effect{}
 	matches := []types.Rule{}
@@ -310,6 +311,6 @@ func (e *Enforcer) enforce(matcher *matcher.Matcher, rDef *defs.RequestDef, effe
 	return res == eft.Allow, nil
 }
 
-func (e *Enforcer) GetModel() *model.Model {
+func (e *Enforcer) GetModel() model.IModel {
 	return e.model
 }
