@@ -14,7 +14,7 @@
 
 package api
 
-import em "github.com/vansante/go-event-emitter"
+import em "github.com/abichinger/go-event-emitter"
 
 type IString interface {
 	String() string

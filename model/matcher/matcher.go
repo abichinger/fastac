@@ -94,17 +94,17 @@ func NewMatcher(pDef *defs.PolicyDef, policy p.IPolicy, matchers []*defs.Matcher
 		return true
 	})
 
-	policy.AddListener(p.EVT_RULE_ADDED, func(arguments ...interface{}) {
+	policy.AddListener(p.EVT_RULE_ADDED, func(arguments []interface{}) {
 		rule := arguments[0].([]string)
 		m.addRule(rule)
 	})
 
-	policy.AddListener(p.EVT_RULE_REMOVED, func(arguments ...interface{}) {
+	policy.AddListener(p.EVT_RULE_REMOVED, func(arguments []interface{}) {
 		rule := arguments[0].([]string)
 		m.removeRule(rule)
 	})
 
-	policy.AddListener(p.EVT_CLEARED, func(arguments ...interface{}) {
+	policy.AddListener(p.EVT_CLEARED, func(arguments []interface{}) {
 		m.root = NewMatcherNode([]string{""})
 	})
 

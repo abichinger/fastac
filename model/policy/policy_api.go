@@ -2,7 +2,7 @@ package policy
 
 import (
 	"github.com/abichinger/fastac/api"
-	em "github.com/vansante/go-event-emitter"
+	em "github.com/abichinger/go-event-emitter"
 )
 
 const (

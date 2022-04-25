@@ -52,8 +52,8 @@ func newRoleManagerWithMatchingFunc(maxHierarchyLevel int, fn MatchingFunc) *Rol
 func (rm *RoleManager) rebuild() {
 	roles := rm.allRoles
 	_ = rm.Clear()
-	rangeLinks(roles, func(name1, name2 string, domain ...string) bool {
-		_, _ = rm.AddLink(name1, name2, domain...)
+	rangeLinks(roles, func(name1, name2 string, domains []string) bool {
+		_, _ = rm.AddLink(name1, name2, domains)
 		return true
 	})
 }
@@ -147,7 +147,7 @@ func (rm *RoleManager) Clear() error {
 
 // AddLink adds the inheritance link between role: name1 and role: name2.
 // aka role: name1 inherits role: name2.
-func (rm *RoleManager) AddLink(name1 string, name2 string, domains ...string) (bool, error) {
+func (rm *RoleManager) AddLink(name1 string, name2 string, domains []string) (bool, error) {
 	user, _ := rm.getRole(name1)
 	role, _ := rm.getRole(name2)
 
@@ -160,7 +160,7 @@ func (rm *RoleManager) AddLink(name1 string, name2 string, domains ...string) (b
 
 // DeleteLink deletes the inheritance link between role: name1 and role: name2.
 // aka role: name1 does not inherit role: name2 any more.
-func (rm *RoleManager) DeleteLink(name1 string, name2 string, domains ...string) (bool, error) {
+func (rm *RoleManager) DeleteLink(name1 string, name2 string, domains []string) (bool, error) {
 	user, _ := rm.getRole(name1)
 	role, _ := rm.getRole(name2)
 
@@ -172,7 +172,7 @@ func (rm *RoleManager) DeleteLink(name1 string, name2 string, domains ...string)
 }
 
 // HasLink determines whether role: name1 inherits role: name2.
-func (rm *RoleManager) HasLink(name1 string, name2 string, domains ...string) (bool, error) {
+func (rm *RoleManager) HasLink(name1 string, name2 string, domains []string) (bool, error) {
 	if name1 == name2 {
 		return true, nil
 	}
@@ -210,7 +210,7 @@ func (rm *RoleManager) hasLinkHelper(name string, roles map[string]*Role, level 
 }
 
 // GetRoles gets the roles that a user inherits.
-func (rm *RoleManager) GetRoles(name string, domains ...string) ([]string, error) {
+func (rm *RoleManager) GetRoles(name string, domains []string) ([]string, error) {
 	user, created := rm.getRole(name)
 	if created {
 		defer rm.removeRole(user.name)
@@ -220,7 +220,7 @@ func (rm *RoleManager) GetRoles(name string, domains ...string) ([]string, error
 
 // GetUsers gets the users of a role.
 // domain is an unreferenced parameter here, may be used in other implementations.
-func (rm *RoleManager) GetUsers(name string, domain ...string) ([]string, error) {
+func (rm *RoleManager) GetUsers(name string, domains []string) ([]string, error) {
 	role, created := rm.getRole(name)
 	if created {
 		defer rm.removeRole(role.name)
@@ -238,13 +238,13 @@ func (rm *RoleManager) GetAllDomains() ([]string, error) {
 	return []string{}, nil
 }
 
-func rangeLinks(users *sync.Map, fn func(name1, name2 string, domain ...string) bool) {
+func rangeLinks(users *sync.Map, fn func(name1, name2 string, domains []string) bool) {
 	users.Range(func(_, value interface{}) bool {
 		user := value.(*Role)
 		user.roles.Range(func(key, _ interface{}) bool {
 			roleName := key.(string)
 			if _, ok := user.redundant.Load(roleName); !ok {
-				return fn(user.name, roleName)
+				return fn(user.name, roleName, nil)
 			}
 			return true
 		})
@@ -252,6 +252,6 @@ func rangeLinks(users *sync.Map, fn func(name1, name2 string, domain ...string) 
 	})
 }
 
-func (rm *RoleManager) Range(fn func(name1, name2 string, domain ...string) bool) {
+func (rm *RoleManager) Range(fn func(name1, name2 string, domains []string) bool) {
 	rangeLinks(rm.allRoles, fn)
 }

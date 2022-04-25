@@ -75,7 +75,7 @@ func OptionStorage(enable bool) Option {
 //
 //  adapter := gormadapter.NewAdapter(db, tableName)
 //  NewEnforcer("model.conf", adapter, OptionAutosave(true))
-func NewEnforcer(model interface{}, adapter interface{}, options ...Option) (*Enforcer, error) {
+func NewEnforcer(model interface{}, adapter interface{}, options []Option) (*Enforcer, error) {
 	e := &Enforcer{}
 
 	switch m2 := model.(type) {
@@ -231,36 +231,36 @@ func (e *Enforcer) splitParams(params ...interface{}) (ctx *Context, request []i
 		}
 	}
 
-	ctx, err = NewContext(e.model, options...)
+	ctx, err = NewContext(e.model, options)
 	return ctx, request, err
 }
 
 // Enforce decides whether to allow or deny a request
-func (e *Enforcer) Enforce(params ...interface{}) (bool, error) {
-	ctx, rvals, err := e.splitParams(params...)
+func (e *Enforcer) Enforce(params []interface{}) (bool, error) {
+	ctx, request, err := e.splitParams(params...)
 	if err != nil {
 		return false, err
 	}
-	return e.EnforceWithContext(ctx, rvals...)
+	return e.EnforceWithContext(ctx, request)
 }
 
-func (e *Enforcer) EnforceWithContext(ctx *Context, rvals ...interface{}) (bool, error) {
-	return e.enforce(ctx, rvals)
+func (e *Enforcer) EnforceWithContext(ctx *Context, request []interface{}) (bool, error) {
+	return e.enforce(ctx, request)
 }
 
 // Filter will fetch all rules which match the given request
 // The effect of rules does not matter.
-func (e *Enforcer) Filter(params ...interface{}) ([]kind.Rule, error) {
-	ctx, rvals, err := e.splitParams(params...)
+func (e *Enforcer) Filter(params []interface{}) ([]kind.Rule, error) {
+	ctx, request, err := e.splitParams(params...)
 	if err != nil {
 		return nil, err
 	}
-	return e.FilterWithContext(ctx, rvals...)
+	return e.FilterWithContext(ctx, request)
 }
 
-func (e *Enforcer) FilterWithContext(ctx *Context, rvals ...interface{}) ([]kind.Rule, error) {
+func (e *Enforcer) FilterWithContext(ctx *Context, request []interface{}) ([]kind.Rule, error) {
 	rules := []kind.Rule{}
-	err := e.RangeMatchesWithContext(ctx, rvals, func(rule kind.Rule) bool {
+	err := e.RangeMatchesWithContext(ctx, request, func(rule kind.Rule) bool {
 		rules = append(rules, rule)
 		return true
 	})

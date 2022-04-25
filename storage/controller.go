@@ -20,7 +20,7 @@ import (
 	"github.com/abichinger/fastac/api"
 	"github.com/abichinger/fastac/model"
 	"github.com/abichinger/fastac/storage/adapter"
-	eventemitter "github.com/vansante/go-event-emitter"
+	eventemitter "github.com/abichinger/go-event-emitter"
 )
 
 type opcode int
@@ -63,7 +63,7 @@ func NewStorageController(eventemitter api.IAddRemoveListener, adapter adapter.A
 }
 
 func (sc *StorageController) addListener(event eventemitter.EventType, opc opcode) {
-	l := sc.em.AddListener(event, func(arguments ...interface{}) {
+	l := sc.em.AddListener(event, func(arguments []interface{}) {
 		rule := arguments[0].([]string)
 		sc.addOp(opc, rule)
 	})

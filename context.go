@@ -84,7 +84,7 @@ type Context struct {
 	effector e.IEffector
 }
 
-func NewContext(model model.IModel, options ...ContextOption) (*Context, error) {
+func NewContext(model model.IModel, options []ContextOption) (*Context, error) {
 	ctx := &Context{}
 	ctx.model = model
 

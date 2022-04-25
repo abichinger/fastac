@@ -28,8 +28,8 @@ import (
 	"github.com/abichinger/fastac/model/policy"
 	"github.com/abichinger/fastac/rbac"
 	"github.com/abichinger/fastac/str"
+	em "github.com/abichinger/go-event-emitter"
 	"github.com/go-ini/ini"
-	em "github.com/vansante/go-event-emitter"
 )
 
 const (
@@ -357,14 +357,14 @@ func (m *Model) addRoleRule(key string, rule kind.Rule) (bool, error) {
 	if !ok {
 		return false, fmt.Errorf(str.ERR_RM_NOT_FOUND, key)
 	}
-	return rm.AddLink(rule[0], rule[1], rule[2:]...)
+	return rm.AddLink(rule[0], rule[1], rule[2:])
 }
 func (m *Model) removeRoleRule(key string, rule kind.Rule) (bool, error) {
 	rm, ok := m.rmMap[key]
 	if !ok {
 		return false, fmt.Errorf(str.ERR_RM_NOT_FOUND, key)
 	}
-	return rm.DeleteLink(rule[0], rule[1], rule[2:]...)
+	return rm.DeleteLink(rule[0], rule[1], rule[2:])
 }
 
 func (m *Model) GetPolicy(key string) (policy.IPolicy, bool) {
@@ -459,10 +459,10 @@ func (m *Model) RangeRules(fn func(rule []string) bool) {
 	}
 	for gKey, rm := range m.rmMap {
 		ruleKey := []string{gKey}
-		rm.Range(func(name1, name2 string, domain ...string) bool {
+		rm.Range(func(name1, name2 string, domains []string) bool {
 			rule := append(ruleKey, name1)
 			rule = append(rule, name2)
-			return fn(append(rule, domain...))
+			return fn(append(rule, domains...))
 		})
 	}
 }

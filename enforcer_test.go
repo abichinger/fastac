@@ -26,27 +26,27 @@ import (
 
 func testEnforce(t *testing.T, e *Enforcer, sub interface{}, obj interface{}, act string, res bool) {
 	t.Helper()
-	if myRes, _ := e.Enforce(sub, obj, act); myRes != res {
+	if myRes, _ := e.Enforce([]interface{}{sub, obj, act}); myRes != res {
 		t.Errorf("%s, %v, %s: %t, supposed to be %t", sub, obj, act, myRes, res)
 	}
 }
 
 func testEnforceWithoutUsers(t *testing.T, e *Enforcer, obj string, act string, res bool) {
 	t.Helper()
-	if myRes, _ := e.Enforce(obj, act); myRes != res {
+	if myRes, _ := e.Enforce([]interface{}{obj, act}); myRes != res {
 		t.Errorf("%s, %s: %t, supposed to be %t", obj, act, myRes, res)
 	}
 }
 
 func testDomainEnforce(t *testing.T, e *Enforcer, sub string, dom string, obj string, act string, res bool) {
 	t.Helper()
-	if myRes, _ := e.Enforce(sub, dom, obj, act); myRes != res {
+	if myRes, _ := e.Enforce([]interface{}{sub, dom, obj, act}); myRes != res {
 		t.Errorf("%s, %s, %s, %s: %t, supposed to be %t", sub, dom, obj, act, myRes, res)
 	}
 }
 
 func TestBasicModel(t *testing.T) {
-	e, _ := NewEnforcer("examples/basic_model.conf", "examples/basic_policy.csv")
+	e, _ := NewEnforcer("examples/basic_model.conf", "examples/basic_policy.csv", nil)
 
 	testEnforce(t, e, "alice", "data1", "read", true)
 	testEnforce(t, e, "alice", "data1", "write", false)
@@ -59,7 +59,7 @@ func TestBasicModel(t *testing.T) {
 }
 
 func TestBasicModelWithoutSpaces(t *testing.T) {
-	e, _ := NewEnforcer("examples/basic_model_without_spaces.conf", "examples/basic_policy.csv")
+	e, _ := NewEnforcer("examples/basic_model_without_spaces.conf", "examples/basic_policy.csv", nil)
 
 	testEnforce(t, e, "alice", "data1", "read", true)
 	testEnforce(t, e, "alice", "data1", "write", false)
@@ -72,7 +72,7 @@ func TestBasicModelWithoutSpaces(t *testing.T) {
 }
 
 func TestBasicModelNoPolicy(t *testing.T) {
-	e, _ := NewEnforcer("examples/basic_model.conf", nil)
+	e, _ := NewEnforcer("examples/basic_model.conf", nil, nil)
 
 	testEnforce(t, e, "alice", "data1", "read", false)
 	testEnforce(t, e, "alice", "data1", "write", false)
@@ -85,7 +85,7 @@ func TestBasicModelNoPolicy(t *testing.T) {
 }
 
 func TestBasicModelWithRoot(t *testing.T) {
-	e, _ := NewEnforcer("examples/basic_with_root_model.conf", "examples/basic_policy.csv")
+	e, _ := NewEnforcer("examples/basic_with_root_model.conf", "examples/basic_policy.csv", nil)
 
 	testEnforce(t, e, "alice", "data1", "read", true)
 	testEnforce(t, e, "alice", "data1", "write", false)
@@ -102,7 +102,7 @@ func TestBasicModelWithRoot(t *testing.T) {
 }
 
 func TestBasicModelWithRootNoPolicy(t *testing.T) {
-	e, _ := NewEnforcer("examples/basic_with_root_model.conf", nil)
+	e, _ := NewEnforcer("examples/basic_with_root_model.conf", nil, nil)
 
 	testEnforce(t, e, "alice", "data1", "read", false)
 	testEnforce(t, e, "alice", "data1", "write", false)
@@ -119,7 +119,7 @@ func TestBasicModelWithRootNoPolicy(t *testing.T) {
 }
 
 func TestBasicModelWithoutUsers(t *testing.T) {
-	e, _ := NewEnforcer("examples/basic_without_users_model.conf", "examples/basic_without_users_policy.csv")
+	e, _ := NewEnforcer("examples/basic_without_users_model.conf", "examples/basic_without_users_policy.csv", nil)
 
 	testEnforceWithoutUsers(t, e, "data1", "read", true)
 	testEnforceWithoutUsers(t, e, "data1", "write", false)
@@ -128,7 +128,7 @@ func TestBasicModelWithoutUsers(t *testing.T) {
 }
 
 func TestBasicModelWithoutResources(t *testing.T) {
-	e, _ := NewEnforcer("examples/basic_without_resources_model.conf", "examples/basic_without_resources_policy.csv")
+	e, _ := NewEnforcer("examples/basic_without_resources_model.conf", "examples/basic_without_resources_policy.csv", nil)
 
 	testEnforceWithoutUsers(t, e, "alice", "read", true)
 	testEnforceWithoutUsers(t, e, "alice", "write", false)
@@ -137,7 +137,7 @@ func TestBasicModelWithoutResources(t *testing.T) {
 }
 
 func TestRBACModel(t *testing.T) {
-	e, _ := NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv")
+	e, _ := NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv", nil)
 
 	testEnforce(t, e, "alice", "data1", "read", true)
 	testEnforce(t, e, "alice", "data1", "write", false)
@@ -150,7 +150,7 @@ func TestRBACModel(t *testing.T) {
 }
 
 func TestRBACModelWithResourceRoles(t *testing.T) {
-	e, _ := NewEnforcer("examples/rbac_with_resource_roles_model.conf", "examples/rbac_with_resource_roles_policy.csv")
+	e, _ := NewEnforcer("examples/rbac_with_resource_roles_model.conf", "examples/rbac_with_resource_roles_policy.csv", nil)
 
 	testEnforce(t, e, "alice", "data1", "read", true)
 	testEnforce(t, e, "alice", "data1", "write", true)
@@ -163,7 +163,7 @@ func TestRBACModelWithResourceRoles(t *testing.T) {
 }
 
 func TestRBACModelWithDomains(t *testing.T) {
-	e, _ := NewEnforcer("examples/rbac_with_domains_model.conf", "examples/rbac_with_domains_policy.csv")
+	e, _ := NewEnforcer("examples/rbac_with_domains_model.conf", "examples/rbac_with_domains_policy.csv", nil)
 
 	testDomainEnforce(t, e, "alice", "domain1", "data1", "read", true)
 	testDomainEnforce(t, e, "alice", "domain1", "data1", "write", true)
@@ -176,7 +176,7 @@ func TestRBACModelWithDomains(t *testing.T) {
 }
 
 func TestRBACModelWithDomainsAtRuntime(t *testing.T) {
-	e, _ := NewEnforcer("examples/rbac_with_domains_model.conf", nil)
+	e, _ := NewEnforcer("examples/rbac_with_domains_model.conf", nil, nil)
 
 	_, _ = e.AddRule([]string{"p", "admin", "domain1", "data1", "read"})
 	_, _ = e.AddRule([]string{"p", "admin", "domain1", "data1", "write"})
@@ -196,7 +196,7 @@ func TestRBACModelWithDomainsAtRuntime(t *testing.T) {
 	testDomainEnforce(t, e, "bob", "domain2", "data2", "write", true)
 
 	//Remove all policy rules related to domain1 and data1.
-	rules, err := e.Filter(SetMatcher([]string{"p.dom == \"domain1\" && p.obj == \"data1\""}))
+	rules, err := e.Filter([]interface{}{SetMatcher([]string{"p.dom == \"domain1\" && p.obj == \"data1\""})})
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -227,7 +227,7 @@ func TestRBACModelWithDomainsAtRuntime(t *testing.T) {
 }
 
 func TestRBACModelWithDomainsExtendAtRuntime(t *testing.T) {
-	e, _ := NewEnforcer("examples/rbac_with_domains_model.conf", "examples/rbac_with_domains_policy.csv")
+	e, _ := NewEnforcer("examples/rbac_with_domains_model.conf", "examples/rbac_with_domains_policy.csv", nil)
 
 	_, _ = e.AddRule([]string{"p", "admin", "domain3", "data1", "read"})
 	_, _ = e.AddRule([]string{"g", "alice", "admin", "domain3"})
@@ -236,7 +236,7 @@ func TestRBACModelWithDomainsExtendAtRuntime(t *testing.T) {
 	testDomainEnforce(t, e, "alice", "domain1", "data1", "read", true)
 
 	// Remove all policy rules related to domain1 and data1.
-	rules, _ := e.Filter(SetMatcher([]string{"p.dom == \"domain1\" && p.obj == \"data1\""}))
+	rules, _ := e.Filter([]interface{}{SetMatcher([]string{"p.dom == \"domain1\" && p.obj == \"data1\""})})
 	for _, rule := range rules {
 		_, _ = e.RemoveRule(append([]string{"p"}, rule...))
 	}
@@ -248,7 +248,7 @@ func TestRBACModelWithDomainsExtendAtRuntime(t *testing.T) {
 }
 
 func TestRBACModelWithDeny(t *testing.T) {
-	e, _ := NewEnforcer("examples/rbac_with_deny_model.conf", "examples/rbac_with_deny_policy.csv")
+	e, _ := NewEnforcer("examples/rbac_with_deny_model.conf", "examples/rbac_with_deny_policy.csv", nil)
 
 	testEnforce(t, e, "alice", "data1", "read", true)
 	testEnforce(t, e, "alice", "data1", "write", false)
@@ -261,13 +261,13 @@ func TestRBACModelWithDeny(t *testing.T) {
 }
 
 func TestRBACModelWithOnlyDeny(t *testing.T) {
-	e, _ := NewEnforcer("examples/rbac_with_not_deny_model.conf", "examples/rbac_with_deny_policy.csv")
+	e, _ := NewEnforcer("examples/rbac_with_not_deny_model.conf", "examples/rbac_with_deny_policy.csv", nil)
 
 	testEnforce(t, e, "alice", "data2", "write", false)
 }
 
 func TestRBACModelExtendAtRuntime(t *testing.T) {
-	e, _ := NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv")
+	e, _ := NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv", nil)
 
 	//equivalent to: e.AddRule("g", "bob", "data2_admin")
 	ok, err := e.AddRule([]string{"g", "bob", "data2_admin", "gets_ignored"})
@@ -307,7 +307,7 @@ func TestRBACModelExtendAtRuntime(t *testing.T) {
 }
 
 func TestRBACModelWithPattern(t *testing.T) {
-	e, _ := NewEnforcer("examples/rbac_with_pattern_model.conf", "examples/rbac_with_pattern_policy.csv")
+	e, _ := NewEnforcer("examples/rbac_with_pattern_model.conf", "examples/rbac_with_pattern_policy.csv", nil)
 
 	// Here's a little confusing: the matching function here is not the custom function used in matcher.
 	// It is the matching function used by "g" (and "g2", "g3" if any..)
@@ -344,13 +344,13 @@ func NewCustomRoleManager() rbac.IRoleManager {
 	return &testCustomRoleManager{}
 }
 func (rm *testCustomRoleManager) Clear() error { return nil }
-func (rm *testCustomRoleManager) AddLink(name1 string, name2 string, domain ...string) (bool, error) {
+func (rm *testCustomRoleManager) AddLink(name1 string, name2 string, domains []string) (bool, error) {
 	return false, nil
 }
-func (rm *testCustomRoleManager) DeleteLink(name1 string, name2 string, domain ...string) (bool, error) {
+func (rm *testCustomRoleManager) DeleteLink(name1 string, name2 string, domains []string) (bool, error) {
 	return false, nil
 }
-func (rm *testCustomRoleManager) HasLink(name1 string, name2 string, domain ...string) (bool, error) {
+func (rm *testCustomRoleManager) HasLink(name1 string, name2 string, domains []string) (bool, error) {
 	if name1 == "alice" && name2 == "alice" {
 		return true, nil
 	} else if name1 == "alice" && name2 == "data2_admin" {
@@ -360,10 +360,10 @@ func (rm *testCustomRoleManager) HasLink(name1 string, name2 string, domain ...s
 	}
 	return false, nil
 }
-func (rm *testCustomRoleManager) GetRoles(name string, domain ...string) ([]string, error) {
+func (rm *testCustomRoleManager) GetRoles(name string, domains []string) ([]string, error) {
 	return []string{}, nil
 }
-func (rm *testCustomRoleManager) GetUsers(name string, domain ...string) ([]string, error) {
+func (rm *testCustomRoleManager) GetUsers(name string, domains []string) ([]string, error) {
 	return []string{}, nil
 }
 func (rm *testCustomRoleManager) GetDomains(name string) ([]string, error)                  { return []string{}, nil }
@@ -372,11 +372,11 @@ func (rm *testCustomRoleManager) PrintRoles() error                             
 func (rm *testCustomRoleManager) SetMatcher(fn rbac.MatchingFunc)                           {}
 func (rm *testCustomRoleManager) SetDomainMatcher(fn rbac.MatchingFunc)                     {}
 func (rm *testCustomRoleManager) CopyFrom(other rbac.IRoleManager)                          {}
-func (rm *testCustomRoleManager) Range(fn func(name1, name2 string, domain ...string) bool) {}
+func (rm *testCustomRoleManager) Range(fn func(name1, name2 string, domains []string) bool) {}
 func (rm *testCustomRoleManager) String() string                                            { return "" }
 
 func TestRBACModelWithCustomRoleManager(t *testing.T) {
-	e, _ := NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv")
+	e, _ := NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv", nil)
 	e.GetModel().SetRoleManager("g", NewCustomRoleManager())
 
 	testEnforce(t, e, "alice", "data1", "read", true)
@@ -402,7 +402,7 @@ func newTestResource(name string, owner string) testResource {
 }
 
 func TestABACModel(t *testing.T) {
-	e, _ := NewEnforcer("examples/abac_model.conf", nil)
+	e, _ := NewEnforcer("examples/abac_model.conf", nil, nil)
 
 	data1 := newTestResource("data1", "alice")
 	data2 := newTestResource("data2", "bob")
@@ -418,7 +418,7 @@ func TestABACModel(t *testing.T) {
 }
 
 func TestKeyMatchModel(t *testing.T) {
-	e, _ := NewEnforcer("examples/keymatch_model.conf", "examples/keymatch_policy.csv")
+	e, _ := NewEnforcer("examples/keymatch_model.conf", "examples/keymatch_policy.csv", nil)
 
 	testEnforce(t, e, "alice", "/alice_data/resource1", "GET", true)
 	testEnforce(t, e, "alice", "/alice_data/resource1", "POST", true)
@@ -444,7 +444,7 @@ func TestKeyMatchModel(t *testing.T) {
 }
 
 func TestKeyMatch2Model(t *testing.T) {
-	e, _ := NewEnforcer("examples/keymatch2_model.conf", "examples/keymatch2_policy.csv")
+	e, _ := NewEnforcer("examples/keymatch2_model.conf", "examples/keymatch2_policy.csv", nil)
 
 	testEnforce(t, e, "alice", "/alice_data", "GET", false)
 	testEnforce(t, e, "alice", "/alice_data/resource1", "GET", true)
@@ -470,7 +470,7 @@ func CustomFunctionWrapper(args ...interface{}) (interface{}, error) {
 }
 
 func TestKeyMatchCustomModel(t *testing.T) {
-	e, _ := NewEnforcer("examples/keymatch_custom_model.conf", "examples/keymatch2_policy.csv")
+	e, _ := NewEnforcer("examples/keymatch_custom_model.conf", "examples/keymatch2_policy.csv", nil)
 
 	e.model.SetFunction("keyMatchCustom", CustomFunctionWrapper)
 
@@ -479,7 +479,7 @@ func TestKeyMatchCustomModel(t *testing.T) {
 }
 
 func TestIPMatchModel(t *testing.T) {
-	e, _ := NewEnforcer("examples/ipmatch_model.conf", "examples/ipmatch_policy.csv")
+	e, _ := NewEnforcer("examples/ipmatch_model.conf", "examples/ipmatch_policy.csv", nil)
 
 	testEnforce(t, e, "192.168.2.123", "data1", "read", true)
 	testEnforce(t, e, "192.168.2.123", "data1", "write", false)
@@ -503,7 +503,7 @@ func TestIPMatchModel(t *testing.T) {
 }
 
 func TestGlobMatchModel(t *testing.T) {
-	e, _ := NewEnforcer("examples/glob_model.conf", "examples/glob_policy.csv")
+	e, _ := NewEnforcer("examples/glob_model.conf", "examples/glob_policy.csv", nil)
 	testEnforce(t, e, "u1", "/foo/", "read", true)
 	testEnforce(t, e, "u1", "/foo", "read", false)
 	testEnforce(t, e, "u1", "/foo/subprefix", "read", true)
@@ -535,13 +535,13 @@ func TestGlobMatchModel(t *testing.T) {
 // }
 
 func TestPriorityModelIndeterminate(t *testing.T) {
-	e, _ := NewEnforcer("examples/priority_model.conf", "examples/priority_indeterminate_policy.csv")
+	e, _ := NewEnforcer("examples/priority_model.conf", "examples/priority_indeterminate_policy.csv", nil)
 
 	testEnforce(t, e, "alice", "data1", "read", false)
 }
 
 func TestRBACModelInMultiLines(t *testing.T) {
-	e, _ := NewEnforcer("examples/rbac_model_in_multi_line.conf", "examples/rbac_policy.csv")
+	e, _ := NewEnforcer("examples/rbac_model_in_multi_line.conf", "examples/rbac_policy.csv", nil)
 
 	testEnforce(t, e, "alice", "data1", "read", true)
 	testEnforce(t, e, "alice", "data1", "write", false)
@@ -566,7 +566,7 @@ func newTestSubject(name string, age int) testSub {
 }
 
 func TestABACNotUsingPolicy(t *testing.T) {
-	e, _ := NewEnforcer("examples/abac_not_using_policy_model.conf", "examples/abac_rule_effect_policy.csv")
+	e, _ := NewEnforcer("examples/abac_not_using_policy_model.conf", "examples/abac_rule_effect_policy.csv", nil)
 	data1 := newTestResource("data1", "alice")
 	data2 := newTestResource("data2", "bob")
 
@@ -577,7 +577,7 @@ func TestABACNotUsingPolicy(t *testing.T) {
 }
 
 func TestABACPolicy(t *testing.T) {
-	e, _ := NewEnforcer("examples/abac_rule_model.conf", "examples/abac_rule_policy.csv")
+	e, _ := NewEnforcer("examples/abac_rule_model.conf", "examples/abac_rule_policy.csv", nil)
 
 	sub1 := newTestSubject("alice", 16)
 	sub2 := newTestSubject("alice", 20)
@@ -598,7 +598,7 @@ func TestABACPolicy(t *testing.T) {
 }
 
 func TestCommentModel(t *testing.T) {
-	e, _ := NewEnforcer("examples/comment_model.conf", "examples/basic_policy.csv")
+	e, _ := NewEnforcer("examples/comment_model.conf", "examples/basic_policy.csv", nil)
 	testEnforce(t, e, "alice", "data1", "read", true)
 	testEnforce(t, e, "alice", "data1", "write", false)
 	testEnforce(t, e, "alice", "data2", "read", false)
@@ -610,7 +610,7 @@ func TestCommentModel(t *testing.T) {
 }
 
 func TestDomainMatchModel(t *testing.T) {
-	e, _ := NewEnforcer("examples/rbac_with_domain_pattern_model.conf", "examples/rbac_with_domain_pattern_policy.csv")
+	e, _ := NewEnforcer("examples/rbac_with_domain_pattern_model.conf", "examples/rbac_with_domain_pattern_policy.csv", nil)
 	rm, _ := e.GetModel().GetRoleManager("g")
 	rm.SetDomainMatcher(util.KeyMatch2)
 
@@ -627,7 +627,7 @@ func TestDomainMatchModel(t *testing.T) {
 }
 
 func TestAllMatchModel(t *testing.T) {
-	e, _ := NewEnforcer("examples/rbac_with_all_pattern_model.conf", "examples/rbac_with_all_pattern_policy.csv")
+	e, _ := NewEnforcer("examples/rbac_with_all_pattern_model.conf", "examples/rbac_with_all_pattern_policy.csv", nil)
 	rm, _ := e.GetModel().GetRoleManager("g")
 	rm.SetMatcher(util.KeyMatch2)
 	rm.SetDomainMatcher(util.KeyMatch2)
@@ -647,14 +647,14 @@ func convertRules(rules []kind.Rule) [][]string {
 }
 
 func TestFilterWithMatcher(t *testing.T) {
-	e, _ := NewEnforcer("examples/rbac_with_domains_model.conf", "examples/rbac_with_domains_policy.csv")
+	e, _ := NewEnforcer("examples/rbac_with_domains_model.conf", "examples/rbac_with_domains_policy.csv", nil)
 
 	expected := []string{
 		"admin,domain1,data1,read",
 		"admin,domain2,data2,read",
 	}
 
-	rules, err := e.Filter(SetMatcher([]string{"p.act == \"read\""}))
+	rules, err := e.Filter([]interface{}{SetMatcher([]string{"p.act == \"read\""})})
 	if err != nil {
 		t.Error(err.Error())
 	}

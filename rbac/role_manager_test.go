@@ -24,7 +24,7 @@ import (
 
 func testRole(t *testing.T, rm IRoleManager, name1 string, name2 string, res bool) {
 	t.Helper()
-	myRes, _ := rm.HasLink(name1, name2)
+	myRes, _ := rm.HasLink(name1, name2, nil)
 
 	if myRes != res {
 		t.Errorf("%s < %s: %t, supposed to be %t", name1, name2, !res, res)
@@ -33,7 +33,7 @@ func testRole(t *testing.T, rm IRoleManager, name1 string, name2 string, res boo
 
 func testDomainRole(t *testing.T, rm IRoleManager, res bool, name1 string, name2 string, domains ...string) {
 	t.Helper()
-	myRes, _ := rm.HasLink(name1, name2, domains...)
+	myRes, _ := rm.HasLink(name1, name2, domains)
 
 	if myRes != res {
 		t.Errorf("%v :: %s < %s: %t, supposed to be %t", domains, name1, name2, !res, res)
@@ -42,7 +42,7 @@ func testDomainRole(t *testing.T, rm IRoleManager, res bool, name1 string, name2
 
 func testPrintRoles(t *testing.T, rm IRoleManager, name string, res []string) {
 	t.Helper()
-	myRes, _ := rm.GetRoles(name)
+	myRes, _ := rm.GetRoles(name, nil)
 	t.Logf("%s: %s", name, myRes)
 
 	assert.ElementsMatch(t, myRes, res)
@@ -50,7 +50,7 @@ func testPrintRoles(t *testing.T, rm IRoleManager, name string, res []string) {
 
 func testPrintUsers(t *testing.T, rm IRoleManager, name string, res []string) {
 	t.Helper()
-	myRes, _ := rm.GetUsers(name)
+	myRes, _ := rm.GetUsers(name, nil)
 	t.Logf("%s: %s", name, myRes)
 
 	assert.ElementsMatch(t, myRes, res)
@@ -58,14 +58,14 @@ func testPrintUsers(t *testing.T, rm IRoleManager, name string, res []string) {
 
 func testPrintRolesWithDomain(t *testing.T, rm IRoleManager, name string, domain string, res []string) {
 	t.Helper()
-	myRes, _ := rm.GetRoles(name, domain)
+	myRes, _ := rm.GetRoles(name, []string{domain})
 
 	assert.ElementsMatch(t, myRes, res)
 }
 
 func testAddLink(t *testing.T, rm IRoleManager, expected bool, name1 string, name2 string, domains ...string) {
 	t.Helper()
-	b, err := rm.AddLink(name1, name2, domains...)
+	b, err := rm.AddLink(name1, name2, domains)
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -74,7 +74,7 @@ func testAddLink(t *testing.T, rm IRoleManager, expected bool, name1 string, nam
 
 func testDeleteLink(t *testing.T, rm IRoleManager, expected bool, name1 string, name2 string, domains ...string) {
 	t.Helper()
-	b, err := rm.DeleteLink(name1, name2, domains...)
+	b, err := rm.DeleteLink(name1, name2, domains)
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -286,7 +286,7 @@ func TestPatternRole(t *testing.T) {
 	testRole(t, rm, "u3", "root", false)
 
 	rules := [][]string{}
-	rm.Range(func(name1, name2 string, domain ...string) bool {
+	rm.Range(func(name1, name2 string, domains []string) bool {
 		rules = append(rules, []string{name1, name2})
 		return true
 	})
@@ -330,8 +330,8 @@ func TestDomainPatternRole(t *testing.T) {
 	testPrintRolesWithDomain(t, rm, "u4", "domain3", []string{"g2"})
 
 	rules := [][]string{}
-	rm.Range(func(name1, name2 string, domain ...string) bool {
-		rules = append(rules, []string{name1, name2, domain[0]})
+	rm.Range(func(name1, name2 string, domains []string) bool {
+		rules = append(rules, []string{name1, name2, domains[0]})
 		return true
 	})
 
@@ -346,8 +346,8 @@ func TestDomainPatternRole(t *testing.T) {
 	testDomainRole(t, rm, false, "u3", "g2", "domain3")
 
 	rules = [][]string{}
-	rm.Range(func(name1, name2 string, domain ...string) bool {
-		rules = append(rules, []string{name1, name2, domain[0]})
+	rm.Range(func(name1, name2 string, domains []string) bool {
+		rules = append(rules, []string{name1, name2, domains[0]})
 		return true
 	})
 

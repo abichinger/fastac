@@ -26,26 +26,26 @@ type IRoleManager interface {
 	Clear() error
 	// AddLink adds the inheritance link between two roles. role: name1 and role: name2.
 	// domain is a prefix to the roles (can be used for other purposes).
-	AddLink(name1 string, name2 string, domain ...string) (bool, error)
+	AddLink(name1 string, name2 string, domains []string) (bool, error)
 	// DeleteLink deletes the inheritance link between two roles. role: name1 and role: name2.
 	// domain is a prefix to the roles (can be used for other purposes).
-	DeleteLink(name1 string, name2 string, domain ...string) (bool, error)
+	DeleteLink(name1 string, name2 string, domains []string) (bool, error)
 	// HasLink determines whether a link exists between two roles. role: name1 inherits role: name2.
 	// domain is a prefix to the roles (can be used for other purposes).
-	HasLink(name1 string, name2 string, domain ...string) (bool, error)
+	HasLink(name1 string, name2 string, domains []string) (bool, error)
 	// GetRoles gets the roles that a user inherits.
 	// domain is a prefix to the roles (can be used for other purposes).
-	GetRoles(name string, domain ...string) ([]string, error)
+	GetRoles(name string, domains []string) ([]string, error)
 	// GetUsers gets the users that inherits a role.
 	// domain is a prefix to the users (can be used for other purposes).
-	GetUsers(name string, domain ...string) ([]string, error)
+	GetUsers(name string, domains []string) ([]string, error)
 	// GetDomains gets domains that a user has
 	GetDomains(name string) ([]string, error)
 
 	SetMatcher(fn MatchingFunc)
 	SetDomainMatcher(fn MatchingFunc)
 
-	Range(fn func(name1, name2 string, domain ...string) bool)
+	Range(fn func(name1, name2 string, domains []string) bool)
 }
 
 // GenerateGFunction is the factory method of the g(_, _) function.
@@ -58,13 +58,13 @@ func GenerateGFunction(rm IRoleManager) govaluate.ExpressionFunction {
 		if rm == nil {
 			return name1 == name2, nil
 		} else if len(args) == 2 {
-			return rm.HasLink(name1, name2)
+			return rm.HasLink(name1, name2, nil)
 		} else {
 			domains := []string{}
 			for _, domain := range args[2:] {
 				domains = append(domains, domain.(string))
 			}
-			return rm.HasLink(name1, name2, domains...)
+			return rm.HasLink(name1, name2, domains)
 		}
 	}
 }
