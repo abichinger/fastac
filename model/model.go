@@ -23,9 +23,9 @@ import (
 	"github.com/abichinger/fastac/model/effector"
 	e "github.com/abichinger/fastac/model/effector"
 	"github.com/abichinger/fastac/model/fm"
+	"github.com/abichinger/fastac/model/kind"
 	"github.com/abichinger/fastac/model/matcher"
 	"github.com/abichinger/fastac/model/policy"
-	"github.com/abichinger/fastac/model/types"
 	"github.com/abichinger/fastac/rbac"
 	"github.com/abichinger/fastac/str"
 	"github.com/go-ini/ini"
@@ -336,7 +336,7 @@ func (m *Model) RemoveRule(rule []string) (bool, error) {
 	return false, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, key)
 }
 
-func (m *Model) addPolicyRule(key string, rule types.Rule) (bool, error) {
+func (m *Model) addPolicyRule(key string, rule kind.Rule) (bool, error) {
 	policy, ok := m.pMap[key]
 	if !ok {
 		return false, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, key)
@@ -344,7 +344,7 @@ func (m *Model) addPolicyRule(key string, rule types.Rule) (bool, error) {
 	return policy.AddRule(rule)
 }
 
-func (m *Model) removePolicyRule(key string, rule types.Rule) (bool, error) {
+func (m *Model) removePolicyRule(key string, rule kind.Rule) (bool, error) {
 	policy, ok := m.pMap[key]
 	if !ok {
 		return false, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, key)
@@ -352,14 +352,14 @@ func (m *Model) removePolicyRule(key string, rule types.Rule) (bool, error) {
 	return policy.RemoveRule(rule)
 }
 
-func (m *Model) addRoleRule(key string, rule types.Rule) (bool, error) {
+func (m *Model) addRoleRule(key string, rule kind.Rule) (bool, error) {
 	rm, ok := m.rmMap[key]
 	if !ok {
 		return false, fmt.Errorf(str.ERR_RM_NOT_FOUND, key)
 	}
 	return rm.AddLink(rule[0], rule[1], rule[2:]...)
 }
-func (m *Model) removeRoleRule(key string, rule types.Rule) (bool, error) {
+func (m *Model) removeRoleRule(key string, rule kind.Rule) (bool, error) {
 	rm, ok := m.rmMap[key]
 	if !ok {
 		return false, fmt.Errorf(str.ERR_RM_NOT_FOUND, key)
@@ -413,7 +413,7 @@ func (m *Model) SetEffector(key string, eft e.IEffector) {
 	panic("not implemented")
 }
 
-func (m *Model) RangeMatches(matcher matcher.IMatcher, rDef *defs.RequestDef, rvals []interface{}, fn func(rule types.Rule) bool) error {
+func (m *Model) RangeMatches(matcher matcher.IMatcher, rDef *defs.RequestDef, rvals []interface{}, fn func(rule kind.Rule) bool) error {
 	return matcher.RangeMatches(*rDef, rvals, *m.fm, fn)
 }
 

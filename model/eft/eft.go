@@ -14,11 +14,11 @@
 
 package eft
 
-import "github.com/abichinger/fastac/model/types"
+import "github.com/abichinger/fastac/model/kind"
 
 // Values for policy effect.
 const (
-	Allow types.Effect = iota
+	Allow kind.Effect = iota
 	Indeterminate
 	Deny
 )

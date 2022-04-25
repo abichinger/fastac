@@ -16,13 +16,13 @@ package policy
 
 import (
 	"github.com/abichinger/fastac/model/defs"
-	"github.com/abichinger/fastac/model/types"
+	"github.com/abichinger/fastac/model/kind"
 	"github.com/abichinger/fastac/util"
 	em "github.com/vansante/go-event-emitter"
 )
 
 type Policy struct {
-	ruleMap map[string]types.Rule
+	ruleMap map[string]kind.Rule
 
 	*em.Emitter
 	*defs.PolicyDef
@@ -32,7 +32,7 @@ func NewPolicy(pDef *defs.PolicyDef) *Policy {
 	p := &Policy{}
 	p.PolicyDef = pDef
 	p.Emitter = em.NewEmitter(false)
-	p.ruleMap = make(map[string]types.Rule)
+	p.ruleMap = make(map[string]kind.Rule)
 	return p
 }
 
@@ -85,7 +85,7 @@ func (p *Policy) Range(fn func(hash string, rule []string) bool) {
 }
 
 func (p *Policy) Clear() error {
-	p.ruleMap = make(map[string]types.Rule)
+	p.ruleMap = make(map[string]kind.Rule)
 	p.Emitter.EmitEvent(EVT_CLEARED)
 	return nil
 }
