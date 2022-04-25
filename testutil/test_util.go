@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package adapter
+package testutil
 
 import (
 	"testing"
 
+	"github.com/abichinger/fastac/storage"
 	"github.com/abichinger/fastac/util"
 	"github.com/stretchr/testify/assert"
 )
@@ -38,7 +39,7 @@ func (m *ModelMock) RangeRules(fn func(rule []string) bool) {
 	}
 }
 
-func testSavePolicy(t *testing.T, adapter Adapter, rules [][]string) {
+func testSavePolicy(t *testing.T, adapter storage.Adapter, rules [][]string) {
 	save := &ModelMock{rules}
 	load := &ModelMock{}
 	if err := adapter.SavePolicy(save); err != nil {
@@ -51,7 +52,7 @@ func testSavePolicy(t *testing.T, adapter Adapter, rules [][]string) {
 	assert.ElementsMatch(t, util.Join2D(save.rules, ","), util.Join2D(load.rules, ","))
 }
 
-func testLoadPolicy(t *testing.T, adapter Adapter, expected [][]string) {
+func testLoadPolicy(t *testing.T, adapter storage.Adapter, expected [][]string) {
 	load := &ModelMock{}
 	if err := adapter.LoadPolicy(load); err != nil {
 		t.Error(err.Error())
@@ -60,35 +61,35 @@ func testLoadPolicy(t *testing.T, adapter Adapter, expected [][]string) {
 	assert.ElementsMatch(t, util.Join2D(expected, ","), util.Join2D(load.rules, ","))
 }
 
-func testAddRule(t *testing.T, adapter SimpleAdapter, rule []string) {
+func testAddRule(t *testing.T, adapter storage.SimpleAdapter, rule []string) {
 	t.Helper()
 	if err := adapter.AddRule(rule); err != nil {
 		t.Error(err.Error())
 	}
 }
 
-func testRemoveRule(t *testing.T, adapter SimpleAdapter, rule []string) {
+func testRemoveRule(t *testing.T, adapter storage.SimpleAdapter, rule []string) {
 	t.Helper()
 	if err := adapter.RemoveRule(rule); err != nil {
 		t.Error(err.Error())
 	}
 }
 
-func testAddRules(t *testing.T, adapter BatchAdapter, rules [][]string) {
+func testAddRules(t *testing.T, adapter storage.BatchAdapter, rules [][]string) {
 	t.Helper()
 	if err := adapter.AddRules(rules); err != nil {
 		t.Error(err.Error())
 	}
 }
 
-func testRemoveRules(t *testing.T, adapter BatchAdapter, rules [][]string) {
+func testRemoveRules(t *testing.T, adapter storage.BatchAdapter, rules [][]string) {
 	t.Helper()
 	if err := adapter.RemoveRules(rules); err != nil {
 		t.Error(err.Error())
 	}
 }
 
-func BasicAdapterTest(t *testing.T, adapter Adapter) {
+func BasicAdapterTest(t *testing.T, adapter storage.Adapter) {
 
 	rules := [][]string{
 		{"p", "group1", "data1", "read"},
@@ -108,7 +109,7 @@ func BasicAdapterTest(t *testing.T, adapter Adapter) {
 	testLoadPolicy(t, adapter, rules)
 
 	switch a := adapter.(type) {
-	case SimpleAdapter:
+	case storage.SimpleAdapter:
 		testAddRule(t, a, modified_rules[1])
 		testAddRule(t, a, modified_rules[2])
 
@@ -126,7 +127,7 @@ func BasicAdapterTest(t *testing.T, adapter Adapter) {
 	testSavePolicy(t, adapter, rules)
 
 	switch a := adapter.(type) {
-	case BatchAdapter:
+	case storage.BatchAdapter:
 		testAddRules(t, a, [][]string{modified_rules[1], modified_rules[2]})
 		testRemoveRules(t, a, [][]string{rules[1], rules[2]})
 

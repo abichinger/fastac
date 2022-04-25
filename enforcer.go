@@ -29,7 +29,7 @@ import (
 
 type Enforcer struct {
 	model   *m.Model
-	adapter a.Adapter
+	adapter storage.Adapter
 	sc      *storage.StorageController
 }
 
@@ -93,14 +93,14 @@ func NewEnforcer(model interface{}, adapter interface{}, options []Option) (*Enf
 		return nil, errors.New(str.ERR_INVALID_MODEL)
 	}
 
-	var a3 a.Adapter
+	var a3 storage.Adapter
 	switch a2 := adapter.(type) {
 	case string:
 		a3 := a.NewFileAdapter(a2)
 		if err := a3.LoadPolicy(e.model); err != nil {
 			return nil, err
 		}
-	case a.Adapter:
+	case storage.Adapter:
 		a3 = a2
 	default:
 		a3 = &a.NoopAdapter{}
@@ -124,7 +124,7 @@ func (e *Enforcer) SetOption(option Option) error {
 }
 
 // SetAdapter sets the storage adapter
-func (e *Enforcer) SetAdapter(adapter a.Adapter) {
+func (e *Enforcer) SetAdapter(adapter storage.Adapter) {
 	autosave := false
 	if e.sc != nil {
 		autosave = e.sc.AutosaveEnabled()

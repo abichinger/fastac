@@ -12,12 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package adapter
+package storage
 
 import (
-	"encoding/csv"
-	"strings"
-
 	"github.com/abichinger/fastac/api"
 )
 
@@ -51,24 +48,4 @@ type BatchAdapter interface {
 
 	api.IAddRules
 	api.IRemoveRules
-}
-
-// LoadPolicyLine loads a text line as a policy rule to model.
-func LoadPolicyLine(line string, m api.IAddRuleBool) error {
-	if line == "" || strings.HasPrefix(line, "#") {
-		return nil
-	}
-
-	r := csv.NewReader(strings.NewReader(line))
-	r.Comma = ','
-	r.Comment = '#'
-	r.TrimLeadingSpace = true
-
-	tokens, err := r.Read()
-	if err != nil {
-		return err
-	}
-
-	_, err = m.AddRule(tokens)
-	return err
 }

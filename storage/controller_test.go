@@ -19,7 +19,6 @@ import (
 
 	"github.com/abichinger/fastac/api"
 	"github.com/abichinger/fastac/model"
-	"github.com/abichinger/fastac/storage/adapter"
 	em "github.com/abichinger/go-event-emitter"
 	"github.com/stretchr/testify/assert"
 )
@@ -42,7 +41,7 @@ func (e *EmitterMock) RemoveListener(event em.EventType, listener *em.Listener) 
 }
 
 type AdapterMock interface {
-	adapter.Adapter
+	Adapter
 	AddCalls() int
 	RemoveCalls() int
 }
