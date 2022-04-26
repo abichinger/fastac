@@ -19,7 +19,8 @@ import (
 
 	"github.com/abichinger/fastac/api"
 	"github.com/abichinger/fastac/model"
-	eventemitter "github.com/abichinger/go-event-emitter"
+	"github.com/abichinger/fastac/storage/adapter"
+	eventemitter "github.com/vansante/go-event-emitter"
 )
 
 type opcode int
@@ -42,13 +43,13 @@ type listener struct {
 type StorageController struct {
 	autosave  bool
 	em        api.IAddRemoveListener
-	adapter   Adapter
+	adapter   adapter.Adapter
 	q         []operation
 	wait      int
 	listeners []listener
 }
 
-func NewStorageController(eventemitter api.IAddRemoveListener, adapter Adapter, autosave bool) *StorageController {
+func NewStorageController(eventemitter api.IAddRemoveListener, adapter adapter.Adapter, autosave bool) *StorageController {
 	sc := &StorageController{
 		em:        eventemitter,
 		adapter:   adapter,
@@ -62,7 +63,7 @@ func NewStorageController(eventemitter api.IAddRemoveListener, adapter Adapter, 
 }
 
 func (sc *StorageController) addListener(event eventemitter.EventType, opc opcode) {
-	l := sc.em.AddListener(event, func(arguments []interface{}) {
+	l := sc.em.AddListener(event, func(arguments ...interface{}) {
 		rule := arguments[0].([]string)
 		sc.addOp(opc, rule)
 	})
@@ -170,9 +171,9 @@ func (sc *StorageController) Flush() error {
 	var err error
 
 	switch sc.adapter.(type) {
-	case BatchAdapter:
+	case adapter.BatchAdapter:
 		err = sc.batchFlush()
-	case SimpleAdapter:
+	case adapter.SimpleAdapter:
 		err = sc.flush()
 	default:
 		err = errors.New("invalid adapter")
@@ -183,7 +184,7 @@ func (sc *StorageController) Flush() error {
 }
 
 func (sc *StorageController) run(opc opcode, rule []string) error {
-	adapter := sc.adapter.(SimpleAdapter)
+	adapter := sc.adapter.(adapter.SimpleAdapter)
 	var err error
 
 	switch opc {
@@ -196,7 +197,7 @@ func (sc *StorageController) run(opc opcode, rule []string) error {
 }
 
 func (sc *StorageController) runBatch(opc opcode, rules [][]string) error {
-	adapter := sc.adapter.(BatchAdapter)
+	adapter := sc.adapter.(adapter.BatchAdapter)
 	var err error
 
 	switch opc {

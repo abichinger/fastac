@@ -2,8 +2,6 @@ github.com/Knetic/govaluate v3.0.0+incompatible h1:7o6+MAPhYTCF0+fdvoz1xDedhRb4f
 github.com/Knetic/govaluate v3.0.0+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible h1:1G1pk05UrOh0NlF1oeaaix1x8XzrfjIDK47TY0Zehcw=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
-github.com/abichinger/go-event-emitter v1.0.3-0.20220425151840-c24470ff7958 h1:P6PICGK+sKbvuXJB6qYz7/dm6txBzNf3tvXYrjJQHwQ=
-github.com/abichinger/go-event-emitter v1.0.3-0.20220425151840-c24470ff7958/go.mod h1:1WJBafQLLLZYkpg3cojhLeBpWXpJzxo6Pq0bIsBlPkw=
 github.com/casbin/casbin/v2 v2.44.0 h1:bZZ0KK15TSF8VC6W2pz2iqxzWJRvw1R9hAR2DPaDY/8=
 github.com/casbin/casbin/v2 v2.44.0/go.mod h1:sEL80qBYTbd+BPeL4iyvwYzFT3qwLaESq5aFKVLbLfA=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=

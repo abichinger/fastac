@@ -19,8 +19,9 @@ import (
 
 	"github.com/abichinger/fastac/api"
 	"github.com/abichinger/fastac/model"
-	em "github.com/abichinger/go-event-emitter"
+	"github.com/abichinger/fastac/storage/adapter"
 	"github.com/stretchr/testify/assert"
+	em "github.com/vansante/go-event-emitter"
 )
 
 type EmitterMock struct {
@@ -41,7 +42,7 @@ func (e *EmitterMock) RemoveListener(event em.EventType, listener *em.Listener) 
 }
 
 type AdapterMock interface {
-	Adapter
+	adapter.Adapter
 	AddCalls() int
 	RemoveCalls() int
 }
@@ -92,11 +93,11 @@ func TestFlush(t *testing.T) {
 	for _, a := range adapters {
 		sc := NewStorageController(e, a.adapter, false)
 
-		e.handlers[model.RULE_ADDED]([]interface{}{[]string{"p", "alice", "data1", "read"}})
-		e.handlers[model.RULE_ADDED]([]interface{}{[]string{"p", "alice", "data2", "read"}})
-		e.handlers[model.RULE_REMOVED]([]interface{}{[]string{"p", "alice", "data1", "read"}})
-		e.handlers[model.RULE_REMOVED]([]interface{}{[]string{"p", "alice", "data1", "read"}})
-		e.handlers[model.RULE_ADDED]([]interface{}{[]string{"p", "alice", "data1", "read"}})
+		e.handlers[model.RULE_ADDED]([]string{"p", "alice", "data1", "read"})
+		e.handlers[model.RULE_ADDED]([]string{"p", "alice", "data2", "read"})
+		e.handlers[model.RULE_REMOVED]([]string{"p", "alice", "data1", "read"})
+		e.handlers[model.RULE_REMOVED]([]string{"p", "alice", "data1", "read"})
+		e.handlers[model.RULE_ADDED]([]string{"p", "alice", "data1", "read"})
 
 		assert.Equal(t, 0, a.adapter.AddCalls())
 		assert.Equal(t, 0, a.adapter.RemoveCalls())
@@ -122,11 +123,11 @@ func TestAutosave(t *testing.T) {
 	for _, a := range adapters {
 		NewStorageController(e, a.adapter, true)
 
-		e.handlers[model.RULE_ADDED]([]interface{}{[]string{"p", "alice", "data1", "read"}})
-		e.handlers[model.RULE_ADDED]([]interface{}{[]string{"p", "alice", "data2", "read"}})
-		e.handlers[model.RULE_REMOVED]([]interface{}{[]string{"p", "alice", "data1", "read"}})
-		e.handlers[model.RULE_REMOVED]([]interface{}{[]string{"p", "alice", "data1", "read"}})
-		e.handlers[model.RULE_ADDED]([]interface{}{[]string{"p", "alice", "data1", "read"}})
+		e.handlers[model.RULE_ADDED]([]string{"p", "alice", "data1", "read"})
+		e.handlers[model.RULE_ADDED]([]string{"p", "alice", "data2", "read"})
+		e.handlers[model.RULE_REMOVED]([]string{"p", "alice", "data1", "read"})
+		e.handlers[model.RULE_REMOVED]([]string{"p", "alice", "data1", "read"})
+		e.handlers[model.RULE_ADDED]([]string{"p", "alice", "data1", "read"})
 
 		assert.Equal(t, a.addExpected, a.adapter.AddCalls())
 		assert.Equal(t, a.removeExpected, a.adapter.RemoveCalls())
@@ -150,11 +151,11 @@ func TestAdd(t *testing.T) {
 		sc := NewStorageController(e, a.adapter, true)
 		sc.AddWait(5)
 
-		e.handlers[model.RULE_ADDED]([]interface{}{[]string{"p", "alice", "data1", "read"}})
-		e.handlers[model.RULE_ADDED]([]interface{}{[]string{"p", "alice", "data2", "read"}})
-		e.handlers[model.RULE_REMOVED]([]interface{}{[]string{"p", "alice", "data1", "read"}})
-		e.handlers[model.RULE_REMOVED]([]interface{}{[]string{"p", "alice", "data1", "read"}})
-		e.handlers[model.RULE_ADDED]([]interface{}{[]string{"p", "alice", "data1", "read"}})
+		e.handlers[model.RULE_ADDED]([]string{"p", "alice", "data1", "read"})
+		e.handlers[model.RULE_ADDED]([]string{"p", "alice", "data2", "read"})
+		e.handlers[model.RULE_REMOVED]([]string{"p", "alice", "data1", "read"})
+		e.handlers[model.RULE_REMOVED]([]string{"p", "alice", "data1", "read"})
+		e.handlers[model.RULE_ADDED]([]string{"p", "alice", "data1", "read"})
 
 		assert.Equal(t, a.addExpected, a.adapter.AddCalls())
 		assert.Equal(t, a.removeExpected, a.adapter.RemoveCalls())
@@ -178,15 +179,15 @@ func TestEnableDisable(t *testing.T) {
 		sc := NewStorageController(e, a.adapter, true)
 
 		sc.Disable()
-		e.EmitEvent(model.RULE_ADDED, []interface{}{[]string{"p", "alice", "data1", "read"}})
-		e.EmitEvent(model.RULE_REMOVED, []interface{}{[]string{"p", "alice", "data1", "read"}})
+		e.EmitEvent(model.RULE_ADDED, []string{"p", "alice", "data1", "read"})
+		e.EmitEvent(model.RULE_REMOVED, []string{"p", "alice", "data1", "read"})
 
 		assert.Equal(t, 0, a.adapter.AddCalls())
 		assert.Equal(t, 0, a.adapter.RemoveCalls())
 
 		sc.Enable()
-		e.EmitEvent(model.RULE_ADDED, []interface{}{[]string{"p", "alice", "data1", "read"}})
-		e.EmitEvent(model.RULE_REMOVED, []interface{}{[]string{"p", "alice", "data1", "read"}})
+		e.EmitEvent(model.RULE_ADDED, []string{"p", "alice", "data1", "read"})
+		e.EmitEvent(model.RULE_REMOVED, []string{"p", "alice", "data1", "read"})
 
 		assert.Equal(t, a.addExpected, a.adapter.AddCalls())
 		assert.Equal(t, a.removeExpected, a.adapter.RemoveCalls())

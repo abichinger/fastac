@@ -19,8 +19,8 @@ import (
 
 	"github.com/abichinger/fastac/model/defs"
 	"github.com/abichinger/fastac/model/fm"
-	"github.com/abichinger/fastac/model/kind"
 	"github.com/abichinger/fastac/model/policy"
+	"github.com/abichinger/fastac/model/types"
 	"github.com/abichinger/fastac/util"
 	"github.com/stretchr/testify/assert"
 )
@@ -28,7 +28,7 @@ import (
 func testRangeMatches(t *testing.T, matcher *Matcher, expected [][]string, rDef defs.RequestDef, rvals []interface{}, fm fm.FunctionMap) {
 	t.Helper()
 	rules := [][]string{}
-	err := matcher.RangeMatches(rDef, rvals, fm, func(rule kind.Rule) bool {
+	err := matcher.RangeMatches(rDef, rvals, fm, func(rule types.Rule) bool {
 		rules = append(rules, rule)
 		return true
 	})

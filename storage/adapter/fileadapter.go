@@ -16,7 +16,6 @@ package adapter
 
 import (
 	"bufio"
-	"encoding/csv"
 	"os"
 	"strings"
 
@@ -32,26 +31,6 @@ type FileAdapter struct {
 
 type RuleSet struct {
 	*policy.Policy
-}
-
-// LoadPolicyLine loads a text line as a policy rule to model.
-func LoadPolicyLine(line string, m api.IAddRuleBool) error {
-	if line == "" || strings.HasPrefix(line, "#") {
-		return nil
-	}
-
-	r := csv.NewReader(strings.NewReader(line))
-	r.Comma = ','
-	r.Comment = '#'
-	r.TrimLeadingSpace = true
-
-	tokens, err := r.Read()
-	if err != nil {
-		return err
-	}
-
-	_, err = m.AddRule(tokens)
-	return err
 }
 
 func NewRuleSet() *RuleSet {

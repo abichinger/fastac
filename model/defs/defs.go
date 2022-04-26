@@ -22,7 +22,7 @@ import (
 
 	"github.com/Knetic/govaluate"
 	"github.com/abichinger/fastac/model/eft"
-	"github.com/abichinger/fastac/model/kind"
+	"github.com/abichinger/fastac/model/types"
 )
 
 const DefaultSep = ","
@@ -66,7 +66,7 @@ func (def *PolicyDef) Has(name string) bool {
 	return ok
 }
 
-func (def *PolicyDef) GetEft(values []string) kind.Effect {
+func (def *PolicyDef) GetEft(values []string) types.Effect {
 	eftArg := def.key + "_eft"
 	if def.Has(eftArg) {
 		eftStr, _ := def.GetParameter(values, eftArg)
@@ -90,7 +90,7 @@ func (def *PolicyDef) GetParameter(values []string, name string) (string, error)
 	return values[index], nil
 }
 
-func (def *PolicyDef) GetParameters(values, names []string) (kind.Rule, error) {
+func (def *PolicyDef) GetParameters(values, names []string) (types.Rule, error) {
 	params := make([]string, 0)
 	for _, name := range names {
 		value, err := def.GetParameter(values, name)

@@ -62,8 +62,8 @@ func (dm *DomainManager) SetDomainMatcher(fn MatchingFunc) {
 func (dm *DomainManager) rebuild() {
 	rmMap := dm.rmMap
 	_ = dm.Clear()
-	dm.rangeLinks(rmMap, func(name1, name2 string, domains []string) bool {
-		_, _ = dm.AddLink(name1, name2, domains)
+	dm.rangeLinks(rmMap, func(name1, name2 string, domain ...string) bool {
+		_, _ = dm.AddLink(name1, name2, domain...)
 		return true
 	})
 }
@@ -75,7 +75,7 @@ func (dm *DomainManager) Clear() error {
 	return nil
 }
 
-func (dm *DomainManager) getDomain(domains []string) (domain string, subdomains []string, err error) {
+func (dm *DomainManager) getDomain(domains ...string) (domain string, subdomains []string, err error) {
 	if len(domains) == 0 {
 		return defaultDomain, []string{}, nil
 	} else if domains[0] == REDUNDANT_ROLE {
@@ -115,7 +115,7 @@ func (dm *DomainManager) load(name interface{}) (value IRoleManager, ok bool) {
 }
 
 // load or create a RoleManager instance of domain
-func (dm *DomainManager) getRoleManager(domain string, store bool, subdomains []string) IRoleManager {
+func (dm *DomainManager) getRoleManager(domain string, store bool, subdomains ...string) IRoleManager {
 	var rm IRoleManager
 	var ok bool
 
@@ -135,8 +135,8 @@ func (dm *DomainManager) getRoleManager(domain string, store bool, subdomains []
 				domain2 := key.(string)
 				rm2 := value.(IRoleManager)
 				if domain != domain2 && dm.match(domain, domain2) {
-					rm2.Range(func(name1, name2 string, domains []string) bool {
-						_, _ = rm.AddLink(name1, name2, append(domains, REDUNDANT_ROLE))
+					rm2.Range(func(name1, name2 string, domain ...string) bool {
+						_, _ = rm.AddLink(name1, name2, append(domain, REDUNDANT_ROLE)...)
 						return true
 					})
 				}
@@ -149,77 +149,77 @@ func (dm *DomainManager) getRoleManager(domain string, store bool, subdomains []
 
 // AddLink adds the inheritance link between role: name1 and role: name2.
 // aka role: name1 inherits role: name2.
-func (dm *DomainManager) AddLink(name1 string, name2 string, domains []string) (bool, error) {
-	domain, subdomains, err := dm.getDomain(domains)
+func (dm *DomainManager) AddLink(name1 string, name2 string, domains ...string) (bool, error) {
+	domain, subdomains, err := dm.getDomain(domains...)
 	if err != nil {
 		return false, err
 	}
-	roleManager := dm.getRoleManager(domain, true, subdomains) //create role manager if it does not exist
-	added, _ := roleManager.AddLink(name1, name2, subdomains)
+	roleManager := dm.getRoleManager(domain, true, subdomains...) //create role manager if it does not exist
+	added, _ := roleManager.AddLink(name1, name2, subdomains...)
 
 	dm.rangeAffectedRoleManagers(domain, func(rm IRoleManager) {
-		_, _ = rm.AddLink(name1, name2, append(subdomains, REDUNDANT_ROLE))
+		_, _ = rm.AddLink(name1, name2, append(subdomains, REDUNDANT_ROLE)...)
 	})
 	return added, nil
 }
 
 // DeleteLink deletes the inheritance link between role: name1 and role: name2.
 // aka role: name1 does not inherit role: name2 any more.
-func (dm *DomainManager) DeleteLink(name1 string, name2 string, domains []string) (bool, error) {
-	domain, subdomains, err := dm.getDomain(domains)
+func (dm *DomainManager) DeleteLink(name1 string, name2 string, domains ...string) (bool, error) {
+	domain, subdomains, err := dm.getDomain(domains...)
 	if err != nil {
 		return false, err
 	}
-	roleManager := dm.getRoleManager(domain, true, subdomains) //create role manager if it does not exist
-	removed, _ := roleManager.DeleteLink(name1, name2, subdomains)
+	roleManager := dm.getRoleManager(domain, true, subdomains...) //create role manager if it does not exist
+	removed, _ := roleManager.DeleteLink(name1, name2, subdomains...)
 
 	dm.rangeAffectedRoleManagers(domain, func(rm IRoleManager) {
-		_, _ = rm.DeleteLink(name1, name2, append(subdomains, REDUNDANT_ROLE))
+		_, _ = rm.DeleteLink(name1, name2, append(subdomains, REDUNDANT_ROLE)...)
 	})
 	return removed, nil
 }
 
 // HasLink determines whether role: name1 inherits role: name2.
-func (dm *DomainManager) HasLink(name1 string, name2 string, domains []string) (bool, error) {
-	domain, subdomains, err := dm.getDomain(domains)
+func (dm *DomainManager) HasLink(name1 string, name2 string, domains ...string) (bool, error) {
+	domain, subdomains, err := dm.getDomain(domains...)
 	if err != nil {
 		return false, err
 	}
-	rm := dm.getRoleManager(domain, false, subdomains)
-	return rm.HasLink(name1, name2, subdomains)
+	rm := dm.getRoleManager(domain, false, subdomains...)
+	return rm.HasLink(name1, name2, subdomains...)
 }
 
 // GetRoles gets the roles that a subject inherits.
-func (dm *DomainManager) GetRoles(name string, domains []string) ([]string, error) {
-	domain, subdomains, err := dm.getDomain(domains)
+func (dm *DomainManager) GetRoles(name string, domains ...string) ([]string, error) {
+	domain, subdomains, err := dm.getDomain(domains...)
 	if err != nil {
 		return nil, err
 	}
-	rm := dm.getRoleManager(domain, false, subdomains)
-	return rm.GetRoles(name, subdomains)
+	rm := dm.getRoleManager(domain, false, subdomains...)
+	return rm.GetRoles(name, subdomains...)
 }
 
 // GetUsers gets the users of a role.
-func (dm *DomainManager) GetUsers(name string, domains []string) ([]string, error) {
-	domain, subdomains, err := dm.getDomain(domains)
+func (dm *DomainManager) GetUsers(name string, domains ...string) ([]string, error) {
+	domain, subdomains, err := dm.getDomain(domains...)
 	if err != nil {
 		return nil, err
 	}
-	rm := dm.getRoleManager(domain, false, subdomains)
-	return rm.GetUsers(name, subdomains)
+	rm := dm.getRoleManager(domain, false, subdomains...)
+	return rm.GetUsers(name, subdomains...)
 }
 
-func (dm *DomainManager) resolveRoleManager(domains []string) *RoleManager {
+func (dm *DomainManager) resolveRoleManager(domains ...string) *RoleManager {
 	var domain string
 	domainManager := dm
-	domain, subdomains, _ := dm.getDomain(domains)
+	domain, subdomains, _ := dm.getDomain(domains...)
 
 	for domain != defaultDomain {
-		domainManager = domainManager.getRoleManager(domain, false, subdomains).(*DomainManager)
-		domain, subdomains, _ = dm.getDomain(subdomains)
+		domainManager = domainManager.getRoleManager(domain, false, subdomains...).(*DomainManager)
+		domain, subdomains, _ = dm.getDomain(subdomains...)
 	}
 
-	return domainManager.getRoleManager(domain, false, subdomains).(*RoleManager)
+	return domainManager.getRoleManager(domain, false, subdomains...).(*RoleManager)
 }
 
 // GetDomains gets domains that a user has
@@ -231,7 +231,7 @@ func (dm *DomainManager) GetDomains(name string) ([]string, error) {
 
 	res := []string{}
 	for _, domains := range domainArr {
-		rm := dm.resolveRoleManager(domains)
+		rm := dm.resolveRoleManager(domains...)
 		role, created := rm.getRole(name)
 		if created {
 			defer rm.removeRole(role.name)
@@ -245,7 +245,7 @@ func (dm *DomainManager) GetDomains(name string) ([]string, error) {
 
 func (dm *DomainManager) getAllDomainsHelper() ([][]string, error) {
 	domainMap := make(map[string][]string)
-	dm.Range(func(name1, name2 string, domains []string) bool {
+	dm.Range(func(name1, name2 string, domains ...string) bool {
 		domain := strings.Join(domains, "/")
 		domainMap[domain] = domains
 		return true
@@ -271,16 +271,16 @@ func (dm *DomainManager) GetAllDomains() ([]string, error) {
 	return res, nil
 }
 
-func (dm *DomainManager) rangeLinks(rmMap *sync.Map, fn func(name1, name2 string, domains []string) bool) {
+func (dm *DomainManager) rangeLinks(rmMap *sync.Map, fn func(name1, name2 string, domain ...string) bool) {
 	rmMap.Range(func(key, value interface{}) bool {
 		roleManager := value.(IRoleManager)
-		domain := []string{}
+		domains := []string{}
 		if d := key.(string); d != defaultDomain {
-			domain = append(domain, d)
+			domains = append(domains, d)
 		}
 
-		roleManager.Range(func(name1, name2 string, domains []string) bool {
-			fn(name1, name2, append(domain, domains...))
+		roleManager.Range(func(name1, name2 string, domain ...string) bool {
+			fn(name1, name2, append(domains, domain...)...)
 			return true
 		})
 
@@ -288,6 +288,6 @@ func (dm *DomainManager) rangeLinks(rmMap *sync.Map, fn func(name1, name2 string
 	})
 }
 
-func (dm *DomainManager) Range(fn func(name1, name2 string, domains []string) bool) {
+func (dm *DomainManager) Range(fn func(name1, name2 string, domain ...string) bool) {
 	dm.rangeLinks(dm.rmMap, fn)
 }

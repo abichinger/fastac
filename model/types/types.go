@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package adapter
+package types
 
 import (
-	"os"
-	"testing"
+	"github.com/abichinger/fastac/util"
 )
 
-func TestFileAdapter(t *testing.T) {
-	a := NewFileAdapter("test.csv")
-	defer os.Remove("test.csv")
+type Rule []string
 
-	BasicAdapterTest(t, a)
+func (r *Rule) Hash() string {
+	return util.Hash(*r)
 }
+
+// Effect is the result for a policy rule.
+type Effect int

@@ -21,7 +21,7 @@ import (
 	m "github.com/abichinger/fastac/model"
 	"github.com/abichinger/fastac/model/defs"
 	"github.com/abichinger/fastac/model/eft"
-	"github.com/abichinger/fastac/model/kind"
+	"github.com/abichinger/fastac/model/types"
 	"github.com/abichinger/fastac/storage"
 	a "github.com/abichinger/fastac/storage/adapter"
 	"github.com/abichinger/fastac/str"
@@ -29,7 +29,7 @@ import (
 
 type Enforcer struct {
 	model   *m.Model
-	adapter storage.Adapter
+	adapter a.Adapter
 	sc      *storage.StorageController
 }
 
@@ -75,7 +75,7 @@ func OptionStorage(enable bool) Option {
 //
 //  adapter := gormadapter.NewAdapter(db, tableName)
 //  NewEnforcer("model.conf", adapter, OptionAutosave(true))
-func NewEnforcer(model interface{}, adapter interface{}, options []Option) (*Enforcer, error) {
+func NewEnforcer(model interface{}, adapter interface{}, options ...Option) (*Enforcer, error) {
 	e := &Enforcer{}
 
 	switch m2 := model.(type) {
@@ -93,14 +93,14 @@ func NewEnforcer(model interface{}, adapter interface{}, options []Option) (*Enf
 		return nil, errors.New(str.ERR_INVALID_MODEL)
 	}
 
-	var a3 storage.Adapter
+	var a3 a.Adapter
 	switch a2 := adapter.(type) {
 	case string:
 		a3 := a.NewFileAdapter(a2)
 		if err := a3.LoadPolicy(e.model); err != nil {
 			return nil, err
 		}
-	case storage.Adapter:
+	case a.Adapter:
 		a3 = a2
 	default:
 		a3 = &a.NoopAdapter{}
@@ -124,7 +124,7 @@ func (e *Enforcer) SetOption(option Option) error {
 }
 
 // SetAdapter sets the storage adapter
-func (e *Enforcer) SetAdapter(adapter storage.Adapter) {
+func (e *Enforcer) SetAdapter(adapter a.Adapter) {
 	autosave := false
 	if e.sc != nil {
 		autosave = e.sc.AutosaveEnabled()
@@ -231,43 +231,43 @@ func (e *Enforcer) splitParams(params ...interface{}) (ctx *Context, request []i
 		}
 	}
 
-	ctx, err = NewContext(e.model, options)
+	ctx, err = NewContext(e.model, options...)
 	return ctx, request, err
 }
 
 // Enforce decides whether to allow or deny a request
-func (e *Enforcer) Enforce(params []interface{}) (bool, error) {
-	ctx, request, err := e.splitParams(params...)
+func (e *Enforcer) Enforce(params ...interface{}) (bool, error) {
+	ctx, rvals, err := e.splitParams(params...)
 	if err != nil {
 		return false, err
 	}
-	return e.EnforceWithContext(ctx, request)
+	return e.EnforceWithContext(ctx, rvals...)
 }
 
-func (e *Enforcer) EnforceWithContext(ctx *Context, request []interface{}) (bool, error) {
-	return e.enforce(ctx, request)
+func (e *Enforcer) EnforceWithContext(ctx *Context, rvals ...interface{}) (bool, error) {
+	return e.enforce(ctx, rvals)
 }
 
 // Filter will fetch all rules which match the given request
 // The effect of rules does not matter.
-func (e *Enforcer) Filter(params []interface{}) ([]kind.Rule, error) {
-	ctx, request, err := e.splitParams(params...)
+func (e *Enforcer) Filter(params ...interface{}) ([]types.Rule, error) {
+	ctx, rvals, err := e.splitParams(params...)
 	if err != nil {
 		return nil, err
 	}
-	return e.FilterWithContext(ctx, request)
+	return e.FilterWithContext(ctx, rvals...)
 }
 
-func (e *Enforcer) FilterWithContext(ctx *Context, request []interface{}) ([]kind.Rule, error) {
-	rules := []kind.Rule{}
-	err := e.RangeMatchesWithContext(ctx, request, func(rule kind.Rule) bool {
+func (e *Enforcer) FilterWithContext(ctx *Context, rvals ...interface{}) ([]types.Rule, error) {
+	rules := []types.Rule{}
+	err := e.RangeMatchesWithContext(ctx, rvals, func(rule types.Rule) bool {
 		rules = append(rules, rule)
 		return true
 	})
 	return rules, err
 }
 
-func (e *Enforcer) RangeMatches(params []interface{}, fn func(rule kind.Rule) bool) error {
+func (e *Enforcer) RangeMatches(params []interface{}, fn func(rule types.Rule) bool) error {
 	ctx, rvals, err := e.splitParams(params...)
 	if err != nil {
 		return err
@@ -275,7 +275,7 @@ func (e *Enforcer) RangeMatches(params []interface{}, fn func(rule kind.Rule) bo
 	return e.RangeMatchesWithContext(ctx, rvals, fn)
 }
 
-func (e *Enforcer) RangeMatchesWithContext(ctx *Context, rvals []interface{}, fn func(rule kind.Rule) bool) error {
+func (e *Enforcer) RangeMatchesWithContext(ctx *Context, rvals []interface{}, fn func(rule types.Rule) bool) error {
 	return e.model.RangeMatches(ctx.matcher, ctx.rDef, rvals, fn)
 }
 
@@ -283,11 +283,11 @@ func (e *Enforcer) enforce(ctx *Context, rvals []interface{}) (bool, error) {
 	def, _ := e.model.GetDef(model.P_SEC, ctx.matcher.GetPolicyKey())
 	pDef := def.(*defs.PolicyDef)
 	res := eft.Indeterminate
-	effects := []kind.Effect{}
-	matches := []kind.Rule{}
+	effects := []types.Effect{}
+	matches := []types.Rule{}
 
 	var eftErr error = nil
-	err := e.RangeMatchesWithContext(ctx, rvals, func(rule kind.Rule) bool {
+	err := e.RangeMatchesWithContext(ctx, rvals, func(rule types.Rule) bool {
 		effect := pDef.GetEft(rule)
 
 		effects = append(effects, effect)

@@ -16,14 +16,14 @@ package fastac
 
 import (
 	"github.com/abichinger/fastac/model"
-	"github.com/abichinger/fastac/storage"
+	"github.com/abichinger/fastac/storage/adapter"
 )
 
 type IEnforcer interface {
 	GetModel() model.IModel
 	SetModel(m model.IModel)
-	GetAdapter() *storage.Adapter
-	SetAdapter(*storage.Adapter)
+	GetAdapter() *adapter.Adapter
+	SetAdapter(*adapter.Adapter)
 
 	Enforce(rvals ...interface{}) (bool, error)
 	EnforceWithMatcher(matcher string, rvals ...interface{}) (bool, error)
