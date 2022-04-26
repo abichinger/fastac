@@ -75,7 +75,7 @@ type Model struct {
 
 	pMap  map[string]policy.IPolicy
 	mMap  map[string]matcher.IMatcher
-	rmMap map[string]rbac.IRoleManager
+	rpMap map[string]*rbac.RolePolicy
 	eMap  map[string]effector.IEffector
 
 	secDefs    map[string]*SectionDef
@@ -90,7 +90,7 @@ func NewModel() *Model {
 	m.defs = make(map[byte]map[string]defs.IDef)
 	m.pMap = make(map[string]policy.IPolicy)
 	m.mMap = make(map[string]matcher.IMatcher)
-	m.rmMap = make(map[string]rbac.IRoleManager)
+	m.rpMap = make(map[string]*rbac.RolePolicy)
 	m.eMap = make(map[string]effector.IEffector)
 
 	m.secDefs = make(map[string]*SectionDef)
@@ -257,34 +257,45 @@ func (m *Model) BuildMatcher(key string) error {
 
 func (m *Model) BuildMatcherFromDef(mDef *defs.MatcherDef) (matcher.IMatcher, error) {
 	pKey := mDef.GetPolicyKey()
-	pDef, ok := m.defs[P_SEC][pKey]
+	var pDef *defs.PolicyDef
+	switch pKey[0] {
+	case P_SEC:
+		def, ok := m.defs[P_SEC][pKey]
+		if !ok {
+			return nil, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, pKey)
+		}
+		pDef = def.(*defs.PolicyDef)
+	case G_SEC:
+		pDef = defs.NewPolicyDef(pKey, "user, role, domain")
+	default:
+		return nil, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, pKey)
+	}
+
+	policy, ok := m.GetPolicy(pKey)
 	if !ok {
 		return nil, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, pKey)
 	}
 
-	policy, ok := m.pMap[pKey]
-	if !ok {
-		return nil, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, pKey)
-	}
-
-	return matcher.NewMatcher(pDef.(*defs.PolicyDef), policy, mDef.Stages()), nil
+	return matcher.NewMatcher(pDef, policy, mDef.Stages()), nil
 }
 
 func addRoleDef(m *Model, key, arguments string) error {
 	def := defs.NewRoleDef(key, arguments)
 	m.defs[G_SEC][key] = def
+	var rm rbac.IRoleManager
 	if def.NArgs() == 2 {
-		m.rmMap[key] = rbac.NewRoleManager(10)
+		rm = rbac.NewRoleManager(10)
 	} else {
-		m.rmMap[key] = rbac.NewDomainManager(10)
+		rm = rbac.NewDomainManager(10)
 	}
-	m.fm.SetFunction(key, rbac.GenerateGFunction(m.rmMap[key]))
+	m.rpMap[key] = rbac.NewRolePolicy(rm)
+	m.fm.SetFunction(key, rbac.GenerateGFunction(rm))
 	return nil
 }
 
 func removeRoleDef(m *Model, key string) error {
 	delete(m.defs[G_SEC], key)
-	delete(m.rmMap, key)
+	delete(m.rpMap, key)
 	m.fm.RemoveFunction(key)
 	return nil
 }
@@ -353,22 +364,25 @@ func (m *Model) removePolicyRule(key string, rule types.Rule) (bool, error) {
 }
 
 func (m *Model) addRoleRule(key string, rule types.Rule) (bool, error) {
-	rm, ok := m.rmMap[key]
+	rp, ok := m.rpMap[key]
 	if !ok {
 		return false, fmt.Errorf(str.ERR_RM_NOT_FOUND, key)
 	}
-	return rm.AddLink(rule[0], rule[1], rule[2:]...)
+	return rp.AddRule(rule)
 }
 func (m *Model) removeRoleRule(key string, rule types.Rule) (bool, error) {
-	rm, ok := m.rmMap[key]
+	rp, ok := m.rpMap[key]
 	if !ok {
 		return false, fmt.Errorf(str.ERR_RM_NOT_FOUND, key)
 	}
-	return rm.DeleteLink(rule[0], rule[1], rule[2:]...)
+	return rp.RemoveRule(rule)
 }
 
 func (m *Model) GetPolicy(key string) (policy.IPolicy, bool) {
 	p, ok := m.pMap[key]
+	if !ok {
+		p, ok = m.rpMap[key]
+	}
 	return p, ok
 }
 
@@ -377,12 +391,12 @@ func (m *Model) SetPolicy(key string, policy policy.IPolicy) {
 }
 
 func (m *Model) GetRoleManager(key string) (rbac.IRoleManager, bool) {
-	rm, ok := m.rmMap[key]
-	return rm, ok
+	rp, ok := m.rpMap[key]
+	return rp.GetRoleManager(), ok
 }
 
 func (m *Model) SetRoleManager(key string, rm rbac.IRoleManager) {
-	m.rmMap[key] = rm
+	m.rpMap[key] = rbac.NewRolePolicy(rm)
 	m.fm.SetFunction(key, rbac.GenerateGFunction(rm))
 }
 
@@ -453,16 +467,14 @@ func (m *Model) String() string {
 func (m *Model) RangeRules(fn func(rule []string) bool) {
 	for pKey, p := range m.pMap {
 		ruleKey := []string{pKey}
-		p.Range(func(hash string, rule []string) bool {
+		p.Range(func(rule []string) bool {
 			return fn(append(ruleKey, rule...))
 		})
 	}
-	for gKey, rm := range m.rmMap {
+	for gKey, rm := range m.rpMap {
 		ruleKey := []string{gKey}
-		rm.Range(func(name1, name2 string, domain ...string) bool {
-			rule := append(ruleKey, name1)
-			rule = append(rule, name2)
-			return fn(append(rule, domain...))
+		rm.Range(func(rule []string) bool {
+			return fn(append(ruleKey, rule...))
 		})
 	}
 }

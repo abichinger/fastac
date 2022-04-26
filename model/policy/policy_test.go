@@ -42,9 +42,9 @@ func TestGetDistinct(t *testing.T) {
 
 	loadTestPolicy(t, p, rules)
 
-	subjects, _ := p.GetDistinct([]string{"sub"})
-	objects, _ := p.GetDistinct([]string{"obj"})
-	actions, _ := p.GetDistinct([]string{"act"})
+	subjects, _ := p.GetDistinct([]int{0})
+	objects, _ := p.GetDistinct([]int{1})
+	actions, _ := p.GetDistinct([]int{2})
 	assert.ElementsMatch(t, util.Join2D(subjects, ""), []string{"alice", "bob", "data2_admin"})
 	assert.ElementsMatch(t, util.Join2D(objects, ""), []string{"data1", "data2"})
 	assert.ElementsMatch(t, util.Join2D(actions, ""), []string{"read", "write"})

@@ -2,6 +2,7 @@ package policy
 
 import (
 	"github.com/abichinger/fastac/api"
+	"github.com/abichinger/fastac/util"
 	em "github.com/vansante/go-event-emitter"
 )
 
@@ -17,5 +18,22 @@ type IPolicy interface {
 	api.IAddRemoveListener
 	api.IClear
 
-	Range(fn func(hash string, rule []string) bool)
+	Range(fn func(rule []string) bool)
+}
+
+func GetDistinct(p IPolicy, columns []int) ([][]string, error) {
+	resMap := make(map[string][]string)
+	p.Range(func(rule []string) bool {
+		values := make([]string, len(columns))
+		for i, column := range columns {
+			values[i] = rule[column]
+		}
+		resMap[util.Hash(values)] = values
+		return true
+	})
+	res := make([][]string, 0)
+	for _, values := range resMap {
+		res = append(res, values)
+	}
+	return res, nil
 }

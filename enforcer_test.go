@@ -649,15 +649,32 @@ func convertRules(rules []types.Rule) [][]string {
 func TestFilterWithMatcher(t *testing.T) {
 	e, _ := NewEnforcer("examples/rbac_with_domains_model.conf", "examples/rbac_with_domains_policy.csv")
 
-	expected := []string{
-		"admin,domain1,data1,read",
-		"admin,domain2,data2,read",
+	tests := []struct {
+		matchter string
+		expected []string
+	}{
+		{
+			"p.act == \"read\"",
+			[]string{
+				"admin,domain1,data1,read",
+				"admin,domain2,data2,read",
+			},
+		},
+		{
+			"g.domain == \"domain1\"",
+			[]string{
+				"alice,admin,domain1",
+			},
+		},
 	}
 
-	rules, err := e.Filter(SetMatcher([]string{"p.act == \"read\""}))
-	if err != nil {
-		t.Error(err.Error())
+	for _, test := range tests {
+		rules, err := e.Filter(SetMatcher([]string{test.matchter}))
+		if err != nil {
+			t.Error(err.Error())
+		}
+
+		assert.ElementsMatch(t, util.Join2D(convertRules(rules), ","), test.expected)
 	}
 
-	assert.ElementsMatch(t, util.Join2D(convertRules(rules), ","), expected)
 }

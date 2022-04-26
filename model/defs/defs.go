@@ -28,8 +28,8 @@ import (
 const DefaultSep = ","
 const DefaultRoleParty = "_"
 
-var ArgReg = regexp.MustCompile(`([pr][0-9]*)(\.|_)([A-Za-z0-9_]+)`)
-var pArgReg = regexp.MustCompile(`(p[0-9]*)_([A-Za-z0-9_]+)`)
+var ArgReg = regexp.MustCompile(`([prg][0-9]*)(\.|_)([A-Za-z0-9_]+)`)
+var pArgReg = regexp.MustCompile(`([pg][0-9]*)_([A-Za-z0-9_]+)`)
 var rArgReg = regexp.MustCompile(`(r[0-9]*)_([A-Za-z0-9_]+)`)
 
 type IDef interface {

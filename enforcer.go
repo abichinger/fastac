@@ -236,6 +236,7 @@ func (e *Enforcer) splitParams(params ...interface{}) (ctx *Context, request []i
 }
 
 // Enforce decides whether to allow or deny a request
+// It is possible to pass ContextOptions, everything else will be treated as a request value
 func (e *Enforcer) Enforce(params ...interface{}) (bool, error) {
 	ctx, rvals, err := e.splitParams(params...)
 	if err != nil {
@@ -249,7 +250,13 @@ func (e *Enforcer) EnforceWithContext(ctx *Context, rvals ...interface{}) (bool,
 }
 
 // Filter will fetch all rules which match the given request
-// The effect of rules does not matter.
+// It is possible to pass ContextOptions, everything else will be treated as a request value
+// The effect of rules is not considered.
+//
+// Get all permissons from alice:
+//  e.Filter(SetMatcher([]string{"p.user == \"alice\""}))
+// Get all grouping rules in domain1:
+//  e.Filter(SetMatcher([]string{"g.domain == \"domain1\""}))
 func (e *Enforcer) Filter(params ...interface{}) ([]types.Rule, error) {
 	ctx, rvals, err := e.splitParams(params...)
 	if err != nil {

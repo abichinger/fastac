@@ -39,7 +39,7 @@ func NewRuleSet() *RuleSet {
 }
 
 func (set *RuleSet) RangeRules(fn func(rule []string) bool) {
-	set.Range(func(hash string, rule []string) bool {
+	set.Range(func(rule []string) bool {
 		return fn(rule)
 	})
 }

@@ -66,7 +66,7 @@ func NewMatchParameters(pDef defs.PolicyDef, pvals types.Rule, rDef defs.Request
 
 func (params *MatchParameters) Get(name string) (interface{}, error) {
 	switch name[0] {
-	case 'p':
+	case 'p', 'g':
 		return params.pDef.GetParameter(params.pvals, name)
 	case 'r':
 		return params.rDef.GetParameter(params.rvals, name)
@@ -89,7 +89,7 @@ func NewMatcher(pDef *defs.PolicyDef, policy p.IPolicy, matchers []*defs.Matcher
 	m.matchers = matchers
 	m.root = NewMatcherNode([]string{""})
 
-	policy.Range(func(hash string, rule []string) bool {
+	policy.Range(func(rule []string) bool {
 		m.addRule(rule)
 		return true
 	})
