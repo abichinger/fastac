@@ -173,7 +173,7 @@ func (rm *RoleManager) DeleteLink(name1 string, name2 string, domains ...string)
 
 // HasLink determines whether role: name1 inherits role: name2.
 func (rm *RoleManager) HasLink(name1 string, name2 string, domains ...string) (bool, error) {
-	if name1 == name2 {
+	if name1 == name2 || (rm.matchingFunc != nil && rm.match(name1, name2)) {
 		return true, nil
 	}
 
@@ -190,14 +190,14 @@ func (rm *RoleManager) HasLink(name1 string, name2 string, domains ...string) (b
 	return rm.hasLinkHelper(role.name, map[string]*Role{user.name: user}, rm.maxHierarchyLevel), nil
 }
 
-func (rm *RoleManager) hasLinkHelper(name string, roles map[string]*Role, level int) bool {
+func (rm *RoleManager) hasLinkHelper(targetName string, roles map[string]*Role, level int) bool {
 	if level <= 0 || len(roles) == 0 {
 		return false
 	}
 
 	nextRoles := map[string]*Role{}
 	for _, role := range roles {
-		if name == role.name {
+		if targetName == role.name || (rm.matchingFunc != nil && rm.match(role.name, targetName)) {
 			return true
 		}
 		role.rangeRoles(func(key, value interface{}) bool {
@@ -206,7 +206,7 @@ func (rm *RoleManager) hasLinkHelper(name string, roles map[string]*Role, level 
 		})
 	}
 
-	return rm.hasLinkHelper(name, nextRoles, level-1)
+	return rm.hasLinkHelper(targetName, nextRoles, level-1)
 }
 
 // GetRoles gets the roles that a user inherits.

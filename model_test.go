@@ -308,8 +308,18 @@ func TestRBACModelWithPattern(t *testing.T) {
 	// You can see in policy that: "g2, /book/:id, book_group", so in "g2()" function in the matcher, instead
 	// of checking whether "/book/:id" equals the obj: "/book/1", it checks whether the pattern matches.
 	// You can see it as normal RBAC: "/book/:id" == "/book/1" becomes KeyMatch2("/book/:id", "/book/1")
-	rm, _ := e.GetModel().GetRoleManager("g2")
-	rm.SetMatcher(util.KeyMatch2)
+	g2, _ := e.GetModel().GetRoleManager("g2")
+	g2.SetMatcher(util.KeyMatch2)
+	g1, _ := e.GetModel().GetRoleManager("g")
+	g1.SetMatcher(util.KeyMatch2)
+
+	b, _ := g1.HasLink("any_user", "*")
+	t.Log(b)
+
+	testEnforce(t, e, "any_user", "/pen3/1", "GET", true)
+	testEnforce(t, e, "/book/user/1", "/pen4/1", "GET", true)
+
+	testEnforce(t, e, "/book/user/1", "/pen4/1", "POST", true)
 	testEnforce(t, e, "alice", "/book/1", "GET", true)
 	testEnforce(t, e, "alice", "/book/2", "GET", true)
 	testEnforce(t, e, "alice", "/pen/1", "GET", true)
@@ -321,7 +331,7 @@ func TestRBACModelWithPattern(t *testing.T) {
 
 	// AddMatchingFunc() is actually setting a function because only one function is allowed,
 	// so when we set "KeyMatch3", we are actually replacing "KeyMatch2" with "KeyMatch3".
-	rm.SetMatcher(util.KeyMatch3)
+	g2.SetMatcher(util.KeyMatch3)
 	testEnforce(t, e, "alice", "/book2/1", "GET", true)
 	testEnforce(t, e, "alice", "/book2/2", "GET", true)
 	testEnforce(t, e, "alice", "/pen2/1", "GET", true)
