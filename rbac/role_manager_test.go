@@ -296,7 +296,7 @@ func TestPatternRole(t *testing.T) {
 
 func TestDomainPatternRole(t *testing.T) {
 	rm := NewDomainManager(10)
-	rm.SetDomainMatcher(util.KeyMatch2)
+	rm.SetDomainMatcher(util.PathMatch)
 
 	links := [][]string{
 		{"u1", "g1", "domain1"},
@@ -356,8 +356,8 @@ func TestDomainPatternRole(t *testing.T) {
 
 func TestAllMatchingFunc(t *testing.T) {
 	rm := NewDomainManager(10)
-	rm.SetMatcher(util.KeyMatch2)
-	rm.SetDomainMatcher(util.KeyMatch2)
+	rm.SetMatcher(util.PathMatch)
+	rm.SetDomainMatcher(util.PathMatch)
 
 	testAddLink(t, rm, true, "/book/:id", "book_group", "*")
 	// Current role inheritance tree after deleting the links:
@@ -391,7 +391,7 @@ func TestMatchingFuncOrder(t *testing.T) {
 
 func TestDomainMatchingFuncWithDifferentDomain(t *testing.T) {
 	rm := NewDomainManager(10)
-	rm.SetDomainMatcher(util.KeyMatch)
+	rm.SetDomainMatcher(util.PathMatch)
 
 	testAddLink(t, rm, true, "alice", "editor", "*")
 	testAddLink(t, rm, true, "editor", "admin", "domain1")

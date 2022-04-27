@@ -276,9 +276,9 @@ func TestFilter(t *testing.T) {
 			},
 		},
 		{
-			"examples/keymatch_model.conf",
-			"examples/keymatch_policy.csv",
-			"keyMatch(\"/alice_data/resource2\", p.obj)",
+			"examples/pathmatch_model.conf",
+			"examples/pathmatch_policy.csv",
+			"pathMatch(\"/alice_data/resource2\", p.obj)",
 			nil,
 			[]interface{}{},
 			[]string{

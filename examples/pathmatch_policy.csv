@@ -1,5 +1,7 @@
 p, alice, /alice_data/*, GET
 p, alice, /alice_data/resource1, POST
+p, alice, /alice_data2/:resource, GET
+p, alice, /alice_data2/:id/using/:resId, GET
 
 p, bob, /alice_data/resource2, GET
 p, bob, /bob_data/*, POST

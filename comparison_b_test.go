@@ -18,7 +18,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/abichinger/fastac/util"
 	casbin "github.com/casbin/casbin/v2"
+	casbinUtil "github.com/casbin/casbin/v2/util"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -308,4 +310,47 @@ func BenchmarkABAC(b *testing.B) {
 			}
 		})
 	}
+}
+
+func BenchmarkPathMatch(b *testing.B) {
+
+	benchmarks := []struct {
+		pkg     string
+		name    string
+		fn      util.MatchingFunc
+		str     string
+		pattern string
+	}{
+		{
+			"FastAC",
+			"PathMatch/KeyMatch2",
+			util.PathMatch,
+			"/api/v1/user/5/profile",
+			"/api/:v/user/:id/*",
+		},
+		{
+			"Casbin",
+			"PathMatch/KeyMatch2",
+			casbinUtil.KeyMatch2,
+			"/api/v1/user/5/profile",
+			"/api/:v/user/:id/*",
+		},
+	}
+
+	for _, benchmark := range benchmarks {
+		b.Run("pkg="+benchmark.pkg, func(b *testing.B) {
+			b.Run("name="+benchmark.name, func(b *testing.B) {
+				res := benchmark.fn(benchmark.str, benchmark.pattern)
+				if res == false {
+					b.FailNow()
+				}
+
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					benchmark.fn(benchmark.str, benchmark.pattern)
+				}
+			})
+		})
+	}
+
 }

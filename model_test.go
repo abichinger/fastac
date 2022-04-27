@@ -305,13 +305,10 @@ func TestRBACModelWithPattern(t *testing.T) {
 
 	// Here's a little confusing: the matching function here is not the custom function used in matcher.
 	// It is the matching function used by "g" (and "g2", "g3" if any..)
-	// You can see in policy that: "g2, /book/:id, book_group", so in "g2()" function in the matcher, instead
-	// of checking whether "/book/:id" equals the obj: "/book/1", it checks whether the pattern matches.
-	// You can see it as normal RBAC: "/book/:id" == "/book/1" becomes KeyMatch2("/book/:id", "/book/1")
 	g2, _ := e.GetModel().GetRoleManager("g2")
-	g2.SetMatcher(util.KeyMatch2)
+	g2.SetMatcher(util.PathMatch)
 	g1, _ := e.GetModel().GetRoleManager("g")
-	g1.SetMatcher(util.KeyMatch2)
+	g1.SetMatcher(util.PathMatch)
 
 	b, _ := g1.HasLink("any_user", "*")
 	t.Log(b)
@@ -329,9 +326,7 @@ func TestRBACModelWithPattern(t *testing.T) {
 	testEnforce(t, e, "bob", "/pen/1", "GET", true)
 	testEnforce(t, e, "bob", "/pen/2", "GET", true)
 
-	// AddMatchingFunc() is actually setting a function because only one function is allowed,
-	// so when we set "KeyMatch3", we are actually replacing "KeyMatch2" with "KeyMatch3".
-	g2.SetMatcher(util.KeyMatch3)
+	g2.SetMatcher(util.PathMatch2)
 	testEnforce(t, e, "alice", "/book2/1", "GET", true)
 	testEnforce(t, e, "alice", "/book2/2", "GET", true)
 	testEnforce(t, e, "alice", "/pen2/1", "GET", true)
@@ -421,8 +416,8 @@ func TestABACModel(t *testing.T) {
 	testEnforce(t, e, "bob", data2, "write", true)
 }
 
-func TestKeyMatchModel(t *testing.T) {
-	e, _ := NewEnforcer("examples/keymatch_model.conf", "examples/keymatch_policy.csv")
+func TestPathMatchModel(t *testing.T) {
+	e, _ := NewEnforcer("examples/pathmatch_model.conf", "examples/pathmatch_policy.csv")
 
 	testEnforce(t, e, "alice", "/alice_data/resource1", "GET", true)
 	testEnforce(t, e, "alice", "/alice_data/resource1", "POST", true)
@@ -445,14 +440,10 @@ func TestKeyMatchModel(t *testing.T) {
 	testEnforce(t, e, "cathy", "/cathy_data", "GET", true)
 	testEnforce(t, e, "cathy", "/cathy_data", "POST", true)
 	testEnforce(t, e, "cathy", "/cathy_data", "DELETE", false)
-}
 
-func TestKeyMatch2Model(t *testing.T) {
-	e, _ := NewEnforcer("examples/keymatch2_model.conf", "examples/keymatch2_policy.csv")
-
-	testEnforce(t, e, "alice", "/alice_data", "GET", false)
-	testEnforce(t, e, "alice", "/alice_data/resource1", "GET", true)
-	testEnforce(t, e, "alice", "/alice_data2/myid", "GET", false)
+	testEnforce(t, e, "alice", "/alice_data2", "GET", false)
+	testEnforce(t, e, "alice", "/alice_data2/resource1", "GET", true)
+	testEnforce(t, e, "alice", "/alice_data2/resource1/info", "GET", false)
 	testEnforce(t, e, "alice", "/alice_data2/myid/using/res_id", "GET", true)
 }
 
@@ -474,7 +465,7 @@ func CustomFunctionWrapper(args ...interface{}) (interface{}, error) {
 }
 
 func TestKeyMatchCustomModel(t *testing.T) {
-	e, _ := NewEnforcer("examples/keymatch_custom_model.conf", "examples/keymatch2_policy.csv")
+	e, _ := NewEnforcer("examples/keymatch_custom_model.conf", "examples/pathmatch_policy.csv")
 
 	e.model.SetFunction("keyMatchCustom", CustomFunctionWrapper)
 
@@ -616,7 +607,7 @@ func TestCommentModel(t *testing.T) {
 func TestDomainMatchModel(t *testing.T) {
 	e, _ := NewEnforcer("examples/rbac_with_domain_pattern_model.conf", "examples/rbac_with_domain_pattern_policy.csv")
 	rm, _ := e.GetModel().GetRoleManager("g")
-	rm.SetDomainMatcher(util.KeyMatch2)
+	rm.SetDomainMatcher(util.PathMatch)
 
 	testDomainEnforce(t, e, "alice", "domain1", "data1", "read", true)
 	testDomainEnforce(t, e, "alice", "domain1", "data1", "write", true)
@@ -633,8 +624,8 @@ func TestDomainMatchModel(t *testing.T) {
 func TestAllMatchModel(t *testing.T) {
 	e, _ := NewEnforcer("examples/rbac_with_all_pattern_model.conf", "examples/rbac_with_all_pattern_policy.csv")
 	rm, _ := e.GetModel().GetRoleManager("g")
-	rm.SetMatcher(util.KeyMatch2)
-	rm.SetDomainMatcher(util.KeyMatch2)
+	rm.SetMatcher(util.PathMatch)
+	rm.SetDomainMatcher(util.PathMatch)
 
 	testDomainEnforce(t, e, "alice", "domain1", "/book/1", "read", true)
 	testDomainEnforce(t, e, "alice", "domain1", "/book/1", "write", false)

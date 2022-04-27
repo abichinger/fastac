@@ -27,13 +27,8 @@ func DefaultFunctionMap() *FunctionMap {
 	fm := &FunctionMap{}
 	fm.fns = make(map[string]govaluate.ExpressionFunction)
 
-	fm.SetFunction("keyMatch", util.KeyMatchFunc)
-	fm.SetFunction("keyGet", util.KeyGetFunc)
-	fm.SetFunction("keyMatch2", util.KeyMatch2Func)
-	fm.SetFunction("keyGet2", util.KeyGet2Func)
-	fm.SetFunction("keyMatch3", util.KeyMatch3Func)
-	fm.SetFunction("keyMatch4", util.KeyMatch4Func)
-	fm.SetFunction("keyMatch5", util.KeyMatch5Func)
+	fm.SetFunction("pathMatch", util.PathMatchFunc)
+	fm.SetFunction("pathMatch2", util.PathMatchFunc2)
 	fm.SetFunction("regexMatch", util.RegexMatchFunc)
 	fm.SetFunction("ipMatch", util.IPMatchFunc)
 	fm.SetFunction("globMatch", util.GlobMatchFunc)

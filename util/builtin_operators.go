@@ -27,10 +27,6 @@ import (
 	"github.com/Knetic/govaluate"
 )
 
-var (
-	keyMatch4Re *regexp.Regexp = regexp.MustCompile(`{([^/]+)}`)
-)
-
 type MatchingFunc func(str, pattern string) bool
 
 // validate the variadic parameter size and type as string
@@ -47,158 +43,6 @@ func ValidateVariadicArgs(expectedLen int, args ...interface{}) error {
 	}
 
 	return nil
-}
-
-// KeyMatch determines whether key1 matches the pattern of key2 (similar to RESTful path), key2 can contain a *.
-// For example, "/foo/bar" matches "/foo/*"
-func KeyMatch(key1 string, key2 string) bool {
-	i := strings.Index(key2, "*")
-	if i == -1 {
-		return key1 == key2
-	}
-
-	if len(key1) > i {
-		return key1[:i] == key2[:i]
-	}
-	return key1 == key2[:i]
-}
-
-// KeyGet returns the matched part
-// For example, "/foo/bar/foo" matches "/foo/*"
-// "bar/foo" will been returned
-func KeyGet(key1, key2 string) string {
-	i := strings.Index(key2, "*")
-	if i == -1 {
-		return ""
-	}
-	if len(key1) > i {
-		if key1[:i] == key2[:i] {
-			return key1[i:]
-		}
-	}
-	return ""
-}
-
-// KeyGetFunc is the wrapper for KeyGet
-func KeyGetFunc(args ...interface{}) (interface{}, error) {
-	if err := ValidateVariadicArgs(2, args...); err != nil {
-		return false, fmt.Errorf("%s: %s", "keyGet", err)
-	}
-
-	name1 := args[0].(string)
-	name2 := args[1].(string)
-
-	return KeyGet(name1, name2), nil
-}
-
-// KeyMatch2 determines whether key1 matches the pattern of key2 (similar to RESTful path), key2 can contain a *.
-// For example, "/foo/bar" matches "/foo/*", "/resource1" matches "/:resource"
-func KeyMatch2(key1 string, key2 string) bool {
-	key2 = strings.Replace(key2, "/*", "/.*", -1)
-
-	re := regexp.MustCompile(`:[^/]+`)
-	key2 = re.ReplaceAllString(key2, "$1[^/]+$2")
-
-	return RegexMatch(key1, "^"+key2+"$")
-}
-
-// KeyGet2 returns value matched pattern
-// For example, "/resource1" matches "/:resource"
-// if the pathVar == "resource", then "resource1" will be returned
-func KeyGet2(key1, key2 string, pathVar string) string {
-	key2 = strings.Replace(key2, "/*", "/.*", -1)
-
-	re := regexp.MustCompile(`:[^/]+`)
-	keys := re.FindAllString(key2, -1)
-	key2 = re.ReplaceAllString(key2, "$1([^/]+)$2")
-	key2 = "^" + key2 + "$"
-	re2 := regexp.MustCompile(key2)
-	values := re2.FindAllStringSubmatch(key1, -1)
-	if len(values) == 0 {
-		return ""
-	}
-	for i, key := range keys {
-		if pathVar == key[1:] {
-			return values[0][i+1]
-		}
-	}
-	return ""
-}
-
-// KeyGet2Func is the wrapper for KeyGet2
-func KeyGet2Func(args ...interface{}) (interface{}, error) {
-	if err := ValidateVariadicArgs(3, args...); err != nil {
-		return false, fmt.Errorf("%s: %s", "keyGet2", err)
-	}
-
-	name1 := args[0].(string)
-	name2 := args[1].(string)
-	key := args[2].(string)
-
-	return KeyGet2(name1, name2, key), nil
-}
-
-// KeyMatch3 determines whether key1 matches the pattern of key2 (similar to RESTful path), key2 can contain a *.
-// For example, "/foo/bar" matches "/foo/*", "/resource1" matches "/{resource}"
-func KeyMatch3(key1 string, key2 string) bool {
-	key2 = strings.Replace(key2, "/*", "/.*", -1)
-
-	re := regexp.MustCompile(`\{[^/]+\}`)
-	key2 = re.ReplaceAllString(key2, "$1[^/]+$2")
-
-	return RegexMatch(key1, "^"+key2+"$")
-}
-
-// KeyMatch4 determines whether key1 matches the pattern of key2 (similar to RESTful path), key2 can contain a *.
-// Besides what KeyMatch3 does, KeyMatch4 can also match repeated patterns:
-// "/parent/123/child/123" matches "/parent/{id}/child/{id}"
-// "/parent/123/child/456" does not match "/parent/{id}/child/{id}"
-// But KeyMatch3 will match both.
-func KeyMatch4(key1 string, key2 string) bool {
-	key2 = strings.Replace(key2, "/*", "/.*", -1)
-
-	tokens := []string{}
-
-	re := keyMatch4Re
-	key2 = re.ReplaceAllStringFunc(key2, func(s string) string {
-		tokens = append(tokens, s[1:len(s)-1])
-		return "([^/]+)"
-	})
-
-	re = regexp.MustCompile("^" + key2 + "$")
-	matches := re.FindStringSubmatch(key1)
-	if matches == nil {
-		return false
-	}
-	matches = matches[1:]
-
-	if len(tokens) != len(matches) {
-		panic(errors.New("KeyMatch4: number of tokens is not equal to number of values"))
-	}
-
-	values := map[string]string{}
-
-	for key, token := range tokens {
-		if _, ok := values[token]; !ok {
-			values[token] = matches[key]
-		}
-		if values[token] != matches[key] {
-			return false
-		}
-	}
-
-	return true
-}
-
-// KeyMatch determines whether key1 matches the pattern of key2 and ignores the parameters in key2.
-// For example, "/foo/bar?status=1&type=2" matches "/foo/bar"
-func KeyMatch5(key1 string, key2 string) bool {
-	i := strings.Index(key1, "?")
-	if i == -1 {
-		return key1 == key2
-	}
-
-	return key1[:i] == key2
 }
 
 // RegexMatch determines whether key1 matches the pattern of key2 in regular expression.
@@ -274,21 +118,64 @@ func PrefixDecorator(prefix string, fn MatchingFunc) MatchingFunc {
 	}
 }
 
-var KeyMatchFunc = WrapMatchingFunc(KeyMatch)
-var KeyMatch2Func = WrapMatchingFunc(KeyMatch2)
-var KeyMatch3Func = WrapMatchingFunc(KeyMatch3)
-var KeyMatch4Func = WrapMatchingFunc(KeyMatch4)
-var KeyMatch5Func = WrapMatchingFunc(KeyMatch5)
+func nextSegment(path, sep string) (seg string, remaining string, last bool) {
+	i := strings.Index(path, sep)
+	if i == -1 {
+		return path, "", true
+	}
+	return path[:i], path[i+1:], false
+}
+
+func isDynamicSegment(segment string, prefix, suffix byte) bool {
+	l := len(segment)
+	if l == 0 {
+		return false
+	}
+	return (prefix == 0 || segment[0] == prefix) &&
+		(suffix == 0 || segment[l-1] == suffix)
+}
+
+func PathMatchHelper(path, pattern, sep string, prefix, suffix byte) bool {
+	if path == pattern || pattern == "*" {
+		return true
+	}
+
+	var pathS, patternS string
+	var lastPathSeg, lastPatternSeg bool
+	pathS, path, lastPathSeg = nextSegment(path, sep)
+	patternS, pattern, lastPatternSeg = nextSegment(pattern, sep)
+
+	if pathS == patternS || isDynamicSegment(patternS, prefix, suffix) {
+		if lastPathSeg != lastPatternSeg {
+			return false
+		}
+		return PathMatchHelper(path, pattern, sep, prefix, suffix)
+	}
+	if patternS == "*" {
+		if !lastPatternSeg && lastPathSeg {
+			return false
+		}
+		return PathMatchHelper(path, pattern, sep, prefix, suffix) ||
+			PathMatchHelper(path, "*"+sep+pattern, sep, prefix, suffix)
+	}
+	return false
+}
+
+func PathMatch(path, pattern string) bool {
+	return PathMatchHelper(path, pattern, "/", ':', 0)
+}
+
+func PathMatch2(path, pattern string) bool {
+	return PathMatchHelper(path, pattern, "/", '{', '}')
+}
+
+var PathMatchFunc = WrapMatchingFunc(PathMatch)
+var PathMatchFunc2 = WrapMatchingFunc(PathMatch2)
 var RegexMatchFunc = WrapMatchingFunc(RegexMatch)
 var IPMatchFunc = WrapMatchingFunc(IPMatch)
 
 const defaultPrefix = "p'"
 
-var KeyMatchPrefix = PrefixDecorator(defaultPrefix, KeyMatch)
-var KeyMatch2Prefix = PrefixDecorator(defaultPrefix, KeyMatch2)
-var KeyMatch3Prefix = PrefixDecorator(defaultPrefix, KeyMatch3)
-var KeyMatch4Prefix = PrefixDecorator(defaultPrefix, KeyMatch4)
-var KeyMatch5Prefix = PrefixDecorator(defaultPrefix, KeyMatch5)
 var RegexMatchPrefix = PrefixDecorator(defaultPrefix, RegexMatch)
 var IPMatchPrefix = PrefixDecorator(defaultPrefix, IPMatch)
 

@@ -16,61 +16,9 @@ package util
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
-
-func testKeyMatch(t *testing.T, key1 string, key2 string, res bool) {
-	t.Helper()
-	myRes := KeyMatch(key1, key2)
-	t.Logf("%s < %s: %t", key1, key2, myRes)
-
-	if myRes != res {
-		t.Errorf("%s < %s: %t, supposed to be %t", key1, key2, !res, res)
-	}
-}
-
-func TestKeyMatch(t *testing.T) {
-	testKeyMatch(t, "/foo", "/foo", true)
-	testKeyMatch(t, "/foo", "/foo*", true)
-	testKeyMatch(t, "/foo", "/foo/*", false)
-	testKeyMatch(t, "/foo/bar", "/foo", false)
-	testKeyMatch(t, "/foo/bar", "/foo*", true)
-	testKeyMatch(t, "/foo/bar", "/foo/*", true)
-	testKeyMatch(t, "/foobar", "/foo", false)
-	testKeyMatch(t, "/foobar", "/foo*", true)
-	testKeyMatch(t, "/foobar", "/foo/*", false)
-}
-
-func testKeyGet(t *testing.T, key1 string, key2 string, res string) {
-	t.Helper()
-	myRes := KeyGet(key1, key2)
-	t.Logf(`%s < %s: "%s"`, key1, key2, myRes)
-
-	if myRes != res {
-		t.Errorf(`%s < %s: "%s", supposed to be "%s"`, key1, key2, myRes, res)
-	}
-}
-
-func TestKeyGet(t *testing.T) {
-	testKeyGet(t, "/foo", "/foo", "")
-	testKeyGet(t, "/foo", "/foo*", "")
-	testKeyGet(t, "/foo", "/foo/*", "")
-	testKeyGet(t, "/foo/bar", "/foo", "")
-	testKeyGet(t, "/foo/bar", "/foo*", "/bar")
-	testKeyGet(t, "/foo/bar", "/foo/*", "bar")
-	testKeyGet(t, "/foobar", "/foo", "")
-	testKeyGet(t, "/foobar", "/foo*", "bar")
-	testKeyGet(t, "/foobar", "/foo/*", "")
-}
-
-func testKeyMatch2(t *testing.T, key1 string, key2 string, res bool) {
-	t.Helper()
-	myRes := KeyMatch2(key1, key2)
-	t.Logf("%s < %s: %t", key1, key2, myRes)
-
-	if myRes != res {
-		t.Errorf("%s < %s: %t, supposed to be %t", key1, key2, !res, res)
-	}
-}
 
 func testGlobMatch(t *testing.T, key1 string, key2 string, res bool) {
 	t.Helper()
@@ -83,142 +31,6 @@ func testGlobMatch(t *testing.T, key1 string, key2 string, res bool) {
 	if myRes != res {
 		t.Errorf("%s < %s: %t, supposed to be %t", key1, key2, !res, res)
 	}
-}
-
-func TestKeyMatch2(t *testing.T) {
-	testKeyMatch2(t, "/foo", "/foo", true)
-	testKeyMatch2(t, "/foo", "/foo*", true)
-	testKeyMatch2(t, "/foo", "/foo/*", false)
-	testKeyMatch2(t, "/foo/bar", "/foo", false)
-	testKeyMatch2(t, "/foo/bar", "/foo*", false) // different with KeyMatch.
-	testKeyMatch2(t, "/foo/bar", "/foo/*", true)
-	testKeyMatch2(t, "/foobar", "/foo", false)
-	testKeyMatch2(t, "/foobar", "/foo*", false) // different with KeyMatch.
-	testKeyMatch2(t, "/foobar", "/foo/*", false)
-
-	testKeyMatch2(t, "/", "/:resource", false)
-	testKeyMatch2(t, "/resource1", "/:resource", true)
-	testKeyMatch2(t, "/myid", "/:id/using/:resId", false)
-	testKeyMatch2(t, "/myid/using/myresid", "/:id/using/:resId", true)
-
-	testKeyMatch2(t, "/proxy/myid", "/proxy/:id/*", false)
-	testKeyMatch2(t, "/proxy/myid/", "/proxy/:id/*", true)
-	testKeyMatch2(t, "/proxy/myid/res", "/proxy/:id/*", true)
-	testKeyMatch2(t, "/proxy/myid/res/res2", "/proxy/:id/*", true)
-	testKeyMatch2(t, "/proxy/myid/res/res2/res3", "/proxy/:id/*", true)
-	testKeyMatch2(t, "/proxy/", "/proxy/:id/*", false)
-
-	testKeyMatch2(t, "/alice", "/:id", true)
-	testKeyMatch2(t, "/alice/all", "/:id/all", true)
-	testKeyMatch2(t, "/alice", "/:id/all", false)
-	testKeyMatch2(t, "/alice/all", "/:id", false)
-
-	testKeyMatch2(t, "/alice/all", "/:/all", false)
-}
-
-func testKeyGet2(t *testing.T, key1 string, key2 string, pathVar string, res string) {
-	t.Helper()
-	myRes := KeyGet2(key1, key2, pathVar)
-	t.Logf(`%s < %s: %s = "%s"`, key1, key2, pathVar, myRes)
-
-	if myRes != res {
-		t.Errorf(`%s < %s: %s = "%s" supposed to be "%s"`, key1, key2, pathVar, myRes, res)
-	}
-}
-
-func TestKeyGet2(t *testing.T) {
-	testKeyGet2(t, "/foo", "/foo", "id", "")
-	testKeyGet2(t, "/foo", "/foo*", "id", "")
-	testKeyGet2(t, "/foo", "/foo/*", "id", "")
-	testKeyGet2(t, "/foo/bar", "/foo", "id", "")
-	testKeyGet2(t, "/foo/bar", "/foo*", "id", "") // different with KeyMatch.
-	testKeyGet2(t, "/foo/bar", "/foo/*", "id", "")
-	testKeyGet2(t, "/foobar", "/foo", "id", "")
-	testKeyGet2(t, "/foobar", "/foo*", "id", "") // different with KeyMatch.
-	testKeyGet2(t, "/foobar", "/foo/*", "id", "")
-
-	testKeyGet2(t, "/", "/:resource", "resource", "")
-	testKeyGet2(t, "/resource1", "/:resource", "resource", "resource1")
-	testKeyGet2(t, "/myid", "/:id/using/:resId", "id", "")
-	testKeyGet2(t, "/myid/using/myresid", "/:id/using/:resId", "id", "myid")
-	testKeyGet2(t, "/myid/using/myresid", "/:id/using/:resId", "resId", "myresid")
-
-	testKeyGet2(t, "/proxy/myid", "/proxy/:id/*", "id", "")
-	testKeyGet2(t, "/proxy/myid/", "/proxy/:id/*", "id", "myid")
-	testKeyGet2(t, "/proxy/myid/res", "/proxy/:id/*", "id", "myid")
-	testKeyGet2(t, "/proxy/myid/res/res2", "/proxy/:id/*", "id", "myid")
-	testKeyGet2(t, "/proxy/myid/res/res2/res3", "/proxy/:id/*", "id", "myid")
-	testKeyGet2(t, "/proxy/myid/res/res2/res3", "/proxy/:id/res/*", "id", "myid")
-	testKeyGet2(t, "/proxy/", "/proxy/:id/*", "id", "")
-
-	testKeyGet2(t, "/alice", "/:id", "id", "alice")
-	testKeyGet2(t, "/alice/all", "/:id/all", "id", "alice")
-	testKeyGet2(t, "/alice", "/:id/all", "id", "")
-	testKeyGet2(t, "/alice/all", "/:id", "id", "")
-
-	testKeyGet2(t, "/alice/all", "/:/all", "", "")
-}
-func testKeyMatch3(t *testing.T, key1 string, key2 string, res bool) {
-	t.Helper()
-	myRes := KeyMatch3(key1, key2)
-	t.Logf("%s < %s: %t", key1, key2, myRes)
-
-	if myRes != res {
-		t.Errorf("%s < %s: %t, supposed to be %t", key1, key2, !res, res)
-	}
-}
-
-func TestKeyMatch3(t *testing.T) {
-	// keyMatch3() is similar with KeyMatch2(), except using "/proxy/{id}" instead of "/proxy/:id".
-	testKeyMatch3(t, "/foo", "/foo", true)
-	testKeyMatch3(t, "/foo", "/foo*", true)
-	testKeyMatch3(t, "/foo", "/foo/*", false)
-	testKeyMatch3(t, "/foo/bar", "/foo", false)
-	testKeyMatch3(t, "/foo/bar", "/foo*", false)
-	testKeyMatch3(t, "/foo/bar", "/foo/*", true)
-	testKeyMatch3(t, "/foobar", "/foo", false)
-	testKeyMatch3(t, "/foobar", "/foo*", false)
-	testKeyMatch3(t, "/foobar", "/foo/*", false)
-
-	testKeyMatch3(t, "/", "/{resource}", false)
-	testKeyMatch3(t, "/resource1", "/{resource}", true)
-	testKeyMatch3(t, "/myid", "/{id}/using/{resId}", false)
-	testKeyMatch3(t, "/myid/using/myresid", "/{id}/using/{resId}", true)
-
-	testKeyMatch3(t, "/proxy/myid", "/proxy/{id}/*", false)
-	testKeyMatch3(t, "/proxy/myid/", "/proxy/{id}/*", true)
-	testKeyMatch3(t, "/proxy/myid/res", "/proxy/{id}/*", true)
-	testKeyMatch3(t, "/proxy/myid/res/res2", "/proxy/{id}/*", true)
-	testKeyMatch3(t, "/proxy/myid/res/res2/res3", "/proxy/{id}/*", true)
-	testKeyMatch3(t, "/proxy/", "/proxy/{id}/*", false)
-
-	testKeyMatch3(t, "/myid/using/myresid", "/{id/using/{resId}", false)
-}
-
-func testKeyMatch4(t *testing.T, key1 string, key2 string, res bool) {
-	t.Helper()
-	myRes := KeyMatch4(key1, key2)
-	t.Logf("%s < %s: %t", key1, key2, myRes)
-
-	if myRes != res {
-		t.Errorf("%s < %s: %t, supposed to be %t", key1, key2, !res, res)
-	}
-}
-
-func TestKeyMatch4(t *testing.T) {
-	testKeyMatch4(t, "/parent/123/child/123", "/parent/{id}/child/{id}", true)
-	testKeyMatch4(t, "/parent/123/child/456", "/parent/{id}/child/{id}", false)
-
-	testKeyMatch4(t, "/parent/123/child/123", "/parent/{id}/child/{another_id}", true)
-	testKeyMatch4(t, "/parent/123/child/456", "/parent/{id}/child/{another_id}", true)
-
-	testKeyMatch4(t, "/parent/123/child/123/book/123", "/parent/{id}/child/{id}/book/{id}", true)
-	testKeyMatch4(t, "/parent/123/child/123/book/456", "/parent/{id}/child/{id}/book/{id}", false)
-	testKeyMatch4(t, "/parent/123/child/456/book/123", "/parent/{id}/child/{id}/book/{id}", false)
-	testKeyMatch4(t, "/parent/123/child/456/book/", "/parent/{id}/child/{id}/book/{id}", false)
-	testKeyMatch4(t, "/parent/123/child/456", "/parent/{id}/child/{id}/book/{id}", false)
-
-	testKeyMatch4(t, "/parent/123/child/123", "/parent/{i/d}/child/{i/d}", false)
 }
 
 func testRegexMatch(t *testing.T, key1 string, key2 string, res bool) {
@@ -277,76 +89,6 @@ func testRegexMatchFunc(t *testing.T, res bool, err string, args ...interface{})
 	}
 }
 
-func testKeyMatchFunc(t *testing.T, res bool, err string, args ...interface{}) {
-	t.Helper()
-	myRes, myErr := KeyMatchFunc(args...)
-	myErrStr := ""
-
-	if myErr != nil {
-		myErrStr = myErr.Error()
-	}
-
-	if myRes != res || err != myErrStr {
-		t.Errorf("%v returns %v %v, supposed to be %v %v", args, myRes, myErr, res, err)
-	}
-}
-
-func testKeyMatch2Func(t *testing.T, res bool, err string, args ...interface{}) {
-	t.Helper()
-	myRes, myErr := KeyMatch2Func(args...)
-	myErrStr := ""
-
-	if myErr != nil {
-		myErrStr = myErr.Error()
-	}
-
-	if myRes != res || err != myErrStr {
-		t.Errorf("%v returns %v %v, supposed to be %v %v", args, myRes, myErr, res, err)
-	}
-}
-
-func testKeyMatch3Func(t *testing.T, res bool, err string, args ...interface{}) {
-	t.Helper()
-	myRes, myErr := KeyMatch3Func(args...)
-	myErrStr := ""
-
-	if myErr != nil {
-		myErrStr = myErr.Error()
-	}
-
-	if myRes != res || err != myErrStr {
-		t.Errorf("%v returns %v %v, supposed to be %v %v", args, myRes, myErr, res, err)
-	}
-}
-
-func testKeyMatch4Func(t *testing.T, res bool, err string, args ...interface{}) {
-	t.Helper()
-	myRes, myErr := KeyMatch4Func(args...)
-	myErrStr := ""
-
-	if myErr != nil {
-		myErrStr = myErr.Error()
-	}
-
-	if myRes != res || err != myErrStr {
-		t.Errorf("%v returns %v %v, supposed to be %v %v", args, myRes, myErr, res, err)
-	}
-}
-
-func testKeyMatch5Func(t *testing.T, res bool, err string, args ...interface{}) {
-	t.Helper()
-	myRes, myErr := KeyMatch5Func(args...)
-	myErrStr := ""
-
-	if myErr != nil {
-		myErrStr = myErr.Error()
-	}
-
-	if myRes != res || err != myErrStr {
-		t.Errorf("%v returns %v %v, supposed to be %v %v", args, myRes, myErr, res, err)
-	}
-}
-
 func testIPMatchFunc(t *testing.T, res bool, err string, args ...interface{}) {
 	t.Helper()
 	myRes, myErr := IPMatchFunc(args...)
@@ -361,88 +103,17 @@ func testIPMatchFunc(t *testing.T, res bool, err string, args ...interface{}) {
 	}
 }
 
+func testURLMatch(t *testing.T, expected bool, path string, pattern string) {
+	t.Helper()
+	res := PathMatch(path, pattern)
+	assert.Equalf(t, expected, res, "path: %s, pattern: %s", path, pattern)
+}
+
 func TestRegexMatchFunc(t *testing.T) {
 	testRegexMatchFunc(t, false, "RegexMatch: Expected 2 arguments, but got 1", "/topic/create")
 	testRegexMatchFunc(t, false, "RegexMatch: Expected 2 arguments, but got 3", "/topic/create/123", "/topic/create", "/topic/update")
 	testRegexMatchFunc(t, false, "RegexMatch: Argument must be a string", "/topic/create", false)
 	testRegexMatchFunc(t, true, "", "/topic/create/123", "/topic/create")
-}
-
-func TestKeyMatchFunc(t *testing.T) {
-	testKeyMatchFunc(t, false, "KeyMatch: Expected 2 arguments, but got 1", "/foo")
-	testKeyMatchFunc(t, false, "KeyMatch: Expected 2 arguments, but got 3", "/foo/create/123", "/foo/*", "/foo/update/123")
-	testKeyMatchFunc(t, false, "KeyMatch: Argument must be a string", "/foo", true)
-	testKeyMatchFunc(t, false, "", "/foo/bar", "/foo")
-	testKeyMatchFunc(t, true, "", "/foo/bar", "/foo/*")
-	testKeyMatchFunc(t, true, "", "/foo/bar", "/foo*")
-}
-
-func TestKeyMatch2Func(t *testing.T) {
-	testKeyMatch2Func(t, false, "KeyMatch2: Expected 2 arguments, but got 1", "/")
-	testKeyMatch2Func(t, false, "KeyMatch2: Expected 2 arguments, but got 3", "/foo/create/123", "/*", "/foo/update/123")
-	testKeyMatch2Func(t, false, "KeyMatch2: Argument must be a string", "/foo", true)
-
-	testKeyMatch2Func(t, false, "", "/", "/:resource")
-	testKeyMatch2Func(t, true, "", "/resource1", "/:resource")
-
-	testKeyMatch2Func(t, true, "", "/foo", "/foo")
-	testKeyMatch2Func(t, true, "", "/foo", "/foo*")
-	testKeyMatch2Func(t, false, "", "/foo", "/foo/*")
-}
-
-func TestKeyMatch3Func(t *testing.T) {
-	testKeyMatch3Func(t, false, "KeyMatch3: Expected 2 arguments, but got 1", "/")
-	testKeyMatch3Func(t, false, "KeyMatch3: Expected 2 arguments, but got 3", "/foo/create/123", "/*", "/foo/update/123")
-	testKeyMatch3Func(t, false, "KeyMatch3: Argument must be a string", "/foo", true)
-
-	testKeyMatch3Func(t, true, "", "/foo", "/foo")
-	testKeyMatch3Func(t, true, "", "/foo", "/foo*")
-	testKeyMatch3Func(t, false, "", "/foo", "/foo/*")
-	testKeyMatch3Func(t, false, "", "/foo/bar", "/foo")
-	testKeyMatch3Func(t, false, "", "/foo/bar", "/foo*")
-	testKeyMatch3Func(t, true, "", "/foo/bar", "/foo/*")
-	testKeyMatch3Func(t, false, "", "/foobar", "/foo")
-	testKeyMatch3Func(t, false, "", "/foobar", "/foo*")
-	testKeyMatch3Func(t, false, "", "/foobar", "/foo/*")
-
-	testKeyMatch3Func(t, false, "", "/", "/{resource}")
-	testKeyMatch3Func(t, true, "", "/resource1", "/{resource}")
-	testKeyMatch3Func(t, false, "", "/myid", "/{id}/using/{resId}")
-	testKeyMatch3Func(t, true, "", "/myid/using/myresid", "/{id}/using/{resId}")
-
-	testKeyMatch3Func(t, false, "", "/proxy/myid", "/proxy/{id}/*")
-	testKeyMatch3Func(t, true, "", "/proxy/myid/", "/proxy/{id}/*")
-	testKeyMatch3Func(t, true, "", "/proxy/myid/res", "/proxy/{id}/*")
-	testKeyMatch3Func(t, true, "", "/proxy/myid/res/res2", "/proxy/{id}/*")
-	testKeyMatch3Func(t, true, "", "/proxy/myid/res/res2/res3", "/proxy/{id}/*")
-	testKeyMatch3Func(t, false, "", "/proxy/", "/proxy/{id}/*")
-}
-
-func TestKeyMatch4Func(t *testing.T) {
-	testKeyMatch4Func(t, false, "KeyMatch4: Expected 2 arguments, but got 1", "/parent/123/child/123")
-	testKeyMatch4Func(t, false, "KeyMatch4: Expected 2 arguments, but got 3", "/parent/123/child/123", "/parent/{id}/child/{id}", true)
-	testKeyMatch4Func(t, false, "KeyMatch4: Argument must be a string", "/parent/123/child/123", true)
-
-	testKeyMatch4Func(t, true, "", "/parent/123/child/123", "/parent/{id}/child/{id}")
-	testKeyMatch4Func(t, false, "", "/parent/123/child/456", "/parent/{id}/child/{id}")
-
-	testKeyMatch4Func(t, true, "", "/parent/123/child/123", "/parent/{id}/child/{another_id}")
-	testKeyMatch4Func(t, true, "", "/parent/123/child/456", "/parent/{id}/child/{another_id}")
-
-}
-
-func TestKeyMatch5Func(t *testing.T) {
-	testKeyMatch5Func(t, false, "KeyMatch5: Expected 2 arguments, but got 1", "/foo")
-	testKeyMatch5Func(t, false, "KeyMatch5: Expected 2 arguments, but got 3", "/foo/create/123", "/foo/*", "/foo/update/123")
-	testKeyMatch5Func(t, false, "KeyMatch5: Argument must be a string", "/parent/123", true)
-
-	testKeyMatch5Func(t, true, "", "/parent/child?status=1&type=2", "/parent/child")
-	testKeyMatch5Func(t, false, "", "/parent?status=1&type=2", "/parent/child")
-
-	testKeyMatch5Func(t, true, "", "/parent/child/?status=1&type=2", "/parent/child/")
-	testKeyMatch5Func(t, false, "", "/parent/child/?status=1&type=2", "/parent/child")
-	testKeyMatch5Func(t, false, "", "/parent/child?status=1&type=2", "/parent/child/")
-
 }
 
 func TestIPMatchFunc(t *testing.T) {
@@ -491,4 +162,37 @@ func TestGlobMatch(t *testing.T) {
 	testGlobMatch(t, "/prefix/subprefix/foobar", "*/foo", false)
 	testGlobMatch(t, "/prefix/subprefix/foobar", "*/foo*", false)
 	testGlobMatch(t, "/prefix/subprefix/foobar", "*/foo/*", false)
+}
+
+func TestURLMatch(t *testing.T) {
+	testURLMatch(t, false, "/", "")
+	testURLMatch(t, false, "", "/")
+	testURLMatch(t, true, "/", "/")
+
+	testURLMatch(t, true, "/api/v1", "/api/v1")
+	testURLMatch(t, false, "/api/v1/user", "/api/v1")
+	testURLMatch(t, false, "/api/v1", "/api/v1/user")
+
+	testURLMatch(t, true, "/api", "/:")
+	testURLMatch(t, false, "/api", "/api/:")
+	testURLMatch(t, true, "/api/v1", "/api/:")
+	testURLMatch(t, true, "/api/v1", "/api/:v")
+	testURLMatch(t, false, "/api/v1/user/5", "/api/:v")
+	testURLMatch(t, true, "/api/v1/user/id", "/api/:v/user/:id")
+
+	testURLMatch(t, true, "", "*")
+	testURLMatch(t, false, "", "/*")
+	testURLMatch(t, true, "/api", "*")
+	testURLMatch(t, true, "/api", "/*")
+	testURLMatch(t, true, "/api/v1", "/*")
+	testURLMatch(t, false, "/app", "/app/*")
+
+	testURLMatch(t, false, "/api/v1", "/api/:v/*")
+	testURLMatch(t, true, "/api/v1/user", "/api/:v/*")
+	testURLMatch(t, true, "/api/v1/user/5", "/api/:v/*")
+
+	testURLMatch(t, false, "/api/v1/user/5", "/api/:v/*/profile")
+	testURLMatch(t, true, "/api/v1/group/2/profile", "/api/:v/*/profile")
+	testURLMatch(t, true, "/api/v1/user/5/profile", "/api/:v/*/profile")
+	testURLMatch(t, false, "/api/v1/user/5/profile/name", "/api/:v/*/profile")
 }

@@ -27,3 +27,5 @@ draw_benchmarks:
 
 	$(GOBIN)/benchdraw --filter="BenchmarkRemovePolicy" --x=size --group=enforcer < ./bench/benchmark.txt > ./bench/RemovePolicy_op.svg
 	$(GOBIN)/benchdraw --filter="BenchmarkRemovePolicy" --x=size --group=enforcer --y=allocs/op < ./bench/benchmark.txt > ./bench/RemovePolicy_alloc.svg
+
+	$(GOBIN)/benchdraw --filter="BenchmarkPathMatch" --title="Matching Function" --x=name --group=pkg < ./bench/benchmark.txt > ./bench/PathMatch_op.svg
