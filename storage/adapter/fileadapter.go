@@ -16,6 +16,7 @@ package adapter
 
 import (
 	"bufio"
+	"encoding/csv"
 	"os"
 	"strings"
 
@@ -24,6 +25,26 @@ import (
 	"github.com/abichinger/fastac/model/policy"
 	"github.com/abichinger/fastac/util"
 )
+
+// LoadPolicyLine loads a text line as a policy rule to model.
+func LoadPolicyLine(line string, m api.IAddRuleBool) error {
+	if line == "" || strings.HasPrefix(line, "#") {
+		return nil
+	}
+
+	r := csv.NewReader(strings.NewReader(line))
+	r.Comma = ','
+	r.Comment = '#'
+	r.TrimLeadingSpace = true
+
+	tokens, err := r.Read()
+	if err != nil {
+		return err
+	}
+
+	_, err = m.AddRule(tokens)
+	return err
+}
 
 type FileAdapter struct {
 	path string
@@ -42,6 +63,15 @@ func (set *RuleSet) RangeRules(fn func(rule []string) bool) {
 	set.Range(func(rule []string) bool {
 		return fn(rule)
 	})
+}
+
+func (set *RuleSet) Rules() [][]string {
+	rules := [][]string{}
+	set.Range(func(rule []string) bool {
+		rules = append(rules, rule)
+		return true
+	})
+	return rules
 }
 
 func NewFileAdapter(path string) *FileAdapter {

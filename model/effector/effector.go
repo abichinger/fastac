@@ -21,5 +21,5 @@ type IEffector interface {
 	// MergeEffects merges a list of effects into a single one
 	// This function gets called during the accumulation of effects and once more when all effects have been gathered
 	// Returns the effect and the rule, which is responsible for the result
-	MergeEffects(effects []types.Effect, matches []types.Rule, complete bool) (types.Effect, types.Rule, error)
+	MergeEffects(effects []types.Effect, matches [][]string, complete bool) (types.Effect, []string, error)
 }

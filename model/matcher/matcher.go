@@ -22,24 +22,23 @@ import (
 	"github.com/abichinger/fastac/model/defs"
 	"github.com/abichinger/fastac/model/fm"
 	p "github.com/abichinger/fastac/model/policy"
-	"github.com/abichinger/fastac/model/types"
 	"github.com/abichinger/fastac/util"
 )
 
 type MatcherNode struct {
-	rule     types.Rule
+	rule     []string
 	children map[string]*MatcherNode
 }
 
-func NewMatcherNode(rule types.Rule) *MatcherNode {
+func NewMatcherNode(rule []string) *MatcherNode {
 	node := &MatcherNode{}
 	node.rule = rule
 	node.children = make(map[string]*MatcherNode)
 	return node
 }
 
-func (n *MatcherNode) GetOrCreate(key types.Rule, rule types.Rule) *MatcherNode {
-	strKey := key.Hash()
+func (n *MatcherNode) GetOrCreate(key []string, rule []string) *MatcherNode {
+	strKey := util.Hash(key)
 	if node, ok := n.children[strKey]; ok {
 		return node
 	}
@@ -50,12 +49,12 @@ func (n *MatcherNode) GetOrCreate(key types.Rule, rule types.Rule) *MatcherNode 
 
 type MatchParameters struct {
 	pDef  defs.PolicyDef
-	pvals types.Rule
+	pvals []string
 	rDef  defs.RequestDef
 	rvals []interface{}
 }
 
-func NewMatchParameters(pDef defs.PolicyDef, pvals types.Rule, rDef defs.RequestDef, rvals []interface{}) *MatchParameters {
+func NewMatchParameters(pDef defs.PolicyDef, pvals []string, rDef defs.RequestDef, rvals []interface{}) *MatchParameters {
 	return &MatchParameters{
 		pDef:  pDef,
 		pvals: pvals,
@@ -115,11 +114,11 @@ func (m *Matcher) GetPolicyKey() string {
 	return m.pDef.GetKey()
 }
 
-func (m *Matcher) addRule(rule types.Rule) {
+func (m *Matcher) addRule(rule []string) {
 	m.addRuleHelper(rule, 0, m.root)
 }
 
-func (m *Matcher) addRuleHelper(rule types.Rule, level int, node *MatcherNode) {
+func (m *Matcher) addRuleHelper(rule []string, level int, node *MatcherNode) {
 	pArgs := m.matchers[level].GetPolicyArgs()
 	if len(pArgs) == 0 {
 		return
@@ -130,16 +129,16 @@ func (m *Matcher) addRuleHelper(rule types.Rule, level int, node *MatcherNode) {
 		nextNode := node.GetOrCreate(key, rule)
 		m.addRuleHelper(rule, level+1, nextNode)
 	} else {
-		hash := rule.Hash()
+		hash := util.Hash(rule)
 		node.children[hash] = NewMatcherNode(rule)
 	}
 }
 
-func (m *Matcher) removeRule(rule types.Rule) {
+func (m *Matcher) removeRule(rule []string) {
 	m.removeRuleHelper(rule, 0, m.root)
 }
 
-func (m *Matcher) removeRuleHelper(rule types.Rule, level int, node *MatcherNode) {
+func (m *Matcher) removeRuleHelper(rule []string, level int, node *MatcherNode) {
 	pArgs := m.matchers[level].GetPolicyArgs()
 	if len(pArgs) == 0 {
 		return
@@ -147,17 +146,17 @@ func (m *Matcher) removeRuleHelper(rule types.Rule, level int, node *MatcherNode
 
 	if level < len(m.matchers)-1 {
 		key, _ := m.pDef.GetParameters(rule, pArgs)
-		strKey := key.Hash()
+		strKey := util.Hash(key)
 		if nextNode, ok := node.children[strKey]; ok {
 			m.removeRuleHelper(rule, level+1, nextNode)
 		}
 	} else {
-		hash := rule.Hash()
+		hash := util.Hash(rule)
 		delete(node.children, hash)
 	}
 }
 
-func (m *Matcher) RangeMatches(rDef defs.RequestDef, rvals []interface{}, fMap fm.FunctionMap, fn func(rule types.Rule) bool) error {
+func (m *Matcher) RangeMatches(rDef defs.RequestDef, rvals []interface{}, fMap fm.FunctionMap, fn func(rule []string) bool) error {
 	level := 0
 	q := make([]*MatcherNode, 0)
 	q = append(q, m.root)
@@ -205,7 +204,7 @@ func (m *Matcher) RangeMatches(rDef defs.RequestDef, rvals []interface{}, fMap f
 		}
 
 		if empty && level == len(m.matchers)-1 {
-			params.pvals = make(types.Rule, len(m.pDef.GetArgs()))
+			params.pvals = make([]string, len(m.pDef.GetArgs()))
 			res, err := expr.Eval(params)
 			if err != nil {
 				return err

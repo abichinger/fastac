@@ -34,25 +34,25 @@ func NewEffector(def *defs.EffectDef) *DefaultEffector {
 	return &e
 }
 
-func (e *DefaultEffector) MergeEffects(effects []types.Effect, matches []types.Rule, complete bool) (types.Effect, types.Rule, error) {
+func (e *DefaultEffector) MergeEffects(effects []types.Effect, matches [][]string, complete bool) (types.Effect, []string, error) {
 
 	if complete {
 		switch e.Expr() {
 		case "some(where(p.eft==allow))":
-			return eft.Deny, types.Rule{}, nil
+			return eft.Deny, []string{}, nil
 		case "!some(where(p.eft==deny))":
-			return eft.Allow, types.Rule{}, nil
+			return eft.Allow, []string{}, nil
 		case "some(where(p.eft==allow))&&!some(where(p.eft==deny))":
 			if len(matches) == 0 {
-				return eft.Deny, types.Rule{}, nil
+				return eft.Deny, []string{}, nil
 			}
 			return effects[0], matches[0], nil
 		}
-		return eft.Deny, types.Rule{}, errors.New("unsupported effect")
+		return eft.Deny, []string{}, errors.New("unsupported effect")
 	}
 
 	effect := eft.Indeterminate
-	match := types.Rule{}
+	match := []string{}
 
 	if len(effects) > 0 {
 		effect = effects[len(effects)-1]
@@ -75,7 +75,7 @@ func (e *DefaultEffector) MergeEffects(effects []types.Effect, matches []types.R
 			return effect, match, nil
 		}
 	default:
-		return eft.Deny, types.Rule{}, errors.New("unsupported effect")
+		return eft.Deny, []string{}, errors.New("unsupported effect")
 	}
 
 	return eft.Indeterminate, match, nil

@@ -24,9 +24,9 @@ import (
 	"github.com/abichinger/fastac/model/types"
 )
 
-func genEffects(effects []types.Effect, n int) ([]types.Effect, []types.Rule) {
+func genEffects(effects []types.Effect, n int) ([]types.Effect, [][]string) {
 	e := make([]types.Effect, 0)
-	m := make([]types.Rule, 0)
+	m := make([][]string, 0)
 
 	for i := 0; i < n; i++ {
 		e = append(e, effects[i%len(effects)])
@@ -35,7 +35,7 @@ func genEffects(effects []types.Effect, n int) ([]types.Effect, []types.Rule) {
 	return e, m
 }
 
-func testMerge(t *testing.T, e IEffector, effects []types.Effect, matches []types.Rule, complete bool, exprected types.Effect) {
+func testMerge(t *testing.T, e IEffector, effects []types.Effect, matches [][]string, complete bool, exprected types.Effect) {
 	t.Helper()
 	effect, _, err := e.MergeEffects(effects, matches, complete)
 	if err != nil {

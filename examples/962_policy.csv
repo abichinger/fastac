@@ -1,4 +1,0 @@
-p, pages_group_sub, pages_group_res, GET
-
-g, alice, pages_group_sub
-g2, /users/:id, pages_group_res

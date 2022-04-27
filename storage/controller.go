@@ -19,7 +19,6 @@ import (
 
 	"github.com/abichinger/fastac/api"
 	"github.com/abichinger/fastac/model"
-	"github.com/abichinger/fastac/storage/adapter"
 	eventemitter "github.com/vansante/go-event-emitter"
 )
 
@@ -43,13 +42,13 @@ type listener struct {
 type StorageController struct {
 	autosave  bool
 	em        api.IAddRemoveListener
-	adapter   adapter.Adapter
+	adapter   Adapter
 	q         []operation
 	wait      int
 	listeners []listener
 }
 
-func NewStorageController(eventemitter api.IAddRemoveListener, adapter adapter.Adapter, autosave bool) *StorageController {
+func NewStorageController(eventemitter api.IAddRemoveListener, adapter Adapter, autosave bool) *StorageController {
 	sc := &StorageController{
 		em:        eventemitter,
 		adapter:   adapter,
@@ -171,9 +170,9 @@ func (sc *StorageController) Flush() error {
 	var err error
 
 	switch sc.adapter.(type) {
-	case adapter.BatchAdapter:
+	case BatchAdapter:
 		err = sc.batchFlush()
-	case adapter.SimpleAdapter:
+	case SimpleAdapter:
 		err = sc.flush()
 	default:
 		err = errors.New("invalid adapter")
@@ -184,7 +183,7 @@ func (sc *StorageController) Flush() error {
 }
 
 func (sc *StorageController) run(opc opcode, rule []string) error {
-	adapter := sc.adapter.(adapter.SimpleAdapter)
+	adapter := sc.adapter.(SimpleAdapter)
 	var err error
 
 	switch opc {
@@ -197,7 +196,7 @@ func (sc *StorageController) run(opc opcode, rule []string) error {
 }
 
 func (sc *StorageController) runBatch(opc opcode, rules [][]string) error {
-	adapter := sc.adapter.(adapter.BatchAdapter)
+	adapter := sc.adapter.(BatchAdapter)
 	var err error
 
 	switch opc {

@@ -25,7 +25,6 @@ import (
 	"github.com/abichinger/fastac/model/fm"
 	"github.com/abichinger/fastac/model/matcher"
 	"github.com/abichinger/fastac/model/policy"
-	"github.com/abichinger/fastac/model/types"
 	"github.com/abichinger/fastac/rbac"
 	"github.com/abichinger/fastac/str"
 	"github.com/go-ini/ini"
@@ -347,7 +346,7 @@ func (m *Model) RemoveRule(rule []string) (bool, error) {
 	return false, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, key)
 }
 
-func (m *Model) addPolicyRule(key string, rule types.Rule) (bool, error) {
+func (m *Model) addPolicyRule(key string, rule []string) (bool, error) {
 	policy, ok := m.pMap[key]
 	if !ok {
 		return false, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, key)
@@ -355,7 +354,7 @@ func (m *Model) addPolicyRule(key string, rule types.Rule) (bool, error) {
 	return policy.AddRule(rule)
 }
 
-func (m *Model) removePolicyRule(key string, rule types.Rule) (bool, error) {
+func (m *Model) removePolicyRule(key string, rule []string) (bool, error) {
 	policy, ok := m.pMap[key]
 	if !ok {
 		return false, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, key)
@@ -363,14 +362,14 @@ func (m *Model) removePolicyRule(key string, rule types.Rule) (bool, error) {
 	return policy.RemoveRule(rule)
 }
 
-func (m *Model) addRoleRule(key string, rule types.Rule) (bool, error) {
+func (m *Model) addRoleRule(key string, rule []string) (bool, error) {
 	rp, ok := m.rpMap[key]
 	if !ok {
 		return false, fmt.Errorf(str.ERR_RM_NOT_FOUND, key)
 	}
 	return rp.AddRule(rule)
 }
-func (m *Model) removeRoleRule(key string, rule types.Rule) (bool, error) {
+func (m *Model) removeRoleRule(key string, rule []string) (bool, error) {
 	rp, ok := m.rpMap[key]
 	if !ok {
 		return false, fmt.Errorf(str.ERR_RM_NOT_FOUND, key)
@@ -427,8 +426,11 @@ func (m *Model) SetEffector(key string, eft e.IEffector) {
 	panic("not implemented")
 }
 
-func (m *Model) RangeMatches(matcher matcher.IMatcher, rDef *defs.RequestDef, rvals []interface{}, fn func(rule types.Rule) bool) error {
-	return matcher.RangeMatches(*rDef, rvals, *m.fm, fn)
+func (m *Model) RangeMatches(matcher matcher.IMatcher, rDef *defs.RequestDef, rvals []interface{}, fn func(rule []string) bool) error {
+	policyKey := []string{matcher.GetPolicyKey()}
+	return matcher.RangeMatches(*rDef, rvals, *m.fm, func(rule []string) bool {
+		return fn(append(policyKey, rule...))
+	})
 }
 
 func (m *Model) SetFunction(name string, function govaluate.ExpressionFunction) {

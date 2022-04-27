@@ -1,10 +1,13 @@
 package fastac
 
 import (
+	"fmt"
+
 	"github.com/abichinger/fastac/model"
 	"github.com/abichinger/fastac/model/defs"
 	e "github.com/abichinger/fastac/model/effector"
 	m "github.com/abichinger/fastac/model/matcher"
+	"github.com/abichinger/fastac/str"
 )
 
 type ContextOption func(ctx *Context) error
@@ -30,8 +33,13 @@ func SetMatcher(matcher interface{}) ContextOption {
 			for i, expr := range mType {
 				mDef.AddStage(i, expr)
 			}
-
 			m, err := ctx.model.BuildMatcherFromDef(mDef)
+			if err != nil {
+				return err
+			}
+			ctx.matcher = m
+		case *defs.MatcherDef:
+			m, err := ctx.model.BuildMatcherFromDef(mType)
 			if err != nil {
 				return err
 			}
@@ -49,7 +57,7 @@ func SetRequestDef(definition interface{}) ContextOption {
 		case string:
 			rDef, ok := ctx.model.GetRequestDef(rType)
 			if !ok {
-				rDef = defs.NewRequestDef("", rType)
+				return fmt.Errorf(str.ERR_REQUESTDEF_NOT_FOUND, rType)
 			}
 			ctx.rDef = rDef
 		case *defs.RequestDef:
@@ -68,6 +76,9 @@ func SetEffector(effector interface{}) ContextOption {
 				eDef := defs.NewEffectDef("", eType)
 				eff = e.NewEffector(eDef)
 			}
+			ctx.effector = eff
+		case *defs.EffectDef:
+			eff := e.NewEffector(eType)
 			ctx.effector = eff
 		case e.IEffector:
 			ctx.effector = eType

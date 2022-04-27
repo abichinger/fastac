@@ -82,18 +82,24 @@ func (def *PolicyDef) GetEft(values []string) types.Effect {
 	return eft.Allow
 }
 
-func (def *PolicyDef) GetParameter(values []string, name string) (string, error) {
+func (def *PolicyDef) GetParameter(rule []string, name string) (string, error) {
 	index, ok := def.argIndex[name]
 	if !ok {
 		return "", errors.New("No parameter '" + name + "' found.")
 	}
-	return values[index], nil
+	//check if rule is passed with key
+	if len(rule) > len(def.args) {
+		return rule[index+1], nil
+	} else {
+		return rule[index], nil
+	}
+
 }
 
-func (def *PolicyDef) GetParameters(values, names []string) (types.Rule, error) {
+func (def *PolicyDef) GetParameters(rule, names []string) ([]string, error) {
 	params := make([]string, 0)
 	for _, name := range names {
-		value, err := def.GetParameter(values, name)
+		value, err := def.GetParameter(rule, name)
 		if err != nil {
 			return nil, err
 		}

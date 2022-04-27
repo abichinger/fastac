@@ -19,7 +19,6 @@ import (
 
 	"github.com/abichinger/fastac/api"
 	"github.com/abichinger/fastac/model"
-	"github.com/abichinger/fastac/storage/adapter"
 	"github.com/stretchr/testify/assert"
 	em "github.com/vansante/go-event-emitter"
 )
@@ -42,7 +41,7 @@ func (e *EmitterMock) RemoveListener(event em.EventType, listener *em.Listener) 
 }
 
 type AdapterMock interface {
-	adapter.Adapter
+	Adapter
 	AddCalls() int
 	RemoveCalls() int
 }
@@ -56,11 +55,11 @@ func (a *SimpleAdapterMock) AddCalls() int                           { return a.
 func (a *SimpleAdapterMock) RemoveCalls() int                        { return a.removeCalls }
 func (a *SimpleAdapterMock) LoadPolicy(model api.IAddRuleBool) error { return nil }
 func (a *SimpleAdapterMock) SavePolicy(model api.IRangeRules) error  { return nil }
-func (a *SimpleAdapterMock) AddRule(rules []string) error {
+func (a *SimpleAdapterMock) AddRule(rule []string) error {
 	a.addCalls++
 	return nil
 }
-func (a *SimpleAdapterMock) RemoveRule(rules []string) error {
+func (a *SimpleAdapterMock) RemoveRule(rule []string) error {
 	a.removeCalls++
 	return nil
 }
