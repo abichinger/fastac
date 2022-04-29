@@ -136,13 +136,6 @@ func TestRBACBenchmarkPolicy(t *testing.T) {
 
 	testEnforce(t, e, false, "user501", "data9", "read")
 	testEnforce(t, e, true, "user501", "data5", "read")
-
-	e = NewRulesAPIEnforcer("examples/rbac_model_index.conf")
-	if err := genRBACPolicy(e, 1000); err != nil {
-		t.Fatal()
-	}
-	testEnforce(t, e, false, "user501", "data9", "read")
-	testEnforce(t, e, true, "user501", "data5", "read")
 }
 
 func BenchmarkRBAC(b *testing.B) {
@@ -162,7 +155,6 @@ func BenchmarkRBAC(b *testing.B) {
 	}{
 		{name: "Casbin", model: "examples/rbac_model.conf", init: NewRulesAPICasbinEnforcer},
 		{name: "FastAC", model: "examples/rbac_model.conf", init: NewRulesAPIEnforcer},
-		{name: "FastAC-index", model: "examples/rbac_model_index.conf", init: NewRulesAPIEnforcer},
 	}
 
 	for _, bm := range benchmarks {
@@ -202,7 +194,6 @@ func BenchmarkAddPolicy(b *testing.B) {
 	}{
 		{name: "Casbin", model: "examples/rbac_model.conf", init: NewRulesAPICasbinEnforcer},
 		{name: "FastAC", model: "examples/rbac_model.conf", init: NewRulesAPIEnforcer},
-		{name: "FastAC-index", model: "examples/rbac_model_index.conf", init: NewRulesAPIEnforcer},
 	}
 
 	for _, bm := range benchmarks {
@@ -242,7 +233,6 @@ func BenchmarkRemovePolicy(b *testing.B) {
 	}{
 		{name: "Casbin", model: "examples/rbac_model.conf", init: NewRulesAPICasbinEnforcer},
 		{name: "FastAC", model: "examples/rbac_model.conf", init: NewRulesAPIEnforcer},
-		{name: "FastAC-index", model: "examples/rbac_model_index.conf", init: NewRulesAPIEnforcer},
 	}
 
 	for _, bm := range benchmarks {
@@ -289,7 +279,6 @@ func BenchmarkABAC(b *testing.B) {
 	}{
 		{name: "Casbin", model: "examples/abac_rule_model.conf", init: NewRulesAPICasbinEnforcer},
 		{name: "FastAC", model: "examples/abac_rule_model.conf", init: NewRulesAPIEnforcer},
-		{name: "FastAC-index", model: "examples/abac_rule_model_index.conf", init: NewRulesAPIEnforcer},
 	}
 
 	for _, bm := range benchmarks {

@@ -17,6 +17,7 @@ package fastac
 import (
 	"testing"
 
+	"github.com/abichinger/fastac/model/fm"
 	"github.com/abichinger/fastac/rbac"
 	"github.com/abichinger/fastac/util"
 )
@@ -193,7 +194,7 @@ func TestRBACModelWithDomainsAtRuntime(t *testing.T) {
 	testDomainEnforce(t, e, "bob", "domain2", "data2", "write", true)
 
 	//Remove all policy rules related to domain1 and data1.
-	rules, err := e.Filter(SetMatcher([]string{"p.dom == \"domain1\" && p.obj == \"data1\""}))
+	rules, err := e.Filter(SetMatcher("p.dom == \"domain1\" && p.obj == \"data1\""))
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -231,8 +232,10 @@ func TestRBACModelWithDomainsExtendAtRuntime(t *testing.T) {
 	testDomainEnforce(t, e, "alice", "domain1", "data1", "read", true)
 
 	// Remove all policy rules related to domain1 and data1.
-	rules, _ := e.Filter(SetMatcher([]string{"p.dom == \"domain1\" && p.obj == \"data1\""}))
-	e.RemoveRules(rules)
+	rules, _ := e.Filter(SetMatcher("p.dom == \"domain1\" && p.obj == \"data1\""))
+	if err := e.RemoveRules(rules); err != nil {
+		t.Error(err.Error())
+	}
 
 	testDomainEnforce(t, e, "alice", "domain1", "data1", "read", false)
 	testDomainEnforce(t, e, "bob", "domain2", "data2", "read", true)
@@ -465,9 +468,12 @@ func CustomFunctionWrapper(args ...interface{}) (interface{}, error) {
 }
 
 func TestKeyMatchCustomModel(t *testing.T) {
-	e, _ := NewEnforcer("examples/keymatch_custom_model.conf", "examples/pathmatch_policy.csv")
+	fm.SetFunction("keyMatchCustom", CustomFunctionWrapper)
 
-	e.model.SetFunction("keyMatchCustom", CustomFunctionWrapper)
+	e, err := NewEnforcer("examples/keymatch_custom_model.conf", "examples/pathmatch_policy.csv")
+	if err != nil {
+		t.Error(err.Error())
+	}
 
 	testEnforce(t, e, "alice", "/alice_data2/myid", "GET", false)
 	testEnforce(t, e, "alice", "/alice_data2/myid/using/res_id", "GET", true)

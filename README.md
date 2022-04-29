@@ -18,7 +18,7 @@ go get github.com/abichinger/fastac
 
 First you need to prepare an access control model. The [syntax](https://casbin.org/docs/en/syntax-for-models) of [FastAC models](#supported-models) is identical to Casbin models.
 
-An ACL (Access Control List) model with [policy indexing](#policy-indexing) looks like this: 
+An ACL (Access Control List) model looks like this: 
 ```ini
 #File: model.conf
 
@@ -32,9 +32,7 @@ p = sub, obj, act
 e = some(where (p.eft == allow))
 
 [matchers]
-m.0 = r.sub == p.sub 
-m.1 = r.obj == p.obj 
-m.2 = r.act == p.act
+r.sub == p.sub && r.obj == p.obj && r.act == p.act
 ```
 
 Next, you need to load some policy rules.
@@ -66,23 +64,7 @@ if allow, _ := e.Enforce("alice", "data1", "read"); allow == true {
 
 ## Policy Indexing
 
-[Matchers](https://casbin.org/docs/en/syntax-for-models#matchers) can be divided into multiple stages. As a result FastAC will index all policy rules, which reduces the search space for access requests. This feature brings the most **performance gain**.
-
-All you have to do, to take advantage of this is new feature, is to split your matcher definition.
-
-```ini
-#Before
-[matchers]
-m = g(r.sub, p.sub) && r.dom == p.dom && r.obj == p.obj && r.act == p.act
-```
-
-```ini
-#After
-[matchers]
-m.0 = r.dom == p.dom
-m.1 = g(r.sub, p.sub)
-m.2 = r.obj == p.obj && r.act == p.act
-```
+[Matchers](https://casbin.org/docs/en/syntax-for-models#matchers) will be divided into multiple stages. As a result FastAC will index all policy rules, which reduces the search space for access requests. This feature brings the most **performance gain**.
 
 ## Advanced Policy Filtering
 
@@ -92,18 +74,18 @@ FastAC can filter the policy rules with matchers.
 //Examples
 
 //get all policy rules belonging to domain1
-e.Filter(SetMatcher([]string{"p.dom == \"domain1\""})
+e.Filter(SetMatcher("p.dom == \"domain1\"")
 
 //get all policy rules, which grant alice read access
-e.Filter(SetMatcher([]string{"g(\"alice\", p.sub) && p.act == \"read\""})
+e.Filter(SetMatcher("g(\"alice\", p.sub) && p.act == \"read\"")
 ```
 
 # Supported Models
 
-- [ACL](/examples/basic_model_index.conf) - Access Control List
+- [ACL](/examples/basic_model.conf) - Access Control List
 - [ACL-su](/examples/basic_with_root_model.conf) - Access Control List with super user
 - [ABAC](/examples/abac_rule_model.conf) - Attribute Based Access Control
-- [RBAC](/examples/rbac_model_index.conf) - Role Based Access Control
+- [RBAC](/examples/rbac_model.conf) - Role Based Access Control
 - [RBAC-domain](/examples/rbac_with_domains_model.conf) - Role Based Access Control with domains/tenants
 
 # Adapter List

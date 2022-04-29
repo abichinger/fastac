@@ -15,7 +15,7 @@
 package rbac
 
 import (
-	"github.com/Knetic/govaluate"
+	"github.com/abichinger/govaluate"
 )
 
 type MatchingFunc func(arg1 string, arg2 string) bool

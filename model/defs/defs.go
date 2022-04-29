@@ -20,7 +20,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Knetic/govaluate"
 	"github.com/abichinger/fastac/model/eft"
 	"github.com/abichinger/fastac/model/types"
 )
@@ -160,102 +159,6 @@ func (def *RequestDef) GetParameters(values []interface{}, names []string) ([]in
 
 func (def *RequestDef) String() string {
 	return fmt.Sprintf("%s = %s", def.key, strings.Join(def.args, DefaultSep+" "))
-}
-
-type MatcherDef struct {
-	key    string
-	stages []*MatcherStage
-}
-
-func NewMatcherDef(key string) *MatcherDef {
-	return &MatcherDef{key, []*MatcherStage{}}
-}
-
-func (def *MatcherDef) GetKey() string {
-	return def.key
-}
-
-func (def *MatcherDef) AddStage(index int, expr string) {
-	newStage := NewMatcherStage(index, expr)
-	for i, stage := range def.stages {
-		if stage.index > newStage.index {
-			def.stages = append(def.stages[0:i+1], def.stages[i:]...)
-			def.stages[i] = newStage
-			goto END
-		}
-	}
-	def.stages = append(def.stages, newStage)
-END:
-}
-
-func (def *MatcherDef) Stages() []*MatcherStage {
-	return def.stages
-}
-
-func (def *MatcherDef) GetPolicyArgs() []string {
-	args := []string{}
-	for _, stage := range def.stages {
-		args = append(args, stage.pArgs...)
-	}
-	return args
-}
-
-func (def *MatcherDef) GetRequestArgs() []string {
-	args := []string{}
-	for _, stage := range def.stages {
-		args = append(args, stage.rArgs...)
-	}
-	return args
-}
-
-func (def *MatcherDef) GetPolicyKey() string {
-	pArgs := def.GetPolicyArgs()
-	pKey := "p"
-	if len(pArgs) > 0 {
-		pKey = strings.Split(pArgs[0], "_")[0]
-	}
-	return pKey
-}
-
-func (def *MatcherDef) String() string {
-	if len(def.stages) == 1 {
-		return fmt.Sprintf("%s = %s", def.key, ArgReg.ReplaceAllString(def.stages[0].expr, "${1}.${3}"))
-	}
-
-	defs := []string{}
-	for i, stage := range def.stages {
-		defs = append(defs, fmt.Sprintf("%s.%d = %s", def.key, i, ArgReg.ReplaceAllString(stage.expr, "${1}.${3}")))
-	}
-	return strings.Join(defs, "\n")
-
-}
-
-type MatcherStage struct {
-	index int
-	expr  string
-	pArgs []string
-	rArgs []string
-}
-
-func NewMatcherStage(index int, expr string) *MatcherStage {
-	stage := &MatcherStage{}
-	stage.index = index
-	stage.expr = ArgReg.ReplaceAllString(expr, "${1}_${3}")
-	stage.pArgs = pArgReg.FindAllString(stage.expr, -1)
-	stage.rArgs = rArgReg.FindAllString(stage.expr, -1)
-	return stage
-}
-
-func (stage *MatcherStage) GetPolicyArgs() []string {
-	return stage.pArgs
-}
-
-func (stage *MatcherStage) GetRequestArgs() []string {
-	return stage.rArgs
-}
-
-func (def *MatcherStage) NewExpressionWithFunctions(functions map[string]govaluate.ExpressionFunction) (*govaluate.EvaluableExpression, error) {
-	return govaluate.NewEvaluableExpressionWithFunctions(def.expr, functions)
 }
 
 type EffectDef struct {

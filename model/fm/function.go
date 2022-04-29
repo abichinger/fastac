@@ -15,23 +15,36 @@
 package fm
 
 import (
-	"github.com/Knetic/govaluate"
 	"github.com/abichinger/fastac/util"
+	"github.com/abichinger/govaluate"
 )
 
 type FunctionMap struct {
 	fns map[string]govaluate.ExpressionFunction
 }
 
-func DefaultFunctionMap() *FunctionMap {
+//NewFunctionMap returns an empty function map
+func NewFunctionMap() *FunctionMap {
 	fm := &FunctionMap{}
 	fm.fns = make(map[string]govaluate.ExpressionFunction)
+	return fm
+}
 
+//DefaultFunctionMap returns a function map with all global registered functions and the built in functions (pathMatch, regexMatch, ...)
+func DefaultFunctionMap() *FunctionMap {
+	fm := NewFunctionMap()
+
+	fm.SetFunction("eval", func(arguments ...interface{}) (interface{}, error) { return nil, nil })
 	fm.SetFunction("pathMatch", util.PathMatchFunc)
 	fm.SetFunction("pathMatch2", util.PathMatchFunc2)
 	fm.SetFunction("regexMatch", util.RegexMatchFunc)
 	fm.SetFunction("ipMatch", util.IPMatchFunc)
 	fm.SetFunction("globMatch", util.GlobMatchFunc)
+
+	global := getGlobalFunctionMap()
+	for name, fn := range global.fns {
+		fm.SetFunction(name, fn)
+	}
 
 	return fm
 }

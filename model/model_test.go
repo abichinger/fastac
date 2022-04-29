@@ -25,7 +25,7 @@ import (
 
 func TestToString(t *testing.T) {
 
-	models := []string{"../examples/basic_model.conf", "../examples/rbac_model.conf", "../examples/rbac_model_index.conf", "../examples/multiple_policy_definitions_model.conf"}
+	models := []string{"../examples/basic_model.conf", "../examples/rbac_model.conf", "../examples/multiple_policy_definitions_model.conf"}
 
 	minify := func(s string) string {
 		s = strings.ReplaceAll(s, " ", "")

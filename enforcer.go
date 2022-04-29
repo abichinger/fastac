@@ -259,9 +259,9 @@ func (e *Enforcer) EnforceWithContext(ctx *Context, rvals ...interface{}) (bool,
 // The effect of rules is not considered.
 //
 // Get all permissons from alice:
-//  e.Filter(SetMatcher([]string{"p.user == \"alice\""}))
+//  e.Filter(SetMatcher("p.user == \"alice\""))
 // Get all grouping rules in domain1:
-//  e.Filter(SetMatcher([]string{"g.domain == \"domain1\""}))
+//  e.Filter(SetMatcher("g.domain == \"domain1\""))
 func (e *Enforcer) Filter(params ...interface{}) ([][]string, error) {
 	ctx, rvals, err := e.splitParams(params...)
 	if err != nil {

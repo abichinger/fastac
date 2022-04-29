@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/Knetic/govaluate"
 	"github.com/abichinger/fastac/model/defs"
 	"github.com/abichinger/fastac/model/effector"
 	e "github.com/abichinger/fastac/model/effector"
@@ -27,6 +26,7 @@ import (
 	"github.com/abichinger/fastac/model/policy"
 	"github.com/abichinger/fastac/rbac"
 	"github.com/abichinger/fastac/str"
+	"github.com/abichinger/govaluate"
 	"github.com/go-ini/ini"
 	em "github.com/vansante/go-event-emitter"
 )
@@ -213,14 +213,11 @@ func removePolicyDef(m *Model, key string) error {
 }
 
 func addMatcherDef(m *Model, key string, matcher string) error {
-	mKey, index := defs.SplitMatcherKey(key)
-	mDef, ok := m.defs[M_SEC][mKey].(*defs.MatcherDef)
-	if !ok {
-		mDef = defs.NewMatcherDef(mKey)
-		m.defs[M_SEC][mKey] = mDef
+	mDef, err := defs.NewMatcherDef(key, matcher)
+	if err != nil {
+		return err
 	}
-
-	mDef.AddStage(index, matcher)
+	m.defs[M_SEC][key] = mDef
 	return nil
 }
 
@@ -255,6 +252,10 @@ func (m *Model) BuildMatcher(key string) error {
 }
 
 func (m *Model) BuildMatcherFromDef(mDef *defs.MatcherDef) (matcher.IMatcher, error) {
+	if err := mDef.Build(m.fm.GetFunctions()); err != nil {
+		return nil, err
+	}
+
 	pKey := mDef.GetPolicyKey()
 	var pDef *defs.PolicyDef
 	switch pKey[0] {
@@ -275,7 +276,7 @@ func (m *Model) BuildMatcherFromDef(mDef *defs.MatcherDef) (matcher.IMatcher, er
 		return nil, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, pKey)
 	}
 
-	return matcher.NewMatcher(pDef, policy, mDef.Stages()), nil
+	return matcher.NewMatcher(pDef, policy, mDef.Root()), nil
 }
 
 func addRoleDef(m *Model, key, arguments string) error {

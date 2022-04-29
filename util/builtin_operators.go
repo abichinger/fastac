@@ -24,7 +24,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/Knetic/govaluate"
+	"github.com/abichinger/govaluate"
 )
 
 type MatchingFunc func(str, pattern string) bool

@@ -18,32 +18,34 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Knetic/govaluate"
 	"github.com/abichinger/fastac/model/defs"
 	"github.com/abichinger/fastac/model/fm"
 	p "github.com/abichinger/fastac/model/policy"
 	"github.com/abichinger/fastac/util"
+	"github.com/abichinger/govaluate"
 )
 
 type MatcherNode struct {
 	rule     []string
-	children map[string]*MatcherNode
+	children []map[string]*MatcherNode
 }
 
 func NewMatcherNode(rule []string) *MatcherNode {
 	node := &MatcherNode{}
 	node.rule = rule
-	node.children = make(map[string]*MatcherNode)
+	node.children = make([]map[string]*MatcherNode, 2)
+	node.children[0] = make(map[string]*MatcherNode)
+	node.children[1] = make(map[string]*MatcherNode)
 	return node
 }
 
-func (n *MatcherNode) GetOrCreate(key []string, rule []string) *MatcherNode {
+func (n *MatcherNode) GetOrCreate(i int, key []string, rule []string) *MatcherNode {
 	strKey := util.Hash(key)
-	if node, ok := n.children[strKey]; ok {
+	if node, ok := n.children[i][strKey]; ok {
 		return node
 	}
 	node := NewMatcherNode(rule)
-	n.children[strKey] = node
+	n.children[i][strKey] = node
 	return node
 }
 
@@ -75,17 +77,17 @@ func (params *MatchParameters) Get(name string) (interface{}, error) {
 }
 
 type Matcher struct {
-	matchers []*defs.MatcherStage
+	exprRoot *defs.MatcherStage
 	pDef     *defs.PolicyDef
 	policy   p.IPolicy
 	root     *MatcherNode
 }
 
-func NewMatcher(pDef *defs.PolicyDef, policy p.IPolicy, matchers []*defs.MatcherStage) *Matcher {
+func NewMatcher(pDef *defs.PolicyDef, policy p.IPolicy, exprRoot *defs.MatcherStage) *Matcher {
 	m := &Matcher{}
 	m.pDef = pDef
 	m.policy = policy
-	m.matchers = matchers
+	m.exprRoot = exprRoot
 	m.root = NewMatcherNode([]string{""})
 
 	policy.Range(func(rule []string) bool {
@@ -115,107 +117,113 @@ func (m *Matcher) GetPolicyKey() string {
 }
 
 func (m *Matcher) addRule(rule []string) {
-	m.addRuleHelper(rule, 0, m.root)
+	m.addRuleHelper(rule, m.exprRoot, m.root)
 }
 
-func (m *Matcher) addRuleHelper(rule []string, level int, node *MatcherNode) {
-	pArgs := m.matchers[level].GetPolicyArgs()
-	if len(pArgs) == 0 {
-		return
+func (m *Matcher) addRuleHelper(rule []string, exprNode *defs.MatcherStage, node *MatcherNode) {
+	for i, nextExpr := range exprNode.Children() {
+		pArgs := nextExpr.GetPolicyArgs()
+		if len(pArgs) == 0 {
+			continue
+		}
+
+		if !nextExpr.IsLeafNode() {
+			key, _ := m.pDef.GetParameters(rule, pArgs)
+			nextNode := node.GetOrCreate(i, key, rule)
+			m.addRuleHelper(rule, nextExpr, nextNode)
+		} else {
+			hash := util.Hash(rule)
+			node.children[i][hash] = NewMatcherNode(rule)
+		}
 	}
 
-	if level < len(m.matchers)-1 {
-		key, _ := m.pDef.GetParameters(rule, pArgs)
-		nextNode := node.GetOrCreate(key, rule)
-		m.addRuleHelper(rule, level+1, nextNode)
-	} else {
-		hash := util.Hash(rule)
-		node.children[hash] = NewMatcherNode(rule)
-	}
 }
 
 func (m *Matcher) removeRule(rule []string) {
-	m.removeRuleHelper(rule, 0, m.root)
+	m.removeRuleHelper(rule, m.exprRoot, m.root)
 }
 
-func (m *Matcher) removeRuleHelper(rule []string, level int, node *MatcherNode) {
-	pArgs := m.matchers[level].GetPolicyArgs()
-	if len(pArgs) == 0 {
-		return
-	}
-
-	if level < len(m.matchers)-1 {
-		key, _ := m.pDef.GetParameters(rule, pArgs)
-		strKey := util.Hash(key)
-		if nextNode, ok := node.children[strKey]; ok {
-			m.removeRuleHelper(rule, level+1, nextNode)
+func (m *Matcher) removeRuleHelper(rule []string, exprNode *defs.MatcherStage, node *MatcherNode) {
+	for i, nextExpr := range exprNode.Children() {
+		pArgs := nextExpr.GetPolicyArgs()
+		if len(pArgs) == 0 {
+			continue
 		}
-	} else {
-		hash := util.Hash(rule)
-		delete(node.children, hash)
+
+		if !nextExpr.IsLeafNode() {
+			key, _ := m.pDef.GetParameters(rule, pArgs)
+			strKey := util.Hash(key)
+			if nextNode, ok := node.children[i][strKey]; ok {
+				m.removeRuleHelper(rule, nextExpr, nextNode)
+			}
+		} else {
+			hash := util.Hash(rule)
+			delete(node.children[i], hash)
+		}
 	}
+}
+
+func (m *Matcher) rangeMatches(exprNode *defs.MatcherStage, rules map[string]*MatcherNode, params *MatchParameters, functions map[string]govaluate.ExpressionFunction, fn func(node *MatcherNode) bool) (bool, error) {
+	expr, err := exprNode.NewExpressionWithFunctions(functions)
+	if err != nil {
+		return false, err
+	}
+	for _, child := range rules {
+		params.pvals = child.rule
+		res, err := expr.Eval(params)
+		if err != nil {
+			return false, err
+		}
+		if res.(bool) && !fn(child) {
+			return false, nil
+		}
+	}
+	if exprNode.IsLeafNode() && len(rules) == 0 {
+		params.pvals = make([]string, len(m.pDef.GetArgs()))
+		res, err := expr.Eval(params)
+		if err != nil {
+			return false, err
+		}
+		if res.(bool) && !fn(NewMatcherNode(params.pvals)) {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+func (m *Matcher) rangeMatchesHelper(exprNode *defs.MatcherStage, node *MatcherNode, params *MatchParameters, functions map[string]govaluate.ExpressionFunction, fn func(rule []string) bool) (bool, error) {
+	for i, nextExpr := range exprNode.Children() {
+		cont, err := m.rangeMatches(nextExpr, node.children[i], params, functions, func(nextNode *MatcherNode) bool {
+			if nextExpr.IsLeafNode() && !fn(nextNode.rule) {
+				return false //break
+			} else {
+				cont, err := m.rangeMatchesHelper(nextExpr, nextNode, params, functions, fn)
+				if err != nil || !cont {
+					return false
+				}
+			}
+			return true //continue
+		})
+		if err != nil {
+			return false, err
+		}
+		if !cont {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 func (m *Matcher) RangeMatches(rDef defs.RequestDef, rvals []interface{}, fMap fm.FunctionMap, fn func(rule []string) bool) error {
-	level := 0
-	q := make([]*MatcherNode, 0)
-	q = append(q, m.root)
-	empty := true
-
 	params := NewMatchParameters(*m.pDef, nil, rDef, rvals)
 	fMap.SetFunction("eval", generateEvalFunction(fMap, params))
 	functions := fMap.GetFunctions()
 
-	for len(q) > 0 {
-		levelSize := len(q)
-
-		expr, err := m.matchers[level].NewExpressionWithFunctions(functions)
-		if err != nil {
-			return err
-		}
-
-		if level < len(m.matchers) {
-
-			for levelSize > 0 {
-				node := q[0]
-				q = q[1:]
-				levelSize--
-
-				for _, child := range node.children {
-					if level == len(m.matchers)-1 {
-						empty = false
-					}
-					params.pvals = child.rule
-					res, err := expr.Eval(params)
-					if err != nil {
-						return err
-					}
-					if res.(bool) {
-						if level < len(m.matchers)-1 {
-							q = append(q, child)
-						} else {
-							if !fn(child.rule) {
-								return nil
-							}
-						}
-					}
-				}
-			}
-		}
-
-		if empty && level == len(m.matchers)-1 {
-			params.pvals = make([]string, len(m.pDef.GetArgs()))
-			res, err := expr.Eval(params)
-			if err != nil {
-				return err
-			}
-			if res.(bool) {
-				fn(params.pvals)
-			}
-		}
-
-		level++
+	_, err := m.rangeMatchesHelper(m.exprRoot, m.root, params, functions, fn)
+	if err != nil {
+		return err
 	}
+
 	return nil
 }
 

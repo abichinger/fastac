@@ -15,7 +15,6 @@
 package model
 
 import (
-	"github.com/Knetic/govaluate"
 	"github.com/abichinger/fastac/api"
 	"github.com/abichinger/fastac/model/defs"
 	e "github.com/abichinger/fastac/model/effector"
@@ -23,6 +22,7 @@ import (
 	m "github.com/abichinger/fastac/model/matcher"
 	p "github.com/abichinger/fastac/model/policy"
 	"github.com/abichinger/fastac/rbac"
+	"github.com/abichinger/govaluate"
 )
 
 type IModel interface {

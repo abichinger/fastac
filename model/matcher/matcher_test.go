@@ -21,6 +21,7 @@ import (
 	"github.com/abichinger/fastac/model/fm"
 	"github.com/abichinger/fastac/model/policy"
 	"github.com/abichinger/fastac/util"
+	"github.com/abichinger/govaluate"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -47,12 +48,13 @@ func TestRangeMatches(t *testing.T) {
 
 	rDef := defs.NewRequestDef("r", "sub, obj, act")
 
-	mDef := defs.NewMatcherDef("m")
-	mDef.AddStage(0, "r.sub == p.sub")
-	mDef.AddStage(1, "r.obj == p.obj && r.act == p.act")
+	mDef, err := defs.NewMatcherDef("m", "r_sub == p_sub && r_obj == p_obj && r_act == p_act")
+	if err != nil {
+		t.Error(err.Error())
+	}
+	_ = mDef.Build(map[string]govaluate.ExpressionFunction{})
 
-	m1 := NewMatcher(pDef, p, mDef.Stages())
-	m2 := NewMatcher(pDef, p, mDef.Stages()[:1])
+	m1 := NewMatcher(pDef, p, mDef.Root())
 
 	rules := [][]string{
 		{"alice", "data1", "read"},
@@ -71,11 +73,5 @@ func TestRangeMatches(t *testing.T) {
 		{"alice", "data2", "read"},
 	}
 
-	expected2 := [][]string{
-		{"bob", "data1", "read"},
-		{"bob", "data2", "read"},
-	}
-
 	testRangeMatches(t, m1, expected1, *rDef, []interface{}{"alice", "data2", "read"}, *fm)
-	testRangeMatches(t, m2, expected2, *rDef, []interface{}{"bob", "", ""}, *fm)
 }

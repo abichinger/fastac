@@ -14,28 +14,18 @@ type ContextOption func(ctx *Context) error
 
 func SetMatcher(matcher interface{}) ContextOption {
 	return func(ctx *Context) error {
-		var err error
-
 		switch mType := matcher.(type) {
 		case string:
 			m, ok := ctx.model.GetMatcher(mType)
 			if !ok {
-				mDef := defs.NewMatcherDef("")
-				mDef.AddStage(-1, mType)
+				mDef, err := defs.NewMatcherDef("", mType)
+				if err != nil {
+					return err
+				}
 				m, err = ctx.model.BuildMatcherFromDef(mDef)
 				if err != nil {
 					return err
 				}
-			}
-			ctx.matcher = m
-		case []string:
-			mDef := defs.NewMatcherDef("")
-			for i, expr := range mType {
-				mDef.AddStage(i, expr)
-			}
-			m, err := ctx.model.BuildMatcherFromDef(mDef)
-			if err != nil {
-				return err
 			}
 			ctx.matcher = m
 		case *defs.MatcherDef:

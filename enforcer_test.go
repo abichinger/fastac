@@ -18,14 +18,19 @@ func TestAdapterInterface(t *testing.T) {
 		t.Error(err.Error())
 	}
 	e.SetAdapter(a)
-	e.LoadPolicy()
+	if err := e.LoadPolicy(); err != nil {
+		t.Error(err.Error())
+	}
 
 	tmpPolicy := "tmp.csv"
 	a = adapter.NewFileAdapter(tmpPolicy)
 	defer os.Remove(tmpPolicy)
 
 	e.SetAdapter(a)
-	e.SavePolicy()
+
+	if err := e.SavePolicy(); err != nil {
+		t.Error(err.Error())
+	}
 
 	result, err2 := os.ReadFile(tmpPolicy)
 	if err2 != nil {
@@ -135,8 +140,8 @@ func TestOptions(t *testing.T) {
 			}
 
 			if test.apply {
-				e.SetOption(OptionAutosave(test.autosave))
-				e.SetOption(OptionStorage(test.storage))
+				_ = e.SetOption(OptionAutosave(test.autosave))
+				_ = e.SetOption(OptionStorage(test.storage))
 			}
 
 			sc := e.GetStorageController()
@@ -149,8 +154,7 @@ func TestOptions(t *testing.T) {
 
 func TestEnforce(t *testing.T) {
 
-	dom1Admin := defs.NewMatcherDef("m5")
-	dom1Admin.AddStage(0, "g(r5.sub, \"admin\", \"domain1\")")
+	dom1Admin, _ := defs.NewMatcherDef("m5", "g(r5.sub, \"admin\", \"domain1\")")
 
 	tests := []struct {
 		model    string
@@ -222,8 +226,7 @@ func TestEnforce(t *testing.T) {
 
 func TestFilter(t *testing.T) {
 
-	mDef := defs.NewMatcherDef("m5")
-	mDef.AddStage(0, "p.act == r5.action")
+	mDef, _ := defs.NewMatcherDef("m5", "p.act == r5.action")
 
 	tests := []struct {
 		model    string
@@ -236,7 +239,7 @@ func TestFilter(t *testing.T) {
 		{
 			"examples/rbac_with_domains_model.conf",
 			"examples/rbac_with_domains_policy.csv",
-			[]string{"p.sub == \"admin\"", "p.dom == \"domain1\""},
+			"p.sub == \"admin\" && p.dom == \"domain1\"",
 			"r",
 			[]interface{}{},
 			[]string{
