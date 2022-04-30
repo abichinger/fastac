@@ -1,4 +1,9 @@
-# FastAC
+<p align="center">
+<img src="logo.png" alt="FastAC">
+</p>
+<p align="center">
+    <em>access control for go, supports RBAC, ABAC and ACL, drop-in replacement for casbin</em>
+</p>
 
 [![Test](https://github.com/abichinger/fastac/actions/workflows/test.yml/badge.svg?branch=main)](https://codecov.io/gh/abichinger/fastac)
 [![Coverage](https://img.shields.io/codecov/c/github/abichinger/fastac)](https://codecov.io/gh/abichinger/fastac)
@@ -68,7 +73,8 @@ if allow, _ := e.Enforce("alice", "data1", "read"); allow == true {
 
 ## Advanced Policy Filtering
 
-FastAC can filter the policy rules with matchers. 
+FastAC can filter the policy rules with matchers. The `Filter` function also supports filtering grouping rules.
+The fields of a grouping rule can be accessed by `g.user`, `g.role`, `g.domain`
 
 ```go
 //Examples
@@ -78,6 +84,9 @@ e.Filter(SetMatcher("p.dom == \"domain1\"")
 
 //get all policy rules, which grant alice read access
 e.Filter(SetMatcher("g(\"alice\", p.sub) && p.act == \"read\"")
+
+//get all grouping rules for alice
+e.Filter(SetMatcher("g.user == \"alice\"")
 ```
 
 # Supported Models
