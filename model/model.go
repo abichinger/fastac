@@ -77,8 +77,8 @@ type Model struct {
 	rpMap map[string]*rbac.RolePolicy
 	eMap  map[string]effector.IEffector
 
-	secDefs    map[string]*SectionDef
-	secNameMap map[byte]string
+	secDefs    map[byte]*SectionDef
+	secNameMap map[string]byte
 
 	fm *fm.FunctionMap
 	*em.Emitter
@@ -92,13 +92,13 @@ func NewModel() *Model {
 	m.rpMap = make(map[string]*rbac.RolePolicy)
 	m.eMap = make(map[string]effector.IEffector)
 
-	m.secDefs = make(map[string]*SectionDef)
-	m.secNameMap = make(map[byte]string)
+	m.secDefs = make(map[byte]*SectionDef)
+	m.secNameMap = make(map[string]byte)
 	m.fm = fm.DefaultFunctionMap()
 
 	for _, sec := range sections {
-		m.secDefs[sec.name] = sec
-		m.secNameMap[sec.keyPrefix] = sec.name
+		m.secDefs[sec.keyPrefix] = sec
+		m.secNameMap[sec.name] = sec.keyPrefix
 		m.defs[sec.keyPrefix] = make(map[string]defs.IDef)
 	}
 
@@ -115,17 +115,14 @@ func NewModelFromFile(path string) (*Model, error) {
 	return m, nil
 }
 
-func (m *Model) getSecDefByName(name string) (*SectionDef, bool) {
-	sec, ok := m.secDefs[name]
+func (m *Model) getSecKeyByName(name string) (byte, bool) {
+	sec, ok := m.secNameMap[name]
 	return sec, ok
 }
 
 func (m *Model) getSecDefByKey(key byte) (*SectionDef, bool) {
-	name, nameOk := m.secNameMap[key]
-	if !nameOk {
-		return nil, nameOk
-	}
-	return m.getSecDefByName(name)
+	sec, ok := m.secDefs[key]
+	return sec, ok
 }
 
 // LoadModel loads the model from model CONF file.
@@ -150,19 +147,13 @@ func (m *Model) LoadModelFromText(text string) error {
 
 func (m *Model) loadModelFromConfig(cfg *ini.File) error {
 	for _, sec := range cfg.Sections() {
-		secDef, ok := m.getSecDefByName(sec.Name())
+		secKey, ok := m.getSecKeyByName(sec.Name())
 		if !ok {
-			continue
+			continue //ignore unknown section
 		}
 
 		for _, key := range sec.Keys() {
-			if key.Name()[0] != secDef.keyPrefix {
-				return fmt.Errorf(str.ERR_INVALID_KEY_PREFIX, secDef.name, secDef.keyPrefix)
-			}
-
-			if err := secDef.handler(m, key.Name(), key.String()); err != nil {
-				return err
-			}
+			m.SetDef(secKey, key.Name(), key.String())
 		}
 	}
 
@@ -213,10 +204,7 @@ func removePolicyDef(m *Model, key string) error {
 }
 
 func addMatcherDef(m *Model, key string, matcher string) error {
-	mDef, err := defs.NewMatcherDef(key, matcher)
-	if err != nil {
-		return err
-	}
+	mDef := defs.NewMatcherDef(key, matcher)
 	m.defs[M_SEC][key] = mDef
 	return nil
 }
