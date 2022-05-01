@@ -1,6 +1,7 @@
 package defs
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -28,7 +29,7 @@ func (stage *MatcherStage) GetPolicyArgs() []string {
 
 func (stage *MatcherStage) RecursivePolicyArgs() []string {
 	res := []string{}
-	res = append(res, stage.pArgs...)
+	res = append(res, stage.GetPolicyArgs()...)
 	for _, child := range stage.children {
 		res = append(res, child.RecursivePolicyArgs()...)
 	}
@@ -165,11 +166,24 @@ func buildExprTree(node *MatcherStage, tokens []govaluate.ExpressionToken, and [
 	}
 }
 
-func NewMatcherDef(key string, expr string) (*MatcherDef, error) {
-	return &MatcherDef{key, expr, nil}, nil
+func NewMatcherDef(key string, expr string) *MatcherDef {
+	return &MatcherDef{key, expr, nil}
 }
 
-func (def *MatcherDef) Build(functions map[string]govaluate.ExpressionFunction) error {
+func (def *MatcherDef) Build(functions map[string]govaluate.ExpressionFunction) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			switch rType := r.(type) {
+			case string:
+				err = errors.New(rType)
+			case error:
+				err = rType
+			default:
+				err = fmt.Errorf("Build failed: %s", def.expr)
+			}
+		}
+	}()
+
 	def.root = NewMatcherStage("")
 	expr := ArgReg.ReplaceAllString(def.expr, "${1}_${3}")
 	parsedExpr, err := govaluate.NewEvaluableExpressionWithFunctions(expr, functions)

@@ -33,6 +33,7 @@ var rArgReg = regexp.MustCompile(`(r[0-9]*)_([A-Za-z0-9_]+)`)
 
 type IDef interface {
 	String() string
+	GetKey() string
 }
 
 type PolicyDef struct {
@@ -84,14 +85,16 @@ func (def *PolicyDef) GetEft(values []string) types.Effect {
 func (def *PolicyDef) GetParameter(rule []string, name string) (string, error) {
 	index, ok := def.argIndex[name]
 	if !ok {
-		return "", errors.New("No parameter '" + name + "' found.")
+		return "", errors.New("parameter '" + name + "' not found.")
 	}
 	//check if rule is passed with key
 	if len(rule) > len(def.args) {
-		return rule[index+1], nil
-	} else {
-		return rule[index], nil
+		index++
 	}
+	if index >= len(rule) {
+		return "", errors.New("rule has not enough values")
+	}
+	return rule[index], nil
 
 }
 
@@ -140,7 +143,14 @@ func (def *RequestDef) Has(name string) bool {
 func (def *RequestDef) GetParameter(values []interface{}, name string) (interface{}, error) {
 	index, ok := def.argIndex[name]
 	if !ok {
-		return "", errors.New("No parameter '" + name + "' found.")
+		return "", errors.New("parameter '" + name + "' not found.")
+	}
+	//check if rule is passed with key
+	if len(values) > len(def.args) {
+		index++
+	}
+	if index >= len(values) {
+		return "", errors.New("not enough values")
 	}
 	return values[index], nil
 }

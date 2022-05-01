@@ -154,7 +154,7 @@ func TestOptions(t *testing.T) {
 
 func TestEnforce(t *testing.T) {
 
-	dom1Admin, _ := defs.NewMatcherDef("m5", "g(r5.sub, \"admin\", \"domain1\")")
+	dom1Admin := defs.NewMatcherDef("m5", "g(r5.sub, \"admin\", \"domain1\")")
 
 	tests := []struct {
 		model    string
@@ -226,7 +226,7 @@ func TestEnforce(t *testing.T) {
 
 func TestFilter(t *testing.T) {
 
-	mDef, _ := defs.NewMatcherDef("m5", "p.act == r5.action")
+	mDef := defs.NewMatcherDef("m5", "p.act == r5.action")
 
 	tests := []struct {
 		model    string

@@ -22,3 +22,9 @@ const (
 	Indeterminate
 	Deny
 )
+
+const (
+	SOME_ALLOW         = "some(where(p.eft==allow))"
+	NO_DENY            = "!some(where(p.eft==deny))"
+	SOME_ALLOW_NO_DENY = "some(where(p.eft==allow))&&!some(where(p.eft==deny))"
+)

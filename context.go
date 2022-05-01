@@ -14,14 +14,12 @@ type ContextOption func(ctx *Context) error
 
 func SetMatcher(matcher interface{}) ContextOption {
 	return func(ctx *Context) error {
+		var err error
 		switch mType := matcher.(type) {
 		case string:
 			m, ok := ctx.model.GetMatcher(mType)
 			if !ok {
-				mDef, err := defs.NewMatcherDef("", mType)
-				if err != nil {
-					return err
-				}
+				mDef := defs.NewMatcherDef("", mType)
 				m, err = ctx.model.BuildMatcherFromDef(mDef)
 				if err != nil {
 					return err

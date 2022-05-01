@@ -48,11 +48,11 @@ func TestRangeMatches(t *testing.T) {
 
 	rDef := defs.NewRequestDef("r", "sub, obj, act")
 
-	mDef, err := defs.NewMatcherDef("m", "r_sub == p_sub && r_obj == p_obj && r_act == p_act")
+	mDef := defs.NewMatcherDef("m", "r_sub == p_sub && r_obj == p_obj && r_act == p_act")
+	err := mDef.Build(map[string]govaluate.ExpressionFunction{})
 	if err != nil {
 		t.Error(err.Error())
 	}
-	_ = mDef.Build(map[string]govaluate.ExpressionFunction{})
 
 	m1 := NewMatcher(pDef, p, mDef.Root())
 

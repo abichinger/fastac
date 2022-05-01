@@ -38,11 +38,11 @@ func (e *DefaultEffector) MergeEffects(effects []types.Effect, matches [][]strin
 
 	if complete {
 		switch e.Expr() {
-		case "some(where(p.eft==allow))":
+		case eft.SOME_ALLOW:
 			return eft.Deny, []string{}, nil
-		case "!some(where(p.eft==deny))":
+		case eft.NO_DENY:
 			return eft.Allow, []string{}, nil
-		case "some(where(p.eft==allow))&&!some(where(p.eft==deny))":
+		case eft.SOME_ALLOW_NO_DENY:
 			if len(matches) == 0 {
 				return eft.Deny, []string{}, nil
 			}
@@ -62,15 +62,15 @@ func (e *DefaultEffector) MergeEffects(effects []types.Effect, matches [][]strin
 	}
 
 	switch e.Expr() {
-	case "some(where(p.eft==allow))":
+	case eft.SOME_ALLOW:
 		if effect == eft.Allow {
 			return effect, match, nil
 		}
-	case "!some(where(p.eft==deny))":
+	case eft.NO_DENY:
 		if effect == eft.Deny {
 			return effect, match, nil
 		}
-	case "some(where(p.eft==allow))&&!some(where(p.eft==deny))":
+	case eft.SOME_ALLOW_NO_DENY:
 		if effect == eft.Deny {
 			return effect, match, nil
 		}
