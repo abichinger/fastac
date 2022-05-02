@@ -108,6 +108,8 @@ e.Filter(SetMatcher("g.user == \"alice\"")
 
 ![ABAC Benchmark](./bench/ABAC_op.svg)
 
+[More benchmarks](./bench)
+
 # Feature Overview
 
 - [x] Enforcement
