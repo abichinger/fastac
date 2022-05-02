@@ -2,31 +2,31 @@ goos: linux
 goarch: amd64
 pkg: github.com/abichinger/fastac
 cpu: AMD Ryzen 5 3600 6-Core Processor              
-BenchmarkRBAC/size=Large(100000)/enforcer=Casbin-12         	     289	   4114282 ns/op	 1131483 B/op	   30142 allocs/op
-BenchmarkRBAC/size=Large(100000)/enforcer=FastAC-12         	    5132	    235020 ns/op	   37416 B/op	    2143 allocs/op
-BenchmarkRBAC/size=Medium(10000)/enforcer=Casbin-12         	    2716	    693001 ns/op	  119891 B/op	    3142 allocs/op
-BenchmarkRBAC/size=Medium(10000)/enforcer=FastAC-12         	   18883	     64313 ns/op	    8616 B/op	     343 allocs/op
-BenchmarkRBAC/size=Small(1000)/enforcer=Casbin-12           	   11779	    115537 ns/op	   18239 B/op	     442 allocs/op
-BenchmarkRBAC/size=Small(1000)/enforcer=FastAC-12           	   40210	     34331 ns/op	    5736 B/op	     163 allocs/op
-BenchmarkAddPolicy/size=Large(10000)/enforcer=Casbin-12     	  757722	      1404 ns/op	     545 B/op	      13 allocs/op
-BenchmarkAddPolicy/size=Large(10000)/enforcer=FastAC-12     	  820814	      1900 ns/op	     786 B/op	      21 allocs/op
-BenchmarkAddPolicy/size=Medium(1000)/enforcer=Casbin-12     	 1000000	      1588 ns/op	     580 B/op	      13 allocs/op
-BenchmarkAddPolicy/size=Medium(1000)/enforcer=FastAC-12     	  502413	      2223 ns/op	     856 B/op	      21 allocs/op
-BenchmarkAddPolicy/size=Empty(0)/enforcer=Casbin-12         	 1000000	      1582 ns/op	     580 B/op	      13 allocs/op
-BenchmarkAddPolicy/size=Empty(0)/enforcer=FastAC-12         	  584534	      2320 ns/op	     834 B/op	      21 allocs/op
-BenchmarkRemovePolicy/size=Large(1000)/enforcer=Casbin-12   	  739759	      1363 ns/op	     302 B/op	      12 allocs/op
-BenchmarkRemovePolicy/size=Large(1000)/enforcer=FastAC-12   	  944139	      1122 ns/op	     270 B/op	      11 allocs/op
-BenchmarkRemovePolicy/size=Medium(100)/enforcer=Casbin-12   	  998751	      1233 ns/op	     286 B/op	      12 allocs/op
-BenchmarkRemovePolicy/size=Medium(100)/enforcer=FastAC-12   	 1136836	      1179 ns/op	     270 B/op	      10 allocs/op
-BenchmarkRemovePolicy/size=Empty(0)/enforcer=Casbin-12      	 1224883	      1205 ns/op	     286 B/op	      11 allocs/op
-BenchmarkRemovePolicy/size=Empty(0)/enforcer=FastAC-12      	 1175228	      1075 ns/op	     270 B/op	      10 allocs/op
-BenchmarkABAC/size=Large(1000)/enforcer=Casbin-12           	      58	  22205646 ns/op	 4424590 B/op	  100072 allocs/op
-BenchmarkABAC/size=Large(1000)/enforcer=FastAC-12           	    1611	    796913 ns/op	  167290 B/op	    4666 allocs/op
-BenchmarkABAC/size=Medium(100)/enforcer=Casbin-12           	     634	   2123448 ns/op	  441448 B/op	   10015 allocs/op
-BenchmarkABAC/size=Medium(100)/enforcer=FastAC-12           	    1896	    734011 ns/op	  161642 B/op	    4378 allocs/op
-BenchmarkABAC/size=Small(10)/enforcer=Casbin-12             	    5871	    229402 ns/op	   45406 B/op	    1009 allocs/op
-BenchmarkABAC/size=Small(10)/enforcer=FastAC-12             	   10725	    124478 ns/op	   27296 B/op	     700 allocs/op
-BenchmarkPathMatch/pkg=FastAC/name=PathMatch/KeyMatch2-12   	13625772	        88.67 ns/op	       0 B/op	       0 allocs/op
-BenchmarkPathMatch/pkg=Casbin/name=PathMatch/KeyMatch2-12   	   90812	     16455 ns/op	    9256 B/op	     116 allocs/op
+BenchmarkRBAC/size=Large(100000)/enforcer=Casbin-12         	     272	   4157986 ns/op	 1131824 B/op	   30142 allocs/op
+BenchmarkRBAC/size=Large(100000)/enforcer=FastAC-12         	    4953	    243195 ns/op	   37416 B/op	    2143 allocs/op
+BenchmarkRBAC/size=Medium(10000)/enforcer=Casbin-12         	    2415	    722334 ns/op	  119668 B/op	    3142 allocs/op
+BenchmarkRBAC/size=Medium(10000)/enforcer=FastAC-12         	   17395	     66900 ns/op	    8616 B/op	     343 allocs/op
+BenchmarkRBAC/size=Small(1000)/enforcer=Casbin-12           	   10000	    104460 ns/op	   18256 B/op	     442 allocs/op
+BenchmarkRBAC/size=Small(1000)/enforcer=FastAC-12           	   37454	     34106 ns/op	    5736 B/op	     163 allocs/op
+BenchmarkAddPolicy/size=Large(10000)/enforcer=Casbin-12     	  918051	      1358 ns/op	     601 B/op	      13 allocs/op
+BenchmarkAddPolicy/size=Large(10000)/enforcer=FastAC-12     	  515362	      2002 ns/op	     848 B/op	      21 allocs/op
+BenchmarkAddPolicy/size=Medium(1000)/enforcer=Casbin-12     	 1000000	      1605 ns/op	     580 B/op	      13 allocs/op
+BenchmarkAddPolicy/size=Medium(1000)/enforcer=FastAC-12     	  696553	      2135 ns/op	     807 B/op	      21 allocs/op
+BenchmarkAddPolicy/size=Empty(0)/enforcer=Casbin-12         	  913353	      1578 ns/op	     574 B/op	      13 allocs/op
+BenchmarkAddPolicy/size=Empty(0)/enforcer=FastAC-12         	  535879	      2240 ns/op	     851 B/op	      21 allocs/op
+BenchmarkRemovePolicy/size=Large(1000)/enforcer=Casbin-12   	  764584	      1413 ns/op	     301 B/op	      12 allocs/op
+BenchmarkRemovePolicy/size=Large(1000)/enforcer=FastAC-12   	 1000000	      1125 ns/op	     270 B/op	      11 allocs/op
+BenchmarkRemovePolicy/size=Medium(100)/enforcer=Casbin-12   	  986221	      1298 ns/op	     286 B/op	      12 allocs/op
+BenchmarkRemovePolicy/size=Medium(100)/enforcer=FastAC-12   	 1000000	      1137 ns/op	     270 B/op	      10 allocs/op
+BenchmarkRemovePolicy/size=Empty(0)/enforcer=Casbin-12      	  882679	      1202 ns/op	     286 B/op	      11 allocs/op
+BenchmarkRemovePolicy/size=Empty(0)/enforcer=FastAC-12      	 1139888	      1107 ns/op	     270 B/op	      10 allocs/op
+BenchmarkABAC/size=Large(1000)/enforcer=Casbin-12           	      49	  22404502 ns/op	 4425453 B/op	  100072 allocs/op
+BenchmarkABAC/size=Large(1000)/enforcer=FastAC-12           	    1279	    851633 ns/op	  167713 B/op	    4666 allocs/op
+BenchmarkABAC/size=Medium(100)/enforcer=Casbin-12           	     526	   2243104 ns/op	  442283 B/op	   10016 allocs/op
+BenchmarkABAC/size=Medium(100)/enforcer=FastAC-12           	    1627	    761929 ns/op	  161695 B/op	    4378 allocs/op
+BenchmarkABAC/size=Small(10)/enforcer=Casbin-12             	    5402	    229037 ns/op	   45442 B/op	    1009 allocs/op
+BenchmarkABAC/size=Small(10)/enforcer=FastAC-12             	   10182	    121456 ns/op	   27334 B/op	     700 allocs/op
+BenchmarkPathMatch/pkg=FastAC/name=PathMatch/KeyMatch2-12   	13487694	        90.47 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPathMatch/pkg=Casbin/name=PathMatch/KeyMatch2-12   	   89431	     16883 ns/op	    9260 B/op	     116 allocs/op
 PASS
-ok  	github.com/abichinger/fastac	54.738s
+ok  	github.com/abichinger/fastac	49.394s

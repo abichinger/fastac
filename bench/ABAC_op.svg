@@ -5,8 +5,8 @@
 	xmlns:xlink="http://www.w3.org/1999/xlink">
 <g transform="scale(1, -1) translate(0, -235)">
 <path d="M0,0L470,0L470,235L0,235Z" style="fill:#FFFFFF" />
-<text x="188.68" y="-223.45" transform="scale(1, -1)"
-	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">ABAC-Benchmark</text>
+<text x="198.17" y="-223.45" transform="scale(1, -1)"
+	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">Enforce ABAC</text>
 <text x="276.49" y="-3.8613" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">size</text>
 <text x="96.744" y="-15.602" transform="scale(1, -1)"
@@ -21,29 +21,29 @@
 </g>
 <text x="35.494" y="-25.509" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:10px">0</text>
-<text x="15.416" y="-110.78" transform="scale(1, -1)"
+<text x="15.416" y="-110.02" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:10px">1e+07</text>
-<text x="15.416" y="-196.05" transform="scale(1, -1)"
+<text x="15.416" y="-194.54" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:10px">2e+07</text>
 <path d="M42.994,30.23L50.994,30.23" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M42.994,115.5L50.994,115.5" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M42.994,200.78L50.994,200.78" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M46.994,47.285L50.994,47.285" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M46.994,64.34L50.994,64.34" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M46.994,81.394L50.994,81.394" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M46.994,98.449L50.994,98.449" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M46.994,132.56L50.994,132.56" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M46.994,149.61L50.994,149.61" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M46.994,166.67L50.994,166.67" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M46.994,183.72L50.994,183.72" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M46.994,217.83L50.994,217.83" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M42.994,114.75L50.994,114.75" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M42.994,199.26L50.994,199.26" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.994,47.134L50.994,47.134" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.994,64.037L50.994,64.037" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.994,80.94L50.994,80.94" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.994,97.843L50.994,97.843" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.994,131.65L50.994,131.65" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.994,148.55L50.994,148.55" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.994,165.46L50.994,165.46" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.994,182.36L50.994,182.36" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.994,216.17L50.994,216.17" style="fill:none;stroke:#000000;stroke-width:0.5" />
 <path d="M50.994,30.23L50.994,219.58" style="fill:none;stroke:#000000;stroke-width:0.5" />
 <path d="M76.642,30.23L76.642,219.58L106.64,219.58L106.64,30.23Z" style="fill:#F15A60" />
-<path d="M240.82,30.23L240.82,48.338L270.82,48.338L270.82,30.23Z" style="fill:#F15A60" />
-<path d="M405,30.23L405,32.187L435,32.187L435,30.23Z" style="fill:#F15A60" />
-<path d="M106.64,30.23L106.64,37.026L136.64,37.026L136.64,30.23Z" style="fill:#7AC36A" />
-<path d="M270.82,30.23L270.82,36.49L300.82,36.49L300.82,30.23Z" style="fill:#7AC36A" />
-<path d="M435,30.23L435,31.292L465,31.292L465,30.23Z" style="fill:#7AC36A" />
+<path d="M240.82,30.23L240.82,49.188L270.82,49.188L270.82,30.23Z" style="fill:#F15A60" />
+<path d="M405,30.23L405,32.166L435,32.166L435,30.23Z" style="fill:#F15A60" />
+<path d="M106.64,30.23L106.64,37.428L136.64,37.428L136.64,30.23Z" style="fill:#7AC36A" />
+<path d="M270.82,30.23L270.82,36.67L300.82,36.67L300.82,30.23Z" style="fill:#7AC36A" />
+<path d="M435,30.23L435,31.257L465,31.257L465,30.23Z" style="fill:#7AC36A" />
 <path d="M450,207.81L450,219.58L470,219.58L470,207.81Z" style="fill:#F15A60" />
 <text x="413.67" y="-208.03" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">Casbin</text>
