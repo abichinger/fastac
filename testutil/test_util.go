@@ -118,9 +118,7 @@ func BasicAdapterTest(t *testing.T, adapter storage.Adapter) {
 
 		testLoadPolicy(t, a, modified_rules)
 
-		testAddRule(t, a, modified_rules[0])
 		testRemoveRule(t, a, unknown_rule)
-
 		testLoadPolicy(t, a, modified_rules)
 	}
 
@@ -133,9 +131,7 @@ func BasicAdapterTest(t *testing.T, adapter storage.Adapter) {
 
 		testLoadPolicy(t, a, modified_rules)
 
-		testAddRules(t, a, [][]string{modified_rules[0]})
 		testRemoveRules(t, a, [][]string{unknown_rule})
-
 		testLoadPolicy(t, a, modified_rules)
 	}
 }
