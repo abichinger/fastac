@@ -5,8 +5,8 @@
 	xmlns:xlink="http://www.w3.org/1999/xlink">
 <g transform="scale(1, -1) translate(0, -235)">
 <path d="M0,0L470,0L470,235L0,235Z" style="fill:#FFFFFF" />
-<text x="189.01" y="-223.45" transform="scale(1, -1)"
-	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">RBAC-Benchmark</text>
+<text x="198.17" y="-223.45" transform="scale(1, -1)"
+	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">Enforce RBAC</text>
 <text x="281.45" y="-3.8613" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">size</text>
 <text x="106.67" y="-15.602" transform="scale(1, -1)"
@@ -21,22 +21,22 @@
 </g>
 <text x="45.416" y="-25.509" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:10px">0</text>
-<text x="15.416" y="-117.56" transform="scale(1, -1)"
+<text x="15.416" y="-116.59" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:10px">2000000</text>
-<text x="15.416" y="-209.6" transform="scale(1, -1)"
+<text x="15.416" y="-207.67" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:10px">4000000</text>
 <path d="M52.916,30.23L60.916,30.23" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M52.916,122.28L60.916,122.28" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M52.916,214.32L60.916,214.32" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M56.916,76.254L60.916,76.254" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M56.916,168.3L60.916,168.3" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M52.916,121.31L60.916,121.31" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M52.916,212.39L60.916,212.39" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M56.916,75.77L60.916,75.77" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M56.916,166.85L60.916,166.85" style="fill:none;stroke:#000000;stroke-width:0.5" />
 <path d="M60.916,30.23L60.916,219.58" style="fill:none;stroke:#000000;stroke-width:0.5" />
 <path d="M91.563,30.23L91.563,219.58L121.56,219.58L121.56,30.23Z" style="fill:#F15A60" />
-<path d="M245.78,30.23L245.78,62.125L275.78,62.125L275.78,30.23Z" style="fill:#F15A60" />
-<path d="M400,30.23L400,35.548L430,35.548L430,30.23Z" style="fill:#F15A60" />
-<path d="M121.56,30.23L121.56,41.047L151.56,41.047L151.56,30.23Z" style="fill:#7AC36A" />
-<path d="M275.78,30.23L275.78,33.19L305.78,33.19L305.78,30.23Z" style="fill:#7AC36A" />
-<path d="M430,30.23L430,31.811L460,31.811L460,30.23Z" style="fill:#7AC36A" />
+<path d="M245.78,30.23L245.78,63.125L275.78,63.125L275.78,30.23Z" style="fill:#F15A60" />
+<path d="M400,30.23L400,34.988L430,34.988L430,30.23Z" style="fill:#F15A60" />
+<path d="M121.56,30.23L121.56,41.306L151.56,41.306L151.56,30.23Z" style="fill:#7AC36A" />
+<path d="M275.78,30.23L275.78,33.277L305.78,33.277L305.78,30.23Z" style="fill:#7AC36A" />
+<path d="M430,30.23L430,31.784L460,31.784L460,30.23Z" style="fill:#7AC36A" />
 <path d="M450,207.81L450,219.58L470,219.58L470,207.81Z" style="fill:#F15A60" />
 <text x="413.67" y="-208.03" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">Casbin</text>

@@ -5,8 +5,8 @@
 	xmlns:xlink="http://www.w3.org/1999/xlink">
 <g transform="scale(1, -1) translate(0, -235)">
 <path d="M0,0L470,0L470,235L0,235Z" style="fill:#FFFFFF" />
-<text x="174.18" y="-223.45" transform="scale(1, -1)"
-	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">ABAC-Benchmark Alloc</text>
+<text x="183.67" y="-223.45" transform="scale(1, -1)"
+	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">Enforce ABAC Alloc</text>
 <text x="278.95" y="-3.8613" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">size</text>
 <text x="101.67" y="-15.602" transform="scale(1, -1)"
@@ -38,7 +38,7 @@
 <path d="M51.916,196.23L55.916,196.23" style="fill:none;stroke:#000000;stroke-width:0.5" />
 <path d="M55.916,30.23L55.916,214.81" style="fill:none;stroke:#000000;stroke-width:0.5" />
 <path d="M81.563,30.23L81.563,214.81L111.56,214.81L111.56,30.23Z" style="fill:#F15A60" />
-<path d="M243.28,30.23L243.28,48.703L273.28,48.703L273.28,30.23Z" style="fill:#F15A60" />
+<path d="M243.28,30.23L243.28,48.705L273.28,48.705L273.28,30.23Z" style="fill:#F15A60" />
 <path d="M405,30.23L405,32.092L435,32.092L435,30.23Z" style="fill:#F15A60" />
 <path d="M111.56,30.23L111.56,38.837L141.56,38.837L141.56,30.23Z" style="fill:#7AC36A" />
 <path d="M273.28,30.23L273.28,38.306L303.28,38.306L303.28,30.23Z" style="fill:#7AC36A" />
