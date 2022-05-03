@@ -158,7 +158,7 @@ func TestEnforce(t *testing.T) {
 
 	tests := []struct {
 		model    string
-		policy   string
+		policy   interface{}
 		matchter interface{}
 		effector interface{}
 		rDef     interface{}
@@ -202,6 +202,18 @@ func TestEnforce(t *testing.T) {
 				{"alice", "data3", "write"},
 			},
 			[]bool{true, false, true},
+		},
+		{
+			"examples/basic_model.conf",
+			nil,
+			"r.sub.Age > 50",
+			nil,
+			nil,
+			[][]interface{}{
+				{map[string]interface{}{"Age": 60}},
+				{map[string]interface{}{"Age": 40}},
+			},
+			[]bool{true, false},
 		},
 	}
 

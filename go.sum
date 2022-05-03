@@ -6,6 +6,8 @@ github.com/abichinger/govaluate v1.5.1-0.20220429195248-9399018b0dfc h1:X8HNbDrd
 github.com/abichinger/govaluate v1.5.1-0.20220429195248-9399018b0dfc/go.mod h1:LYDgKtflnjfUHfo8jBP5DGPRnakeon5/ABxYYjaO/v8=
 github.com/abichinger/govaluate v1.5.1-0.20220429195714-1a681aad947c h1:3x9aXjPKDSFLcWyfOUVRHP6oV0vbYJNVgi+guu5HjSE=
 github.com/abichinger/govaluate v1.5.1-0.20220429195714-1a681aad947c/go.mod h1:kxvs9v5HO4iu/FbZPqhiWJ43Vv7INmjYTlyBbfGq3Xo=
+github.com/abichinger/govaluate v1.5.1-0.20220503123756-74b96f998566 h1:rKOEJDa0kBdr+pOIZHb6gCzACW8mfI+zkDqjxgMPflY=
+github.com/abichinger/govaluate v1.5.1-0.20220503123756-74b96f998566/go.mod h1:kxvs9v5HO4iu/FbZPqhiWJ43Vv7INmjYTlyBbfGq3Xo=
 github.com/casbin/casbin/v2 v2.44.0 h1:bZZ0KK15TSF8VC6W2pz2iqxzWJRvw1R9hAR2DPaDY/8=
 github.com/casbin/casbin/v2 v2.44.0/go.mod h1:sEL80qBYTbd+BPeL4iyvwYzFT3qwLaESq5aFKVLbLfA=
 github.com/casbin/casbin/v2 v2.44.3 h1:tPP1YypfG2fqe7S2zivYuD11yc+/mc0GXJe/sDVbb1U=
