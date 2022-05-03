@@ -407,7 +407,10 @@ func TestABACModel(t *testing.T) {
 	e, _ := NewEnforcer("examples/abac_model.conf", nil)
 
 	data1 := newTestResource("data1", "alice")
-	data2 := newTestResource("data2", "bob")
+	data2 := map[string]interface{}{
+		"Name":  "data2",
+		"Owner": "bob",
+	}
 
 	testEnforce(t, e, "alice", data1, "read", true)
 	testEnforce(t, e, "alice", data1, "write", true)

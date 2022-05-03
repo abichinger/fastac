@@ -153,7 +153,10 @@ func (m *Model) loadModelFromConfig(cfg *ini.File) error {
 		}
 
 		for _, key := range sec.Keys() {
-			m.SetDef(secKey, key.Name(), key.String())
+			err := m.SetDef(secKey, key.Name(), key.String())
+			if err != nil {
+				return err
+			}
 		}
 	}
 
