@@ -17,6 +17,9 @@ func SetMatcher(matcher interface{}) ContextOption {
 		var err error
 		switch mType := matcher.(type) {
 		case string:
+			if mType == "" {
+				break
+			}
 			m, ok := ctx.model.GetMatcher(mType)
 			if !ok {
 				mDef := defs.NewMatcherDef("", mType)
@@ -43,6 +46,9 @@ func SetRequestDef(definition interface{}) ContextOption {
 	return func(ctx *Context) error {
 		switch rType := definition.(type) {
 		case string:
+			if rType == "" {
+				break
+			}
 			rDef, ok := ctx.model.GetRequestDef(rType)
 			if !ok {
 				return fmt.Errorf(str.ERR_REQUESTDEF_NOT_FOUND, rType)
@@ -59,6 +65,9 @@ func SetEffector(effector interface{}) ContextOption {
 	return func(ctx *Context) error {
 		switch eType := effector.(type) {
 		case string:
+			if eType == "" {
+				break
+			}
 			eff, ok := ctx.model.GetEffector(eType)
 			if !ok {
 				eDef := defs.NewEffectDef("", eType)
