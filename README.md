@@ -124,3 +124,12 @@ e.Filter(SetMatcher("g.user == \"alice\"")
 - [ ] Filtered Adapter
 - [ ] Watcher
 - [ ] Dispatcher
+
+# Attribution
+
+FastAC uses the following libraries or parts of it.
+
+- [Casbin](https://github.com/casbin/casbin) - concept, examples and builtin_operators are used
+- [govaluate](https://github.com/Knetic/govaluate) - used to evaluate matcher expressions ([modified version](https://github.com/abichinger/govaluate))
+- [go-ini](https://github.com/go-ini/ini) - used to read the model config
+- [testify](https://github.com/stretchr/testify)
