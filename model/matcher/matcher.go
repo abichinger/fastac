@@ -172,24 +172,25 @@ func (m *Matcher) rangeMatches(exprNode *defs.MatcherStage, rules map[string]*Ma
 	if err != nil {
 		return false, err
 	}
+
+	if len(rules) == 0 {
+		empty_rule := make([]string, len(m.pDef.GetArgs()))
+		rules = map[string]*MatcherNode{
+			"": NewMatcherNode(empty_rule),
+		}
+	}
+
 	for _, child := range rules {
 		params.pvals = child.rule
 		res, err := expr.Eval(params)
 		if err != nil {
 			return false, err
 		}
-		if res.(bool) && !fn(child) {
-			return false, nil
-		}
-	}
-	if exprNode.IsLeafNode() && len(rules) == 0 {
-		params.pvals = make([]string, len(m.pDef.GetArgs()))
-		res, err := expr.Eval(params)
-		if err != nil {
-			return false, err
-		}
-		if res.(bool) && !fn(NewMatcherNode(params.pvals)) {
-			return false, nil
+		switch b := res.(type) {
+		case bool:
+			if b && !fn(child) {
+				return false, nil
+			}
 		}
 	}
 	return true, nil
