@@ -215,6 +215,17 @@ func TestEnforce(t *testing.T) {
 			},
 			[]bool{true, false},
 		},
+		{
+			"examples/basic_model.conf",
+			nil,
+			"123.456",
+			nil,
+			nil,
+			[][]interface{}{
+				{},
+			},
+			[]bool{false},
+		},
 	}
 
 	for _, test := range tests {
