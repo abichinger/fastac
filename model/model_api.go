@@ -28,6 +28,8 @@ import (
 type IModel interface {
 	api.IAddRuleBool
 	api.IRemoveRuleBool
+	api.IRangeRules
+	api.IAddRemoveListener
 
 	GetDef(sec byte, key string) (defs.IDef, bool)
 	SetDef(sec byte, key string, value string) error
@@ -54,6 +56,8 @@ type IModel interface {
 	RemoveFunction(name string) bool
 
 	BuildMatcherFromDef(mDef *defs.MatcherDef) (matcher.IMatcher, error)
+
+	RangeMatches(matcher matcher.IMatcher, rDef *defs.RequestDef, rvals []interface{}, fn func(rule []string) bool) error
 
 	String() string
 }

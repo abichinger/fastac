@@ -17,7 +17,6 @@ package fastac
 import (
 	"errors"
 
-	"github.com/abichinger/fastac/model"
 	m "github.com/abichinger/fastac/model"
 	"github.com/abichinger/fastac/model/defs"
 	"github.com/abichinger/fastac/model/eft"
@@ -28,7 +27,7 @@ import (
 )
 
 type Enforcer struct {
-	model   *m.Model
+	model   m.IModel
 	adapter storage.Adapter
 	sc      *storage.StorageController
 }
@@ -137,6 +136,10 @@ func (e *Enforcer) SetAdapter(adapter storage.Adapter) {
 	}
 	e.sc = storage.NewStorageController(e.model, adapter, autosave)
 	e.adapter = adapter
+}
+
+func (e *Enforcer) GetAdapter() storage.Adapter {
+	return e.adapter
 }
 
 // LoadPolicy loads all rules from the storage adapter into the model.
@@ -292,7 +295,7 @@ func (e *Enforcer) RangeMatchesWithContext(ctx *Context, rvals []interface{}, fn
 }
 
 func (e *Enforcer) enforce(ctx *Context, rvals []interface{}) (bool, error) {
-	def, _ := e.model.GetDef(model.P_SEC, ctx.matcher.GetPolicyKey())
+	def, _ := e.model.GetDef(m.P_SEC, ctx.matcher.GetPolicyKey())
 	pDef := def.(*defs.PolicyDef)
 	res := eft.Indeterminate
 	effects := []types.Effect{}
@@ -326,6 +329,10 @@ func (e *Enforcer) enforce(ctx *Context, rvals []interface{}) (bool, error) {
 	return res == eft.Allow, nil
 }
 
-func (e *Enforcer) GetModel() model.IModel {
+func (e *Enforcer) SetModel(model m.IModel) {
+	e.model = model
+}
+
+func (e *Enforcer) GetModel() m.IModel {
 	return e.model
 }

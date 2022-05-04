@@ -20,19 +20,31 @@ import (
 )
 
 type IEnforcer interface {
+	SetOption(option Option) error
+	GetStorageController() *storage.StorageController
+
 	GetModel() model.IModel
 	SetModel(m model.IModel)
-	GetAdapter() *storage.Adapter
-	SetAdapter(*storage.Adapter)
 
-	Enforce(rvals ...interface{}) (bool, error)
-	EnforceWithMatcher(matcher string, rvals ...interface{}) (bool, error)
-	EnforceWithKeys(mKey string, rKey string, eKey string, rvals ...interface{})
+	GetAdapter() storage.Adapter
+	SetAdapter(storage.Adapter)
 
-	Filter(rvals ...interface{}) (bool, error)
-	FilterWithMatcher(matcher string, rvals ...interface{}) (bool, error)
-	FilterWithKeys(mKey string, rKey string, rvals ...interface{}) (bool, error)
+	AddRule(rule []string) (bool, error)
+	AddRules(rules [][]string) error
+	RemoveRule(rule []string) (bool, error)
+	RemoveRules(rules [][]string) error
 
-	AddRule(params ...string) (bool, error)
-	RemoveRule(params ...string) (bool, error)
+	LoadPolicy() error
+	SavePolicy() error
+
+	Enforce(params ...interface{}) (bool, error)
+	EnforceWithContext(ctx *Context, rvals ...interface{}) (bool, error)
+
+	Filter(params ...interface{}) ([][]string, error)
+	FilterWithContext(ctx *Context, rvals ...interface{}) ([][]string, error)
+
+	RangeMatches(params []interface{}, fn func(rule []string) bool) error
+	RangeMatchesWithContext(ctx *Context, rvals []interface{}, fn func(rule []string) bool) error
+
+	Flush() error
 }
