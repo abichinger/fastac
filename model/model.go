@@ -378,7 +378,7 @@ func (m *Model) GetPolicy(key string) (policy.IPolicy, bool) {
 }
 
 func (m *Model) SetPolicy(key string, policy policy.IPolicy) {
-	panic("not implemented")
+	m.pMap[key] = policy
 }
 
 func (m *Model) GetRoleManager(key string) (rbac.IRoleManager, bool) {
@@ -397,7 +397,7 @@ func (m *Model) GetMatcher(key string) (matcher.IMatcher, bool) {
 }
 
 func (m *Model) SetMatcher(key string, matcher matcher.IMatcher) {
-	panic("not implemented")
+	m.mMap[key] = matcher
 }
 
 func (m *Model) GetRequestDef(key string) (*defs.RequestDef, bool) {
@@ -406,7 +406,7 @@ func (m *Model) GetRequestDef(key string) (*defs.RequestDef, bool) {
 }
 
 func (m *Model) SetRequestDef(key string, def *defs.RequestDef) {
-	panic("not implemented")
+	m.defs[R_SEC][key] = def
 }
 
 func (m *Model) GetEffector(key string) (e.IEffector, bool) {
@@ -414,8 +414,8 @@ func (m *Model) GetEffector(key string) (e.IEffector, bool) {
 	return effector, ok
 }
 
-func (m *Model) SetEffector(key string, eft e.IEffector) {
-	panic("not implemented")
+func (m *Model) SetEffector(key string, effector e.IEffector) {
+	m.eMap[key] = effector
 }
 
 func (m *Model) RangeMatches(matcher matcher.IMatcher, rDef *defs.RequestDef, rvals []interface{}, fn func(rule []string) bool) error {
