@@ -8,8 +8,11 @@
 [![Test](https://github.com/abichinger/fastac/actions/workflows/test.yml/badge.svg?branch=main)](https://codecov.io/gh/abichinger/fastac)
 [![Coverage](https://img.shields.io/codecov/c/github/abichinger/fastac)](https://codecov.io/gh/abichinger/fastac)
 [![Go Report Card](https://goreportcard.com/badge/github.com/abichinger/fastac)](https://goreportcard.com/report/github.com/abichinger/fastac)
+[![Godoc](https://godoc.org/github.com/abichinger/fastac?status.svg)](https://pkg.go.dev/github.com/abichinger/fastac)
 
 FastAC is a drop in replacement for [Casbin](https://github.com/casbin/casbin). In some cases, FastAC can improve the [performance](#performance-comparison) significantly.
+
+API documentation: [https://pkg.go.dev/github.com/abichinger/fastac](https://pkg.go.dev/github.com/abichinger/fastac)
 
 Please refer to the [Casbin Docs](https://casbin.org/docs/en/how-it-works) for explanation of terms.
 
