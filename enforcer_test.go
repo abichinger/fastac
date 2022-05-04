@@ -311,6 +311,25 @@ func TestFilter(t *testing.T) {
 				"p2,r2.sub.Age > 60 && r2.sub.Age < 100,/data1,read,deny",
 			},
 		},
+		{
+			"examples/basic_model.conf",
+			"examples/basic_policy.csv",
+			"true",
+			nil,
+			[]interface{}{},
+			[]string{
+				"p,alice,data1,read",
+				"p,bob,data2,write",
+			},
+		},
+		{
+			"examples/basic_model.conf",
+			"examples/basic_policy.csv",
+			"false",
+			nil,
+			[]interface{}{},
+			[]string{},
+		},
 	}
 
 	for _, test := range tests {

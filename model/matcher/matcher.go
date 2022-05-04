@@ -39,13 +39,12 @@ func NewMatcherNode(rule []string) *MatcherNode {
 	return node
 }
 
-func (n *MatcherNode) GetOrCreate(i int, key []string, rule []string) *MatcherNode {
-	strKey := util.Hash(key)
-	if node, ok := n.children[i][strKey]; ok {
+func (n *MatcherNode) GetOrCreate(i int, key string, rule []string) *MatcherNode {
+	if node, ok := n.children[i][key]; ok {
 		return node
 	}
 	node := NewMatcherNode(rule)
-	n.children[i][strKey] = node
+	n.children[i][key] = node
 	return node
 }
 
@@ -123,17 +122,20 @@ func (m *Matcher) addRule(rule []string) {
 func (m *Matcher) addRuleHelper(rule []string, exprNode *defs.MatcherStage, node *MatcherNode) {
 	for i, nextExpr := range exprNode.Children() {
 		pArgs := nextExpr.GetPolicyArgs()
-		if len(pArgs) == 0 {
-			continue
+
+		var key string
+		if len(pArgs) == 0 || nextExpr.IsLeafNode() {
+			key = util.Hash(rule)
+		} else {
+			r, _ := m.pDef.GetParameters(rule, pArgs)
+			key = util.Hash(r)
 		}
 
 		if !nextExpr.IsLeafNode() {
-			key, _ := m.pDef.GetParameters(rule, pArgs)
 			nextNode := node.GetOrCreate(i, key, rule)
 			m.addRuleHelper(rule, nextExpr, nextNode)
 		} else {
-			hash := util.Hash(rule)
-			node.children[i][hash] = NewMatcherNode(rule)
+			node.children[i][key] = NewMatcherNode(rule)
 		}
 	}
 
@@ -146,19 +148,21 @@ func (m *Matcher) removeRule(rule []string) {
 func (m *Matcher) removeRuleHelper(rule []string, exprNode *defs.MatcherStage, node *MatcherNode) {
 	for i, nextExpr := range exprNode.Children() {
 		pArgs := nextExpr.GetPolicyArgs()
-		if len(pArgs) == 0 {
-			continue
+
+		var key string
+		if len(pArgs) == 0 || nextExpr.IsLeafNode() {
+			key = util.Hash(rule)
+		} else {
+			r, _ := m.pDef.GetParameters(rule, pArgs)
+			key = util.Hash(r)
 		}
 
 		if !nextExpr.IsLeafNode() {
-			key, _ := m.pDef.GetParameters(rule, pArgs)
-			strKey := util.Hash(key)
-			if nextNode, ok := node.children[i][strKey]; ok {
+			if nextNode, ok := node.children[i][key]; ok {
 				m.removeRuleHelper(rule, nextExpr, nextNode)
 			}
 		} else {
-			hash := util.Hash(rule)
-			delete(node.children[i], hash)
+			delete(node.children[i], key)
 		}
 	}
 }

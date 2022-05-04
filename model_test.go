@@ -570,7 +570,7 @@ func newTestSubject(name string, age int) testSub {
 }
 
 func TestABACNotUsingPolicy(t *testing.T) {
-	e, _ := NewEnforcer("examples/abac_not_using_policy_model.conf", "examples/abac_rule_effect_policy.csv")
+	e, _ := NewEnforcer("examples/abac_not_using_policy_model.conf", nil)
 	data1 := newTestResource("data1", "alice")
 	data2 := newTestResource("data2", "bob")
 
@@ -585,7 +585,10 @@ func TestABACPolicy(t *testing.T) {
 
 	sub1 := newTestSubject("alice", 16)
 	sub2 := newTestSubject("alice", 20)
-	sub3 := newTestSubject("alice", 65)
+	sub3 := map[string]interface{}{
+		"Name": "alice",
+		"Age":  65,
+	}
 
 	testEnforce(t, e, sub1, "/data1", "read", false)
 	testEnforce(t, e, sub1, "/data2", "read", false)
