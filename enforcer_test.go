@@ -1,6 +1,7 @@
 package fastac
 
 import (
+	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -32,12 +33,12 @@ func TestAdapterInterface(t *testing.T) {
 		t.Error(err.Error())
 	}
 
-	result, err2 := os.ReadFile(tmpPolicy)
+	result, err2 := ioutil.ReadFile(tmpPolicy)
 	if err2 != nil {
 		t.Error(err.Error())
 	}
 
-	expected, err3 := os.ReadFile("examples/rbac_policy.csv")
+	expected, err3 := ioutil.ReadFile("examples/rbac_policy.csv")
 	if err3 != nil {
 		t.Error(err.Error())
 	}
