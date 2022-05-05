@@ -15,10 +15,9 @@
 package rbac
 
 import (
+	"github.com/abichinger/fastac/util"
 	"github.com/abichinger/govaluate"
 )
-
-type MatchingFunc func(arg1 string, arg2 string) bool
 
 // RoleManager provides interface to define the operations for managing roles.
 type IRoleManager interface {
@@ -40,10 +39,14 @@ type IRoleManager interface {
 	// domain is a prefix to the users (can be used for other purposes).
 	GetUsers(name string, domain ...string) ([]string, error)
 
-	SetMatcher(fn MatchingFunc)
-	SetDomainMatcher(fn MatchingFunc)
-
 	Range(fn func(name1, name2 string, domain ...string) bool)
+}
+
+type IDefaultRoleManager interface {
+	IRoleManager
+
+	SetMatcher(fn util.IMatcher)
+	SetDomainMatcher(fn util.IMatcher)
 }
 
 // GenerateGFunction is the factory method of the g(_, _) function.

@@ -103,7 +103,7 @@ func testIPMatchFunc(t *testing.T, res bool, err string, args ...interface{}) {
 	}
 }
 
-func testURLMatch(t *testing.T, expected bool, path string, pattern string) {
+func testPathMatch(t *testing.T, expected bool, path string, pattern string) {
 	t.Helper()
 	res := PathMatch(path, pattern)
 	assert.Equalf(t, expected, res, "path: %s, pattern: %s", path, pattern)
@@ -164,35 +164,102 @@ func TestGlobMatch(t *testing.T) {
 	testGlobMatch(t, "/prefix/subprefix/foobar", "*/foo/*", false)
 }
 
-func TestURLMatch(t *testing.T) {
-	testURLMatch(t, false, "/", "")
-	testURLMatch(t, false, "", "/")
-	testURLMatch(t, true, "/", "/")
+func TestPathMatch(t *testing.T) {
+	testPathMatch(t, false, "/", "")
+	testPathMatch(t, false, "", "/")
+	testPathMatch(t, true, "/", "/")
 
-	testURLMatch(t, true, "/api/v1", "/api/v1")
-	testURLMatch(t, false, "/api/v1/user", "/api/v1")
-	testURLMatch(t, false, "/api/v1", "/api/v1/user")
+	testPathMatch(t, true, "/api/v1", "/api/v1")
+	testPathMatch(t, false, "/api/v1/user", "/api/v1")
+	testPathMatch(t, false, "/api/v1", "/api/v1/user")
 
-	testURLMatch(t, true, "/api", "/:")
-	testURLMatch(t, false, "/api", "/api/:")
-	testURLMatch(t, true, "/api/v1", "/api/:")
-	testURLMatch(t, true, "/api/v1", "/api/:v")
-	testURLMatch(t, false, "/api/v1/user/5", "/api/:v")
-	testURLMatch(t, true, "/api/v1/user/id", "/api/:v/user/:id")
+	testPathMatch(t, true, "/api", "/:")
+	testPathMatch(t, false, "/api", "/api/:")
+	testPathMatch(t, true, "/api/v1", "/api/:")
+	testPathMatch(t, true, "/api/v1", "/api/:v")
+	testPathMatch(t, false, "/api/v1/user/5", "/api/:v")
+	testPathMatch(t, true, "/api/v1/user/id", "/api/:v/user/:id")
 
-	testURLMatch(t, true, "", "*")
-	testURLMatch(t, false, "", "/*")
-	testURLMatch(t, true, "/api", "*")
-	testURLMatch(t, true, "/api", "/*")
-	testURLMatch(t, true, "/api/v1", "/*")
-	testURLMatch(t, false, "/app", "/app/*")
+	testPathMatch(t, true, "", "*")
+	testPathMatch(t, false, "", "/*")
+	testPathMatch(t, true, "/api", "*")
+	testPathMatch(t, true, "/api", "/*")
+	testPathMatch(t, true, "/api/v1", "/*")
+	testPathMatch(t, false, "/app", "/app/*")
 
-	testURLMatch(t, false, "/api/v1", "/api/:v/*")
-	testURLMatch(t, true, "/api/v1/user", "/api/:v/*")
-	testURLMatch(t, true, "/api/v1/user/5", "/api/:v/*")
+	testPathMatch(t, false, "/api/v1", "/api/:v/*")
+	testPathMatch(t, true, "/api/v1/user", "/api/:v/*")
+	testPathMatch(t, true, "/api/v1/user/5", "/api/:v/*")
 
-	testURLMatch(t, false, "/api/v1/user/5", "/api/:v/*/profile")
-	testURLMatch(t, true, "/api/v1/group/2/profile", "/api/:v/*/profile")
-	testURLMatch(t, true, "/api/v1/user/5/profile", "/api/:v/*/profile")
-	testURLMatch(t, false, "/api/v1/user/5/profile/name", "/api/:v/*/profile")
+	testPathMatch(t, false, "/api/v1/user/5", "/api/:v/*/profile")
+	testPathMatch(t, true, "/api/v1/group/2/profile", "/api/:v/*/profile")
+	testPathMatch(t, true, "/api/v1/user/5/profile", "/api/:v/*/profile")
+	testPathMatch(t, false, "/api/v1/user/5/profile/name", "/api/:v/*/profile")
+}
+
+func TestIsPathPattern(t *testing.T) {
+
+	tests := []struct {
+		path     string
+		expected bool
+	}{
+		{"", false},
+		{"*", true},
+		{"/api/*", true},
+		{"/api/*/user", true},
+		{"/api/v1", false},
+		{"/api/:v", true},
+		{"/api/:v/user", true},
+	}
+
+	for _, test := range tests {
+		res := IsPathPattern(test.path)
+		assert.Equal(t, test.expected, res, test.path)
+	}
+
+}
+
+func TestMatcher(t *testing.T) {
+
+	m := NewMatcher(func(str string) bool { return true }, RegexMatch)
+
+	tests := []struct {
+		pattern   string
+		str       string
+		isPattern bool
+		isMatch   bool
+	}{
+		{"user:bob", "user:alice", true, false},
+		{".*", "user:alice", true, true},
+		{`group:g\d+`, "group:g10", true, true},
+		{`group:g\d+`, "user:alice", true, false},
+	}
+
+	for _, test := range tests {
+		assert.Equal(t, test.isPattern, m.IsPattern(test.pattern), test.pattern, test.str)
+		assert.Equal(t, test.isMatch, m.Match(test.str, test.pattern), test.pattern, test.str)
+	}
+
+}
+
+func TestPrefixMatcher(t *testing.T) {
+
+	m := NewPrefixMatcher("re:", RegexMatch)
+
+	tests := []struct {
+		pattern   string
+		str       string
+		isPattern bool
+		isMatch   bool
+	}{
+		{".*", "user:alice", false, false},
+		{"re:.*", "user:alice", true, true},
+		{`re:group:g\d+`, "group:g10", true, true},
+		{`re:group:g\d+`, "user:alice", true, false},
+	}
+
+	for _, test := range tests {
+		assert.Equal(t, test.isPattern, m.IsPattern(test.pattern), test.pattern, test.str)
+		assert.Equal(t, test.isMatch, m.Match(test.str, test.pattern), test.pattern, test.str)
+	}
 }

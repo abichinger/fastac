@@ -24,11 +24,12 @@ import (
 const defaultDomain string = "RoleManager"
 
 type DomainManager struct {
-	rmMap              *sync.Map
-	maxHierarchyLevel  int
-	matchingFunc       MatchingFunc
-	domainMatchingFunc MatchingFunc
-	matchingFuncCache  *util.SyncLRUCache
+	rmMap             *sync.Map
+	patternMap        *sync.Map
+	maxHierarchyLevel int
+	matcher           util.IMatcher
+	domainMatcher     util.IMatcher
+	matchingFuncCache *util.SyncLRUCache
 }
 
 // NewDomainManager is the constructor for creating an instance of the
@@ -40,19 +41,19 @@ func NewDomainManager(maxHierarchyLevel int) *DomainManager {
 	return dm
 }
 
-func (dm *DomainManager) SetMatcher(fn MatchingFunc) {
-	dm.matchingFunc = fn
+func (dm *DomainManager) SetMatcher(matcher util.IMatcher) {
+	dm.matcher = matcher
 	dm.rmMap.Range(func(key, value interface{}) bool {
-		value.(IRoleManager).SetMatcher(fn)
+		value.(IDefaultRoleManager).SetMatcher(matcher)
 		return true
 	})
 }
 
 // SetDomainMatcher support use domain pattern in g
-func (dm *DomainManager) SetDomainMatcher(fn MatchingFunc) {
-	dm.domainMatchingFunc = fn
+func (dm *DomainManager) SetDomainMatcher(matcher util.IMatcher) {
+	dm.domainMatcher = matcher
 	dm.rmMap.Range(func(key, value interface{}) bool {
-		value.(IRoleManager).SetDomainMatcher(fn)
+		value.(IDefaultRoleManager).SetDomainMatcher(matcher)
 		return true
 	})
 	dm.rebuild()
@@ -71,6 +72,7 @@ func (dm *DomainManager) rebuild() {
 //Clear clears all stored data and resets the role manager to the initial state.
 func (dm *DomainManager) Clear() error {
 	dm.rmMap = &sync.Map{}
+	dm.patternMap = &sync.Map{}
 	dm.matchingFuncCache = util.NewSyncLRUCache(100)
 	return nil
 }
@@ -89,59 +91,67 @@ func (dm *DomainManager) match(str string, pattern string) bool {
 	if v, has := dm.matchingFuncCache.Get(cacheKey); has {
 		return v.(bool)
 	} else {
-		matched := dm.domainMatchingFunc(str, pattern)
+		matched := dm.domainMatcher.Match(str, pattern)
 		dm.matchingFuncCache.Put(cacheKey, matched)
 		return matched
 	}
 }
 
-func (dm *DomainManager) rangeAffectedRoleManagers(domain string, fn func(rm IRoleManager)) {
-	if dm.domainMatchingFunc != nil {
-		dm.rmMap.Range(func(key, value interface{}) bool {
-			domain2 := key.(string)
-			if domain != domain2 && dm.match(domain2, domain) {
-				fn(value.(IRoleManager))
-			}
-			return true
-		})
-	}
-}
-
-func (dm *DomainManager) load(name interface{}) (value IRoleManager, ok bool) {
+func (dm *DomainManager) load(name interface{}) (value IDefaultRoleManager, ok bool) {
 	if r, ok := dm.rmMap.Load(name); ok {
-		return r.(IRoleManager), true
+		return r.(IDefaultRoleManager), true
 	}
 	return nil, false
 }
 
+func (dm *DomainManager) rangeMatchingRMs(pattern string, fn func(rm IRoleManager)) {
+	dm.rmMap.Range(func(key, value interface{}) bool {
+		domain := key.(string)
+		if pattern != domain && dm.match(domain, pattern) {
+			fn(value.(IRoleManager))
+		}
+		return true
+	})
+}
+
+func (dm *DomainManager) rangeMatchingPatterns(domain string, fn func(rm IRoleManager)) {
+	dm.patternMap.Range(func(key, _ interface{}) bool {
+		pattern := key.(string)
+		if pattern != domain && dm.match(domain, pattern) {
+			value, _ := dm.load(pattern)
+			fn(value)
+		}
+		return true
+	})
+}
+
 // load or create a RoleManager instance of domain
 func (dm *DomainManager) getRoleManager(domain string, store bool, subdomains ...string) IRoleManager {
-	var rm IRoleManager
+	var rm IDefaultRoleManager
 	var ok bool
 
 	if rm, ok = dm.load(domain); !ok {
 		if domain != defaultDomain {
 			rm = NewDomainManager(dm.maxHierarchyLevel - 1)
-			rm.SetMatcher(dm.matchingFunc)
-			rm.SetDomainMatcher(dm.domainMatchingFunc)
+			rm.SetMatcher(dm.matcher)
+			rm.SetDomainMatcher(dm.domainMatcher)
 		} else {
-			rm = newRoleManagerWithMatchingFunc(dm.maxHierarchyLevel-1, dm.matchingFunc)
+			rm = newRoleManagerWithMatchingFunc(dm.maxHierarchyLevel-1, dm.matcher)
 		}
 		if store {
 			dm.rmMap.Store(domain, rm)
 		}
-		if dm.domainMatchingFunc != nil {
-			dm.rmMap.Range(func(key, value interface{}) bool {
-				domain2 := key.(string)
-				rm2 := value.(IRoleManager)
-				if domain != domain2 && dm.match(domain, domain2) {
+		if dm.domainMatcher != nil {
+			if dm.domainMatcher.IsPattern(domain) {
+				dm.patternMap.Store(domain, nil)
+			} else {
+				dm.rangeMatchingPatterns(domain, func(rm2 IRoleManager) {
 					rm2.Range(func(name1, name2 string, domain ...string) bool {
 						_, _ = rm.AddLink(name1, name2, append(domain, REDUNDANT_ROLE)...)
 						return true
 					})
-				}
-				return true
-			})
+				})
+			}
 		}
 	}
 	return rm
@@ -157,9 +167,11 @@ func (dm *DomainManager) AddLink(name1 string, name2 string, domains ...string) 
 	roleManager := dm.getRoleManager(domain, true, subdomains...) //create role manager if it does not exist
 	added, _ := roleManager.AddLink(name1, name2, subdomains...)
 
-	dm.rangeAffectedRoleManagers(domain, func(rm IRoleManager) {
-		_, _ = rm.AddLink(name1, name2, append(subdomains, REDUNDANT_ROLE)...)
-	})
+	if dm.domainMatcher != nil && dm.domainMatcher.IsPattern(domain) {
+		dm.rangeMatchingRMs(domain, func(rm IRoleManager) {
+			_, _ = rm.AddLink(name1, name2, append(subdomains, REDUNDANT_ROLE)...)
+		})
+	}
 	return added, nil
 }
 
@@ -173,9 +185,11 @@ func (dm *DomainManager) DeleteLink(name1 string, name2 string, domains ...strin
 	roleManager := dm.getRoleManager(domain, true, subdomains...) //create role manager if it does not exist
 	removed, _ := roleManager.DeleteLink(name1, name2, subdomains...)
 
-	dm.rangeAffectedRoleManagers(domain, func(rm IRoleManager) {
-		_, _ = rm.DeleteLink(name1, name2, append(subdomains, REDUNDANT_ROLE)...)
-	})
+	if dm.domainMatcher != nil && dm.domainMatcher.IsPattern(domain) {
+		dm.rangeMatchingRMs(domain, func(rm IRoleManager) {
+			_, _ = rm.DeleteLink(name1, name2, append(subdomains, REDUNDANT_ROLE)...)
+		})
+	}
 	return removed, nil
 }
 
