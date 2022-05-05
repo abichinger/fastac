@@ -25,11 +25,12 @@ const REDUNDANT_ROLE = "redundant_role"
 
 // RoleManager provides a default implementation for the RoleManager interface
 type RoleManager struct {
-	allRoles           *sync.Map
-	maxHierarchyLevel  int
-	matchingFunc       MatchingFunc
-	domainMatchingFunc MatchingFunc
-	matchingFuncCache  *util.SyncLRUCache
+	allRoles          *sync.Map
+	patternRoles      *sync.Map
+	maxHierarchyLevel int
+	matcher           util.IMatcher
+	domainMatcher     util.IMatcher
+	matchingFuncCache *util.SyncLRUCache
 }
 
 // NewRoleManager is the constructor for creating an instance of the
@@ -42,9 +43,9 @@ func NewRoleManager(maxHierarchyLevel int) *RoleManager {
 }
 
 // use this constructor to avoid rebuild of SetMatcher
-func newRoleManagerWithMatchingFunc(maxHierarchyLevel int, fn MatchingFunc) *RoleManager {
+func newRoleManagerWithMatchingFunc(maxHierarchyLevel int, matcher util.IMatcher) *RoleManager {
 	rm := NewRoleManager(maxHierarchyLevel)
-	rm.matchingFunc = fn
+	rm.matcher = matcher
 	return rm
 }
 
@@ -63,18 +64,27 @@ func (rm *RoleManager) match(str string, pattern string) bool {
 	if v, has := rm.matchingFuncCache.Get(cacheKey); has {
 		return v.(bool)
 	} else {
-		matched := rm.matchingFunc(str, pattern)
+		matched := rm.matcher.Match(str, pattern)
 		rm.matchingFuncCache.Put(cacheKey, matched)
 		return matched
 	}
 }
 
-func (rm *RoleManager) rangeMatchingRoles(name string, isPattern bool, fn func(role *Role) bool) {
+func (rm *RoleManager) rangeMatchingRoles(pattern string, fn func(role *Role)) {
 	rm.allRoles.Range(func(key, value interface{}) bool {
-		name2 := key.(string)
-		if isPattern && name != name2 && rm.match(name2, name) {
+		name := key.(string)
+		if pattern != name && rm.match(name, pattern) {
 			fn(value.(*Role))
-		} else if !isPattern && name != name2 && rm.match(name, name2) {
+		}
+		return true
+	})
+}
+
+func (rm *RoleManager) rangeMatchingPatterns(name string, fn func(role *Role)) {
+	rm.patternRoles.Range(func(key, _ interface{}) bool {
+		pattern := key.(string)
+		if pattern != name && rm.match(name, pattern) {
+			value, _ := rm.allRoles.Load(pattern)
 			fn(value.(*Role))
 		}
 		return true
@@ -97,16 +107,17 @@ func (rm *RoleManager) getRole(name string) (r *Role, created bool) {
 		role = newRole(name)
 		rm.allRoles.Store(name, role)
 
-		if rm.matchingFunc != nil {
-			rm.rangeMatchingRoles(name, false, func(r *Role) bool {
-				r.addMatch(role)
-				return true
-			})
-
-			rm.rangeMatchingRoles(name, true, func(r *Role) bool {
-				role.addMatch(r)
-				return true
-			})
+		if rm.matcher != nil {
+			if rm.matcher.IsPattern(name) {
+				rm.patternRoles.Store(name, nil)
+				rm.rangeMatchingRoles(name, func(r *Role) {
+					role.addMatch(r)
+				})
+			} else {
+				rm.rangeMatchingPatterns(name, func(r *Role) {
+					r.addMatch(role)
+				})
+			}
 		}
 	}
 
@@ -125,23 +136,25 @@ func (rm *RoleManager) removeRole(name string) {
 	if role, ok := loadAndDelete(rm.allRoles, name); ok {
 		role.(*Role).removeMatches()
 	}
+	rm.patternRoles.Delete(name)
 }
 
 // SetMatcher support use pattern in g
-func (rm *RoleManager) SetMatcher(fn MatchingFunc) {
-	rm.matchingFunc = fn
+func (rm *RoleManager) SetMatcher(matcher util.IMatcher) {
+	rm.matcher = matcher
 	rm.rebuild()
 }
 
 // SetDomainMatcher support use domain pattern in g
-func (rm *RoleManager) SetDomainMatcher(fn MatchingFunc) {
-	rm.domainMatchingFunc = fn
+func (rm *RoleManager) SetDomainMatcher(matcher util.IMatcher) {
+	rm.domainMatcher = matcher
 }
 
 // Clear clears all stored data and resets the role manager to the initial state.
 func (rm *RoleManager) Clear() error {
 	rm.matchingFuncCache = util.NewSyncLRUCache(100)
 	rm.allRoles = &sync.Map{}
+	rm.patternRoles = &sync.Map{}
 	return nil
 }
 
@@ -173,7 +186,7 @@ func (rm *RoleManager) DeleteLink(name1 string, name2 string, domains ...string)
 
 // HasLink determines whether role: name1 inherits role: name2.
 func (rm *RoleManager) HasLink(name1 string, name2 string, domains ...string) (bool, error) {
-	if name1 == name2 || (rm.matchingFunc != nil && rm.match(name1, name2)) {
+	if name1 == name2 || (rm.matcher != nil && rm.match(name1, name2)) {
 		return true, nil
 	}
 
@@ -197,7 +210,7 @@ func (rm *RoleManager) hasLinkHelper(targetName string, roles map[string]*Role, 
 
 	nextRoles := map[string]*Role{}
 	for _, role := range roles {
-		if targetName == role.name || (rm.matchingFunc != nil && rm.match(role.name, targetName)) {
+		if targetName == role.name || (rm.matcher != nil && rm.match(role.name, targetName)) {
 			return true
 		}
 		role.rangeRoles(func(key, value interface{}) bool {

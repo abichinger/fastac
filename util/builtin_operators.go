@@ -29,6 +29,46 @@ import (
 
 type MatchingFunc func(str, pattern string) bool
 
+type IMatcher interface {
+	IsPattern(str string) bool
+	Match(str, pattern string) bool
+}
+
+type Matcher struct {
+	patternFn func(str string) bool
+	matchFn   MatchingFunc
+}
+
+func NewMatcher(isPatternFn func(str string) bool, matchFn MatchingFunc) *Matcher {
+	return &Matcher{isPatternFn, matchFn}
+}
+
+func (m *Matcher) IsPattern(str string) bool {
+	return m.patternFn(str)
+}
+func (m *Matcher) Match(str, pattern string) bool {
+	return m.matchFn(str, pattern)
+}
+
+type PrefixMatcher struct {
+	prefix  string
+	matchFn MatchingFunc
+}
+
+func NewPrefixMatcher(prefix string, matchFn MatchingFunc) *PrefixMatcher {
+	return &PrefixMatcher{prefix, matchFn}
+}
+
+func (m *PrefixMatcher) IsPattern(str string) bool {
+	return strings.HasPrefix(str, m.prefix)
+}
+func (m *PrefixMatcher) Match(str, pattern string) bool {
+	if m.IsPattern(pattern) {
+		return m.matchFn(str, pattern[len(m.prefix):])
+	}
+	return false
+}
+
 // validate the variadic parameter size and type as string
 func ValidateVariadicArgs(expectedLen int, args ...interface{}) error {
 	if len(args) != expectedLen {
@@ -108,16 +148,6 @@ func WrapMatchingFunc(fn MatchingFunc) govaluate.ExpressionFunction {
 	}
 }
 
-func PrefixDecorator(prefix string, fn MatchingFunc) MatchingFunc {
-	return func(str, pattern string) bool {
-		if strings.HasPrefix(pattern, prefix) {
-			return fn(str, pattern)
-		} else {
-			return false
-		}
-	}
-}
-
 func nextSegment(path, sep string) (seg string, remaining string, last bool) {
 	i := strings.Index(path, sep)
 	if i == -1 {
@@ -161,12 +191,37 @@ func PathMatchHelper(path, pattern, sep string, prefix, suffix byte) bool {
 	return false
 }
 
+func IsPathPatternHelper(pattern, sep string, prefix, suffix byte) bool {
+	segments := strings.Split(pattern, sep)
+	for _, seg := range segments {
+		l := len(seg)
+		if l == 0 {
+			continue
+		}
+		if seg == "*" {
+			return true
+		}
+		if (prefix == 0 || seg[0] == prefix) && (suffix == 0 || seg[l-1] == suffix) {
+			return true
+		}
+	}
+	return false
+}
+
 func PathMatch(path, pattern string) bool {
 	return PathMatchHelper(path, pattern, "/", ':', 0)
 }
 
 func PathMatch2(path, pattern string) bool {
 	return PathMatchHelper(path, pattern, "/", '{', '}')
+}
+
+func IsPathPattern(path string) bool {
+	return IsPathPatternHelper(path, "/", ':', 0)
+}
+
+func IsPathPattern2(path string) bool {
+	return IsPathPatternHelper(path, "/", '{', '}')
 }
 
 var PathMatchFunc = WrapMatchingFunc(PathMatch)
@@ -176,7 +231,6 @@ var IPMatchFunc = WrapMatchingFunc(IPMatch)
 
 const defaultPrefix = "p'"
 
-var RegexMatchPrefix = PrefixDecorator(defaultPrefix, RegexMatch)
-var IPMatchPrefix = PrefixDecorator(defaultPrefix, IPMatch)
-
-//var GlobMatchPrefix = PrefixDecorator(defaultPrefix, GlobMatch)
+var PathMatcher = NewMatcher(IsPathPattern, PathMatch)
+var PathMatcher2 = NewMatcher(IsPathPattern2, PathMatch2)
+var RegexMatcher = NewPrefixMatcher(defaultPrefix, RegexMatch)

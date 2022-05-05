@@ -309,12 +309,9 @@ func TestRBACModelWithPattern(t *testing.T) {
 	// Here's a little confusing: the matching function here is not the custom function used in matcher.
 	// It is the matching function used by "g" (and "g2", "g3" if any..)
 	g2, _ := e.GetModel().GetRoleManager("g2")
-	g2.SetMatcher(util.PathMatch)
+	g2.(rbac.IDefaultRoleManager).SetMatcher(util.PathMatcher)
 	g1, _ := e.GetModel().GetRoleManager("g")
-	g1.SetMatcher(util.PathMatch)
-
-	b, _ := g1.HasLink("any_user", "*")
-	t.Log(b)
+	g1.(rbac.IDefaultRoleManager).SetMatcher(util.PathMatcher)
 
 	testEnforce(t, e, "any_user", "/pen3/1", "GET", true)
 	testEnforce(t, e, "/book/user/1", "/pen4/1", "GET", true)
@@ -329,7 +326,7 @@ func TestRBACModelWithPattern(t *testing.T) {
 	testEnforce(t, e, "bob", "/pen/1", "GET", true)
 	testEnforce(t, e, "bob", "/pen/2", "GET", true)
 
-	g2.SetMatcher(util.PathMatch2)
+	g2.(rbac.IDefaultRoleManager).SetMatcher(util.PathMatcher2)
 	testEnforce(t, e, "alice", "/book2/1", "GET", true)
 	testEnforce(t, e, "alice", "/book2/2", "GET", true)
 	testEnforce(t, e, "alice", "/pen2/1", "GET", true)
@@ -371,8 +368,8 @@ func (rm *testCustomRoleManager) GetUsers(name string, domain ...string) ([]stri
 func (rm *testCustomRoleManager) GetDomains(name string) ([]string, error)                  { return []string{}, nil }
 func (rm *testCustomRoleManager) GetAllDomains() ([]string, error)                          { return []string{}, nil }
 func (rm *testCustomRoleManager) PrintRoles() error                                         { return nil }
-func (rm *testCustomRoleManager) SetMatcher(fn rbac.MatchingFunc)                           {}
-func (rm *testCustomRoleManager) SetDomainMatcher(fn rbac.MatchingFunc)                     {}
+func (rm *testCustomRoleManager) SetMatcher(fn util.IMatcher)                               {}
+func (rm *testCustomRoleManager) SetDomainMatcher(fn util.IMatcher)                         {}
 func (rm *testCustomRoleManager) CopyFrom(other rbac.IRoleManager)                          {}
 func (rm *testCustomRoleManager) Range(fn func(name1, name2 string, domain ...string) bool) {}
 func (rm *testCustomRoleManager) String() string                                            { return "" }
@@ -619,7 +616,7 @@ func TestCommentModel(t *testing.T) {
 func TestDomainMatchModel(t *testing.T) {
 	e, _ := NewEnforcer("examples/rbac_with_domain_pattern_model.conf", "examples/rbac_with_domain_pattern_policy.csv")
 	rm, _ := e.GetModel().GetRoleManager("g")
-	rm.SetDomainMatcher(util.PathMatch)
+	rm.(rbac.IDefaultRoleManager).SetDomainMatcher(util.PathMatcher)
 
 	testDomainEnforce(t, e, "alice", "domain1", "data1", "read", true)
 	testDomainEnforce(t, e, "alice", "domain1", "data1", "write", true)
@@ -636,8 +633,8 @@ func TestDomainMatchModel(t *testing.T) {
 func TestAllMatchModel(t *testing.T) {
 	e, _ := NewEnforcer("examples/rbac_with_all_pattern_model.conf", "examples/rbac_with_all_pattern_policy.csv")
 	rm, _ := e.GetModel().GetRoleManager("g")
-	rm.SetMatcher(util.PathMatch)
-	rm.SetDomainMatcher(util.PathMatch)
+	rm.(rbac.IDefaultRoleManager).SetMatcher(util.PathMatcher)
+	rm.(rbac.IDefaultRoleManager).SetDomainMatcher(util.PathMatcher)
 
 	testDomainEnforce(t, e, "alice", "domain1", "/book/1", "read", true)
 	testDomainEnforce(t, e, "alice", "domain1", "/book/1", "write", false)
