@@ -6,9 +6,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/abichinger/fastac/log"
 	"github.com/abichinger/fastac/model/defs"
 	"github.com/abichinger/fastac/storage/adapter"
 	"github.com/abichinger/fastac/util"
+	"github.com/sirupsen/logrus"
+	logrustest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -359,4 +362,27 @@ func TestFilter(t *testing.T) {
 		assert.ElementsMatch(t, util.Join2D(rules, ","), test.expected)
 	}
 
+}
+
+func TestEnforceLog(t *testing.T) {
+	e, _ := NewEnforcer("examples/basic_model.conf", "examples/basic_policy.csv")
+
+	logger, hook := logrustest.NewNullLogger()
+	log.SetLogger(logger)
+
+	_, _ = e.Enforce("alice", "data1", "read")
+
+	assert.Equal(t, 1, len(hook.Entries))
+	assert.Equal(t, logrus.InfoLevel, hook.LastEntry().Level)
+	assert.Equal(t, "Enforce: [alice data1 read] => allow", hook.LastEntry().Message)
+
+	_, _ = e.Enforce("alice", "data2", "read")
+
+	assert.Equal(t, 2, len(hook.Entries))
+	assert.Equal(t, logrus.InfoLevel, hook.LastEntry().Level)
+	assert.Equal(t, "Enforce: [alice data2 read] => deny", hook.LastEntry().Message)
+
+	logMsg, _ := hook.LastEntry().String()
+
+	t.Log(logMsg)
 }

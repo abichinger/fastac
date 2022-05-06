@@ -16,7 +16,9 @@ package fastac
 
 import (
 	"errors"
+	"time"
 
+	log "github.com/abichinger/fastac/log"
 	m "github.com/abichinger/fastac/model"
 	"github.com/abichinger/fastac/model/defs"
 	"github.com/abichinger/fastac/model/eft"
@@ -254,7 +256,19 @@ func (e *Enforcer) Enforce(params ...interface{}) (bool, error) {
 }
 
 func (e *Enforcer) EnforceWithContext(ctx *Context, rvals ...interface{}) (bool, error) {
-	return e.enforce(ctx, rvals)
+	start := time.Now()
+	b, err := e.enforce(ctx, rvals)
+	if err != nil {
+		return b, err
+	}
+	logger := log.Logger().WithField("duration", time.Since(start))
+	if b {
+		logger.Infof("Enforce: %v => allow", rvals)
+	} else {
+		logger.Infof("Enforce: %v => deny", rvals)
+	}
+
+	return b, err
 }
 
 // Filter will fetch all rules which match the given request
