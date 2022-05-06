@@ -21,7 +21,6 @@ import (
 	"github.com/abichinger/fastac/util"
 	casbin "github.com/casbin/casbin/v2"
 	casbinUtil "github.com/casbin/casbin/v2/util"
-	"github.com/stretchr/testify/assert"
 )
 
 type RulesAPI interface {
@@ -96,20 +95,23 @@ func (e *RulesAPIEnforcer) RemoveGroupingPolicy(params ...interface{}) (bool, er
 	return e.RemoveRule(e.GeParams("g", params...))
 }
 
-func genRBACPolicy(e RulesAPI, n int) error {
-	for i := 0; i < n; i++ {
-		_, err := e.AddGroupingPolicy(fmt.Sprintf("user%d", i), fmt.Sprintf("group%d", i/10))
+func genRBACPolicy(e RulesAPI, nUsers, nRoles, nObjects int) error {
+	for i := 0; i < nUsers; i++ {
+		_, err := e.AddGroupingPolicy(fmt.Sprintf("user%d", i), fmt.Sprintf("role%d", i%nRoles))
 		if err != nil {
 			return err
 		}
 	}
 
-	for i := 0; i < n/10; i++ {
-		_, err := e.AddPolicy(fmt.Sprintf("group%d", i), fmt.Sprintf("data%d", i/10), "read")
-		if err != nil {
-			return err
+	for i := 0; i < nRoles; i++ {
+		for j := 0; j < nObjects; j++ {
+			_, err := e.AddPolicy(fmt.Sprintf("role%d", i), fmt.Sprintf("data%d", j), "read")
+			if err != nil {
+				return err
+			}
 		}
 	}
+
 	return nil
 }
 
@@ -123,30 +125,12 @@ func genABACPolicy(e RulesAPI, n int) error {
 	return nil
 }
 
-func TestRBACBenchmarkPolicy(t *testing.T) {
-	e := NewRulesAPIEnforcer("examples/rbac_model.conf")
-	if err := genRBACPolicy(e, 1000); err != nil {
-		t.Fatal()
-	}
+func BenchmarkCmpRBAC(b *testing.B) {
+	bmUsers := []int{10000, 100000}
 
-	testEnforce := func(t *testing.T, e RulesAPI, expected bool, params ...interface{}) {
-		actual, _ := e.Enforce(params...)
-		assert.Equal(t, expected, actual)
-	}
+	bmRoles := []int{100, 1000}
 
-	testEnforce(t, e, false, "user501", "data9", "read")
-	testEnforce(t, e, true, "user501", "data5", "read")
-}
-
-func BenchmarkRBAC(b *testing.B) {
-	benchmarks := []struct {
-		name string
-		size int
-	}{
-		{name: "Large", size: 100000},
-		{name: "Medium", size: 10000},
-		{name: "Small", size: 1000},
-	}
+	bmRules := []int{100000}
 
 	enforcers := []struct {
 		name  string
@@ -157,27 +141,32 @@ func BenchmarkRBAC(b *testing.B) {
 		{name: "FastAC", model: "examples/rbac_model.conf", init: NewRulesAPIEnforcer},
 	}
 
-	for _, bm := range benchmarks {
-		b.Run(fmt.Sprintf("size=%s(%d)", bm.name, bm.size), func(b *testing.B) {
-			for _, e := range enforcers {
-				b.Run("enforcer="+e.name, func(b *testing.B) {
-					enf := e.init(e.model)
+	for _, nRules := range bmRules {
+		for _, nRoles := range bmRoles {
+			nObjects := nRules / nRoles
+			for _, nUsers := range bmUsers {
+				b.Run(fmt.Sprintf("users_roles_objects=%d_%d_%d", nUsers, nRoles, nObjects), func(b *testing.B) {
+					for _, e := range enforcers {
+						b.Run("enforcer="+e.name, func(b *testing.B) {
+							enf := e.init(e.model)
 
-					if err := genRBACPolicy(enf, bm.size); err != nil {
-						b.Fatal()
-					}
+							if err := genRBACPolicy(enf, nUsers, nRoles, nObjects); err != nil {
+								b.Fatal()
+							}
 
-					b.ResetTimer()
-					for i := 0; i < b.N; i++ {
-						_, _ = enf.Enforce("user501", "data9", "read")
+							b.ResetTimer()
+							for i := 0; i < b.N; i++ {
+								_, _ = enf.Enforce("role0", "data0", "write")
+							}
+						})
 					}
 				})
 			}
-		})
+		}
 	}
 }
 
-func BenchmarkAddPolicy(b *testing.B) {
+func BenchmarkCmpAddPolicy(b *testing.B) {
 	benchmarks := []struct {
 		name string
 		size int
@@ -202,13 +191,13 @@ func BenchmarkAddPolicy(b *testing.B) {
 				b.Run("enforcer="+e.name, func(b *testing.B) {
 					enf := e.init(e.model)
 
-					if err := genRBACPolicy(enf, bm.size*10); err != nil {
+					if err := genRBACPolicy(enf, 0, bm.size/10, 10); err != nil {
 						b.Fatal()
 					}
 
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
-						_, _ = enf.AddPolicy(fmt.Sprintf("group%d", i), fmt.Sprintf("data%d", i/10), "write")
+						_, _ = enf.AddPolicy(fmt.Sprintf("role%d", i), fmt.Sprintf("data%d", i/10), "write")
 					}
 				})
 			}
@@ -216,7 +205,7 @@ func BenchmarkAddPolicy(b *testing.B) {
 	}
 }
 
-func BenchmarkRemovePolicy(b *testing.B) {
+func BenchmarkCmpRemovePolicy(b *testing.B) {
 	benchmarks := []struct {
 		name string
 		size int
@@ -241,7 +230,7 @@ func BenchmarkRemovePolicy(b *testing.B) {
 				b.Run("enforcer="+e.name, func(b *testing.B) {
 					enf := e.init(e.model)
 
-					if err := genRBACPolicy(enf, bm.size*10); err != nil {
+					if err := genRBACPolicy(enf, 0, bm.size/10, 10); err != nil {
 						b.Fatal()
 					}
 
@@ -255,7 +244,7 @@ func BenchmarkRemovePolicy(b *testing.B) {
 	}
 }
 
-func BenchmarkABAC(b *testing.B) {
+func BenchmarkCmpABAC(b *testing.B) {
 
 	benchmarks := []struct {
 		name string
@@ -301,7 +290,7 @@ func BenchmarkABAC(b *testing.B) {
 	}
 }
 
-func BenchmarkPathMatch(b *testing.B) {
+func BenchmarkCmpPathMatch(b *testing.B) {
 
 	benchmarks := []struct {
 		pkg     string

@@ -12,23 +12,36 @@
 <text x="190" y="-15.602" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:10px">PathMatch</text>
 <g transform="rotate(90)">
-<text x="81.905" y="11.555" transform="scale(1, -1)"
+<text x="80.833" y="11.555" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">ns/op</text>
 </g>
 <text x="35.416" y="-25.509" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:10px">0</text>
-<text x="20.416" y="-86.803" transform="scale(1, -1)"
-	style="font-family:Times;font-weight:normal;font-style:normal;font-size:10px">8000</text>
-<text x="15.416" y="-148.1" transform="scale(1, -1)"
-	style="font-family:Times;font-weight:normal;font-style:normal;font-size:10px">16000</text>
+<text x="20.416" y="-66.991" transform="scale(1, -1)"
+	style="font-family:Times;font-weight:normal;font-style:normal;font-size:10px">5000</text>
+<text x="15.416" y="-108.47" transform="scale(1, -1)"
+	style="font-family:Times;font-weight:normal;font-style:normal;font-size:10px">10000</text>
+<text x="15.416" y="-149.96" transform="scale(1, -1)"
+	style="font-family:Times;font-weight:normal;font-style:normal;font-size:10px">15000</text>
 <path d="M42.916,30.23L50.916,30.23" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M42.916,91.525L50.916,91.525" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M42.916,152.82L50.916,152.82" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M46.916,60.878L50.916,60.878" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M46.916,122.17L50.916,122.17" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M50.916,30.23L50.916,159.58" style="fill:none;stroke:#000000;stroke-width:0.5" />
-<path d="M166.66,30.23L166.66,30.924L196.66,30.924L196.66,30.23Z" style="fill:#F15A60" />
-<path d="M196.66,30.23L196.66,159.58L226.66,159.58L226.66,30.23Z" style="fill:#7AC36A" />
+<path d="M42.916,71.713L50.916,71.713" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M42.916,113.19L50.916,113.19" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M42.916,154.68L50.916,154.68" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.916,38.527L50.916,38.527" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.916,46.823L50.916,46.823" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.916,55.12L50.916,55.12" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.916,63.416L50.916,63.416" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.916,80.009L50.916,80.009" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.916,88.305L50.916,88.305" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.916,96.602L50.916,96.602" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.916,104.9L50.916,104.9" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.916,121.49L50.916,121.49" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.916,129.79L50.916,129.79" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.916,138.08L50.916,138.08" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M46.916,146.38L50.916,146.38" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M50.916,30.23L50.916,157.44" style="fill:none;stroke:#000000;stroke-width:0.5" />
+<path d="M166.66,30.23L166.66,31.063L196.66,31.063L196.66,30.23Z" style="fill:#F15A60" />
+<path d="M196.66,30.23L196.66,157.44L226.66,157.44L226.66,30.23Z" style="fill:#7AC36A" />
 <path d="M330,147.81L330,159.58L350,159.58L350,147.81Z" style="fill:#F15A60" />
 <text x="290.33" y="-148.03" transform="scale(1, -1)"
 	style="font-family:Times;font-weight:normal;font-style:normal;font-size:12px">FastAC</text>
