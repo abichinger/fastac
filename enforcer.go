@@ -170,9 +170,9 @@ func (e *Enforcer) Flush() error {
 // Returns false, if the rule was already present
 //
 // Add policy rule:
-//  e.AddRule("p", "alice", "data1", "read")
+//  e.AddRule([]string{"p", "alice", "data1", "read"})
 // Add grouping rule:
-//  e.AddRule("g", "alice", "group1")
+//  e.AddRule([]string{"g", "alice", "group1"})
 func (e *Enforcer) AddRule(rule []string) (bool, error) {
 	return e.model.AddRule(rule)
 }
@@ -181,9 +181,9 @@ func (e *Enforcer) AddRule(rule []string) (bool, error) {
 // Returns false, if the rule was not present
 //
 // Add policy rule:
-//  e.RemoveRule("p", "alice", "data1", "read")
+//  e.RemoveRule([]string{"p", "alice", "data1", "read"})
 // Add grouping rule:
-//  e.RemoveRule("g", "alice", "group1")
+//  e.RemoveRule([]string{"g", "alice", "group1"})
 func (e *Enforcer) RemoveRule(rule []string) (bool, error) {
 	return e.model.RemoveRule(rule)
 }
