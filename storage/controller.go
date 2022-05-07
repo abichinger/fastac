@@ -105,7 +105,10 @@ func (sc *StorageController) addOp(opc opcode, rule []string) {
 	if sc.autosave {
 		sc.wait--
 		if sc.wait <= 0 {
-			sc.Flush()
+			err := sc.Flush()
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 }
