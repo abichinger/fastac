@@ -248,25 +248,39 @@ func (m *Model) BuildMatcherFromDef(mDef *defs.MatcherDef) (matcher.IMatcher, er
 func (m *Model) AddRule(rule []string) (bool, error) {
 	key := rule[0]
 	sec := key[0]
+	var added bool
+	var err error
 	switch sec {
 	case 'p':
-		return m.addPolicyRule(key, rule[1:])
+		added, err = m.addPolicyRule(key, rule[1:])
 	case 'g':
-		return m.addRoleRule(key, rule[1:])
+		added, err = m.addRoleRule(key, rule[1:])
+	default:
+		return false, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, key)
 	}
-	return false, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, key)
+	if added {
+		m.Emitter.EmitEvent(RULE_ADDED, rule)
+	}
+	return added, err
 }
 
 func (m *Model) RemoveRule(rule []string) (bool, error) {
 	key := rule[0]
 	sec := key[0]
+	var removed bool
+	var err error
 	switch sec {
 	case 'p':
-		return m.removePolicyRule(key, rule[1:])
+		removed, err = m.removePolicyRule(key, rule[1:])
 	case 'g':
-		return m.removeRoleRule(key, rule[1:])
+		removed, err = m.removeRoleRule(key, rule[1:])
+	default:
+		return false, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, key)
 	}
-	return false, fmt.Errorf(str.ERR_POLICY_NOT_FOUND, key)
+	if removed {
+		m.Emitter.EmitEvent(RULE_REMOVED, rule)
+	}
+	return removed, err
 }
 
 func (m *Model) addPolicyRule(key string, rule []string) (bool, error) {
