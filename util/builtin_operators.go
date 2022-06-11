@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/abichinger/govaluate"
+	pm "github.com/abichinger/pathmatch"
 )
 
 type MatchingFunc func(str, pattern string) bool
@@ -148,80 +149,43 @@ func WrapMatchingFunc(fn MatchingFunc) govaluate.ExpressionFunction {
 	}
 }
 
-func nextSegment(path, sep string) (seg string, remaining string, last bool) {
-	i := strings.Index(path, sep)
-	if i == -1 {
-		return path, "", true
-	}
-	return path[:i], path[i+1:], false
-}
+var pathMatchCache = NewSyncLRUCache(100)
+var pathMatchCache2 = NewSyncLRUCache(100)
 
-func isDynamicSegment(segment string, prefix, suffix byte) bool {
-	l := len(segment)
-	if l == 0 {
-		return false
-	}
-	return (prefix == 0 || segment[0] == prefix) &&
-		(suffix == 0 || segment[l-1] == suffix)
-}
-
-func PathMatchHelper(path, pattern, sep string, prefix, suffix byte) bool {
-	if path == pattern || pattern == "*" {
-		return true
-	}
-
-	var pathS, patternS string
-	var lastPathSeg, lastPatternSeg bool
-	pathS, path, lastPathSeg = nextSegment(path, sep)
-	patternS, pattern, lastPatternSeg = nextSegment(pattern, sep)
-
-	if pathS == patternS || isDynamicSegment(patternS, prefix, suffix) {
-		if lastPathSeg != lastPatternSeg {
-			return false
+func getPath(cache *SyncLRUCache, pattern string, options ...pm.Option) *pm.Path {
+	value, ok := cache.Get(pattern)
+	var p *pm.Path
+	var err error
+	if ok {
+		p = value.(*pm.Path)
+	} else {
+		p, err = pm.Compile(pattern, options...)
+		if err != nil {
+			panic(fmt.Sprintf("compile %s: %s\n", pattern, err.Error()))
 		}
-		return PathMatchHelper(path, pattern, sep, prefix, suffix)
+		cache.Put(pattern, p)
 	}
-	if patternS == "*" {
-		if !lastPatternSeg && lastPathSeg {
-			return false
-		}
-		return PathMatchHelper(path, pattern, sep, prefix, suffix) ||
-			PathMatchHelper(path, "*"+sep+pattern, sep, prefix, suffix)
-	}
-	return false
-}
-
-func IsPathPatternHelper(pattern, sep string, prefix, suffix byte) bool {
-	segments := strings.Split(pattern, sep)
-	for _, seg := range segments {
-		l := len(seg)
-		if l == 0 {
-			continue
-		}
-		if seg == "*" {
-			return true
-		}
-		if (prefix == 0 || seg[0] == prefix) && (suffix == 0 || seg[l-1] == suffix) {
-			return true
-		}
-	}
-	return false
+	return p
 }
 
 func PathMatch(path, pattern string) bool {
-	return PathMatchHelper(path, pattern, "/", ':', 0)
+	p := getPath(pathMatchCache, pattern)
+	return p.Match(path)
 }
 
 func PathMatch2(path, pattern string) bool {
-	return PathMatchHelper(path, pattern, "/", '{', '}')
+	p := getPath(pathMatchCache2, pattern, pm.SetPrefix("{"), pm.SetSuffix("}"))
+	return p.Match(path)
 }
 
 func IsPathPattern(path string) bool {
-	return IsPathPatternHelper(path, "/", ':', 0)
+	p := getPath(pathMatchCache, path)
+	return !p.IsStatic()
 }
 
 func IsPathPattern2(path string) bool {
-	return IsPathPatternHelper(path, "/", '{', '}')
+	p := getPath(pathMatchCache2, path, pm.SetPrefix("{"), pm.SetSuffix("}"))
+	return !p.IsStatic()
 }
 
 var PathMatchFunc = WrapMatchingFunc(PathMatch)

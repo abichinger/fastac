@@ -173,9 +173,8 @@ func TestPathMatch(t *testing.T) {
 	testPathMatch(t, false, "/api/v1/user", "/api/v1")
 	testPathMatch(t, false, "/api/v1", "/api/v1/user")
 
-	testPathMatch(t, true, "/api", "/:")
-	testPathMatch(t, false, "/api", "/api/:")
-	testPathMatch(t, true, "/api/v1", "/api/:")
+	testPathMatch(t, true, "/api", "/:a")
+	testPathMatch(t, false, "/api", "/api/:a")
 	testPathMatch(t, true, "/api/v1", "/api/:v")
 	testPathMatch(t, false, "/api/v1/user/5", "/api/:v")
 	testPathMatch(t, true, "/api/v1/user/id", "/api/:v/user/:id")
